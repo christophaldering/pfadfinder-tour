@@ -2284,7 +2284,7 @@ function printPacking() {
     html += '<h2>' + cat.icon + ' ' + escapeHtml(cat.cat) + '</h2><ul>';
     cat.items.forEach(item => {
       const isChecked = !!riderState[item.id];
-      html += '<li><span class="box' + (isChecked ? ' checked' : '') + '"></span><span class="item' + (isChecked ? ' checked' : '') + '">' + escapeHtml(item.name) + '</span></li>';
+      html += '<li><span class="box' + (isChecked ? ' checked' : '') + '"></span><span class="item' + (isChecked ? ' checked' : '') + '">' + escapeHtml(item.label || item.name || '') + '</span></li>';
     });
     html += '</ul>';
   });
@@ -2293,7 +2293,7 @@ function printPacking() {
     html += '<h2>➕ Eigene Einträge</h2><ul>';
     customPackingItems.forEach(item => {
       const isChecked = !!riderState[item.id];
-      html += '<li><span class="box' + (isChecked ? ' checked' : '') + '"></span><span class="item' + (isChecked ? ' checked' : '') + '">' + escapeHtml(item.name) + '</span></li>';
+      html += '<li><span class="box' + (isChecked ? ' checked' : '') + '"></span><span class="item' + (isChecked ? ' checked' : '') + '">' + escapeHtml(item.label || item.name || '') + '</span></li>';
     });
     html += '</ul>';
   }
