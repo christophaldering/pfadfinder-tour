@@ -1287,6 +1287,14 @@ function openEtappeModal(num) {
   modalState = { type: 'etappe', num };
   document.getElementById('modal-title').textContent = 'Etappe ' + num + ' · ' + e.from + ' → ' + e.to;
   document.getElementById('modal-body').innerHTML = `
+    <div style="background: rgba(199,92,46,0.08); padding: 0.7rem 0.8rem; border-radius: 4px; border: 1px dashed rgba(199,92,46,0.4); margin-bottom: 0.8rem;">
+      <label style="color: var(--rust); font-weight: 600; display: block; margin-bottom: 0.3rem;">📊 Strava-GPX hochladen</label>
+      <div style="font-size: 0.78rem; color: var(--paper-dim); margin-bottom: 0.4rem; font-style: italic;">
+        Auf Strava: Aktivität → "..." → "Export GPX" → Datei hier hochladen. km, hm, Zeit werden übernommen.
+      </div>
+      <input id="m-gpx-file" type="file" accept=".gpx,application/gpx+xml" style="font-size: 0.8rem; max-width: 100%;">
+      <div id="m-gpx-result" style="display: none; margin-top: 0.5rem; padding: 0.5rem 0.7rem; background: rgba(107,126,61,0.15); border-radius: 3px; font-size: 0.8rem; line-height: 1.5;"></div>
+    </div>
     <label>Tatsächliche Distanz (km)</label>
     <input type="number" step="0.1" id="m-km" value="${existing.actualKm || e.distance || ''}" placeholder="z.B. 52.3">
     <label>Tatsächliche Höhenmeter</label>
@@ -1311,6 +1319,43 @@ function openEtappeModal(num) {
     <textarea id="m-notes" rows="3" placeholder="z.B. Burkhards Reifenpanne in Arnsberg">${escapeHtml(existing.notes || '')}</textarea>
   `;
   document.getElementById('modal').classList.add('active');
+
+  // === Hook GPX file upload ===
+  const gpxInput = document.getElementById('m-gpx-file');
+  const gpxResult = document.getElementById('m-gpx-result');
+  if (gpxInput) {
+    gpxInput.value = '';
+    if (gpxResult) gpxResult.style.display = 'none';
+    gpxInput.onchange = async function() {
+      if (!gpxInput.files || gpxInput.files.length === 0) return;
+      const file = gpxInput.files[0];
+      gpxResult.style.display = 'block';
+      gpxResult.innerHTML = '⏳ Lese GPX-Datei...';
+      try {
+        const text = await file.text();
+        const data = parseGpx(text);
+        // Auto-fill modal fields
+        document.getElementById('m-km').value = data.distance_km;
+        document.getElementById('m-hm').value = data.elevation_gain_m;
+        if (data.duration_min) {
+          document.getElementById('m-dur').value = data.duration_min;
+        }
+        // Store GPX data for save
+        modalState.gpxData = data;
+        // Show summary
+        let summary = '<strong>✓ GPX gelesen:</strong><br>';
+        summary += '📏 ' + data.distance_km + ' km';
+        if (data.elevation_gain_m) summary += '  ·  ⛰ ' + data.elevation_gain_m + ' hm';
+        if (data.duration_min) summary += '  ·  ⏱ ' + Math.floor(data.duration_min/60) + 'h ' + (data.duration_min%60) + 'm';
+        if (data.avg_speed_kmh) summary += '<br>⚡ ⌀ ' + data.avg_speed_kmh + ' km/h';
+        summary += '<br><span style=\"font-size:0.7rem;color:var(--paper-dark)\">Felder oben wurden übernommen. Du kannst sie noch bearbeiten.</span>';
+        gpxResult.innerHTML = summary;
+      } catch (err) {
+        console.error('GPX parse error:', err);
+        gpxResult.innerHTML = '<span style=\"color:#d44\">⚠ ' + (err.message || 'GPX konnte nicht gelesen werden') + '</span>';
+      }
+    };
+  }
 }
 
 async function saveModalData() {
@@ -1324,6 +1369,13 @@ async function saveModalData() {
       weatherIcon: document.getElementById('m-weather-icon').value,
       notes: document.getElementById('m-notes').value
     };
+    // Include GPX coords if uploaded
+    if (modalState.gpxData) {
+      data.gpxCoords = modalState.gpxData.coords;
+      data.gpxAvgSpeed = modalState.gpxData.avg_speed_kmh;
+      data.gpxStartTime = modalState.gpxData.start_time;
+      data.gpxEndTime = modalState.gpxData.end_time;
+    }
     etappeStats[modalState.num] = data;
     await saveEtappeStatToDb(modalState.num, data);
     renderEtappen();
@@ -2017,6 +2069,77 @@ document.addEventListener('keydown', e => {
   }
 });
 
+
+
+// === GPX UPLOAD (Strava Export Parser) ===
+function parseGpx(xmlText) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlText, 'text/xml');
+  const errors = doc.getElementsByTagName('parsererror');
+  if (errors.length > 0) throw new Error('Ungültige GPX-Datei');
+  
+  const trkpts = doc.getElementsByTagName('trkpt');
+  if (trkpts.length === 0) throw new Error('Keine Trackpunkte in der GPX-Datei gefunden');
+
+  const points = [];
+  for (let i = 0; i < trkpts.length; i++) {
+    const pt = trkpts[i];
+    const lat = parseFloat(pt.getAttribute('lat'));
+    const lon = parseFloat(pt.getAttribute('lon'));
+    const eleEl = pt.getElementsByTagName('ele')[0];
+    const ele = eleEl ? parseFloat(eleEl.textContent) : null;
+    const timeEl = pt.getElementsByTagName('time')[0];
+    const time = timeEl ? new Date(timeEl.textContent) : null;
+    points.push({ lat, lon, ele, time });
+  }
+
+  // Distance & elevation gain
+  let totalDist = 0;
+  let elevGain = 0;
+  let prevEle = points[0].ele;
+  for (let i = 1; i < points.length; i++) {
+    totalDist += haversine(points[i-1].lat, points[i-1].lon, points[i].lat, points[i].lon);
+    if (points[i].ele !== null && prevEle !== null) {
+      const diff = points[i].ele - prevEle;
+      if (diff > 0) elevGain += diff;
+    }
+    if (points[i].ele !== null) prevEle = points[i].ele;
+  }
+
+  // Duration
+  const startTime = points[0].time;
+  const endTime = points[points.length - 1].time;
+  let durationMin = null;
+  let avgSpeedKmh = null;
+  if (startTime && endTime && !isNaN(startTime) && !isNaN(endTime)) {
+    const ms = endTime - startTime;
+    durationMin = Math.round(ms / 60000);
+    if (durationMin > 0) {
+      avgSpeedKmh = Math.round((totalDist / (durationMin / 60)) * 10) / 10;
+    }
+  }
+
+  // Simplify coords (max ~200 points)
+  const simplified = [];
+  const step = Math.max(1, Math.floor(points.length / 200));
+  for (let i = 0; i < points.length; i += step) {
+    simplified.push([points[i].lat, points[i].lon]);
+  }
+  if (simplified[simplified.length - 1] !== [points[points.length - 1].lat, points[points.length - 1].lon]) {
+    simplified.push([points[points.length - 1].lat, points[points.length - 1].lon]);
+  }
+
+  return {
+    distance_km: Math.round(totalDist * 10) / 10,
+    elevation_gain_m: Math.round(elevGain),
+    duration_min: durationMin,
+    avg_speed_kmh: avgSpeedKmh,
+    coords: simplified,
+    point_count: points.length,
+    start_time: startTime ? startTime.toISOString() : null,
+    end_time: endTime ? endTime.toISOString() : null
+  };
+}
 
 // === REALTIME SUBSCRIPTIONS ===
 function initRealtimeSubscriptions() {
