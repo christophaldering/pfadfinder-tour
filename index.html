@@ -1451,8 +1451,8 @@ function renderRanking(id, counts, unit) {
 // === KARTEN-STIL TOGGLE ===
 let mapStyle = (() => { try { return localStorage.getItem('mapStyle') || 'light'; } catch (e) { return 'light'; } })();
 const TILE_LAYERS = {
-  dark: { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', attribution: '© OpenStreetMap © CARTO' },
-  light: { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '© OpenStreetMap' }
+  dark: { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', attribution: '© OpenStreetMap © CARTO', subdomains: 'abcd' },
+  light: { url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', attribution: '© OpenStreetMap © CARTO', subdomains: 'abcd' }
 };
 let mapTileLayer = null;
 let photomapTileLayer = null;
