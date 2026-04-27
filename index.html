@@ -140,7 +140,7 @@ h1 .accent { color: var(--rust); font-style: italic; font-family: 'Fraunces', se
 .progress-stop:last-child { text-align: right; }
 
 /* NAV */
-nav { display: flex; border-bottom: 1px solid var(--line-strong); overflow-x: auto; scrollbar-width: none; background: var(--bg); position: sticky; top: 0; z-index: 50; }
+nav { display: flex; border-top: 1px solid var(--line-strong); overflow-x: auto; scrollbar-width: none; background: rgba(20, 17, 13, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; padding: 0.3rem 0 calc(0.3rem + env(safe-area-inset-bottom, 0px)) 0; box-shadow: 0 -4px 20px rgba(0,0,0,0.4); }
 nav::-webkit-scrollbar { display: none; }
 nav button { background: none; border: none; color: var(--paper-dark); padding: 0.6rem 0.3rem; font-family: 'JetBrains Mono', monospace; font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
 nav button .tab-icon { font-size: 1.15rem; line-height: 1; }
@@ -584,6 +584,27 @@ footer .quote { font-style: italic; margin-top: 1rem; font-size: 0.85rem; color:
   .user-badge { font-size: 0.65rem; padding: 0.3rem 0.6rem; }
 }
 
+
+/* === MINI-PROGRESS UND BOTTOM-NAV LAYOUT === */
+.mini-progress {
+  position: fixed; left: 0; right: 0; bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+  background: rgba(20, 17, 13, 0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(212, 165, 72, 0.15);
+  padding: 0.4rem 1rem 0.45rem 1rem;
+  z-index: 49; display: flex; align-items: center; gap: 0.6rem;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.62rem;
+  color: var(--paper-dim); letter-spacing: 0.08em; text-transform: uppercase;
+}
+.mini-progress-track { flex: 1; height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; position: relative; }
+.mini-progress-fill { position: absolute; inset: 0; background: linear-gradient(90deg, var(--moss), var(--gold), var(--rust)); width: 0%; transition: width 0.5s ease; border-radius: 2px; }
+.mini-progress-km { color: var(--gold); white-space: nowrap; }
+.mini-progress-day { color: var(--paper); white-space: nowrap; }
+@media (max-width: 480px) {
+  .mini-progress { padding: 0.35rem 0.7rem; font-size: 0.55rem; }
+}
+.container { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)) !important; }
+nav button { padding: 0.5rem 0.25rem !important; }
+nav button .tab-icon { font-size: 1.3rem !important; }
 </style></head>
 <body>
 
@@ -671,6 +692,12 @@ footer .quote { font-style: italic; margin-top: 1rem; font-size: 0.85rem; color:
     <span class="progress-stop">Essen</span>
     <span class="progress-stop">Duisburg</span>
   </div>
+</div>
+
+<div id="mini-progress" class="mini-progress">
+  <span class="mini-progress-day" id="mini-prog-day">Tag —</span>
+  <div class="mini-progress-track"><div class="mini-progress-fill" id="mini-prog-fill"></div></div>
+  <span class="mini-progress-km" id="mini-prog-km">0 / 247 km</span>
 </div>
 
 <nav>
@@ -873,6 +900,7 @@ footer .quote { font-style: italic; margin-top: 1rem; font-size: 0.85rem; color:
     <div class="modal-title" id="modal-title">Etappendaten eintragen</div>
     <div id="modal-body"></div>
     <div class="modal-actions">
+      <button id="modal-reset-btn" onclick="resetEtappeData()" style="background:transparent; color: var(--rust); border: 1px solid var(--rust); margin-right: auto; display: none;">🗑 Zurücksetzen</button>
       <button class="secondary" onclick="closeModal()">Abbrechen</button>
       <button onclick="saveModalData()">Speichern</button>
     </div>
@@ -904,7 +932,7 @@ const ETAPPEN = [
   { num: 0, date: 'Mi 29.04.', dateISO: '2026-04-29', from: 'Emmerich', to: 'Winterberg',
     hotel: '', hotelAddr: '', hotelTel: '', hotelLat: 51.1988, hotelLon: 8.5325,
     transfer: true, transferType: 'Anreise mit 3 Autos', transferDistance: '~250 km',
-    transferNote: '🚗 Auto 1 — Lucia fährt, Doris ist Co-Pilotin (weil Lucias Knie gerade ein paar Probleme macht). An Bord: Charly, Christoph + Hund Sammy.\n🚗 Auto 2 — Gaby am Steuer, Elke begleitet. An Bord: Willi, Stefan.\n🚗 Auto 3 — Theo am Steuer. An Bord: Friedhelm, Burkhard. Plus das Gepäck von Charly und Christoph (Sammy braucht Platz).\n\nTreffpunkt: Emmerich. Ziel: Winterberg Bahnhof — Räder ausladen und ab in den Tag 1.' },
+    transferNote: '🚗 Auto 1 — Doris hat sich netterweise frei genommen und fährt, weil Lucias Knie gerade ein paar Probleme macht. An Bord: Lucia, Charly, Christoph + Sammy (der nicht so lange allein sein will :-) )\n🚗 Auto 2 — Gaby am Steuer, Elke begleitet. An Bord: Willi, Stefan.\n🚗 Auto 3 — Theo am Steuer. An Bord: Friedhelm, Burkhard. Plus das Gepäck von Charly und Christoph (Sammy braucht Platz).\n\nTreffpunkt: Emmerich. Ziel: Winterberg Bahnhof — Räder ausladen und ab in den Tag 1.' },
   { num: 1, date: 'Mi 29.04.', dateISO: '2026-04-29', from: 'Winterberg', to: 'Meschede',
     hotel: 'Landhotel Hütter', hotelAddr: 'Freienohler Str. 31, 59872 Meschede',
     hotelTel: '02903 9600', hotelLat: 51.3572, hotelLon: 8.1688 },
@@ -1156,6 +1184,19 @@ function renderStats() {
   document.getElementById('prog-fill').style.width = pct + '%';
   document.getElementById('prog-marker').style.left = pct + '%';
   document.getElementById('prog-km').textContent = Math.round(km) + ' / ' + Math.round(TOTAL_KM) + ' km';
+  // Mini-Progress (sticky bottom) auch aktualisieren
+  const miniFill = document.getElementById('mini-prog-fill');
+  const miniKm = document.getElementById('mini-prog-km');
+  const miniDay = document.getElementById('mini-prog-day');
+  if (miniFill) miniFill.style.width = pct + '%';
+  if (miniKm) miniKm.textContent = Math.round(km) + ' / ' + Math.round(TOTAL_KM) + ' km';
+  if (miniDay) {
+    if (cur && cur >= 1 && cur <= 5) miniDay.textContent = 'Tag ' + cur + '/5';
+    else if (cur === 0) miniDay.textContent = '🚗 Anreise';
+    else if (cur === 6) miniDay.textContent = '🚗 Rückreise';
+    else if (cur > 6) miniDay.textContent = '🏁 Tour beendet';
+    else miniDay.textContent = '📅 Vor der Tour';
+  }
 
   // Status text
   const statusEl = document.getElementById('status-text');
@@ -1493,6 +1534,13 @@ function openEtappeModal(num) {
   `;
   document.getElementById('modal').classList.add('active');
 
+  // Reset-Button nur zeigen wenn schon IST-Daten existieren
+  const resetBtn = document.getElementById('modal-reset-btn');
+  if (resetBtn) {
+    const hasData = !!(existing.actualKm || existing.actualHm || existing.durationMin || existing.weather || existing.notes || existing.gpxCoords);
+    resetBtn.style.display = hasData ? 'inline-block' : 'none';
+  }
+
   // === GPX-Upload-Handler ===
   const gpxInput = document.getElementById('m-gpx');
   if (gpxInput) {
@@ -1523,6 +1571,34 @@ function openEtappeModal(num) {
         status.textContent = '❌ Fehler: ' + err.message;
       }
     };
+  }
+}
+
+async function resetEtappeData() {
+  if (currentUser && currentUser.role === 'guest') {
+    toast('Gäste können keine Daten ändern 👀', true);
+    return;
+  }
+  if (!modalState || modalState.type !== 'etappe') return;
+  const num = modalState.num;
+  const eName = (ETAPPEN.find(e => e.num === num) || {}).from || ('Etappe ' + num);
+  if (!confirm('Alle Tagesdaten dieser Etappe wirklich zurücksetzen?\n\nDas löscht IST-km, Höhenmeter, Fahrzeit, Wetter, Notizen und ggf. den GPX-Track.')) return;
+  try {
+    // Aus DB löschen
+    const { error } = await sb.from('etappe_stats').delete().eq('etappe_num', num);
+    if (error) throw error;
+    // Lokal löschen
+    delete etappeStats[num];
+    // Karte neu rendern
+    if (mapInstance) { mapInstance.remove(); mapInstance = null; if (document.getElementById('tab-map').classList.contains('active')) renderMap(); }
+    renderEtappen();
+    renderStats();
+    renderStatsPage();
+    toast('Tagesdaten zurückgesetzt ✓');
+    closeModal();
+  } catch (e) {
+    console.error('reset error:', e);
+    toast('Zurücksetzen fehlgeschlagen', true);
   }
 }
 
