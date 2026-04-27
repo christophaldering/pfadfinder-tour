@@ -1776,8 +1776,8 @@ async function extractGpsFromFile(file) {
 
 function calculateKmFromGps(etappeNum, lat, lon) {
   // Find nearest point on the etappe track and return accumulated km distance
-  if (!etappeNum) return null;
-  const etappe = ETAPPEN[etappeNum - 1];
+  if (!etappeNum || etappeNum < 1 || etappeNum > 5) return null;
+  const etappe = ETAPPEN.find(e => e.num === etappeNum);
   if (!etappe || !etappe.coords) return null;
 
   const coords = etappe.coords;
@@ -1802,10 +1802,11 @@ function calculateKmFromGps(etappeNum, lat, lon) {
     kmInEtappe += haversine(coords[i][0], coords[i][1], coords[i+1][0], coords[i+1][1]);
   }
 
-  // Add km from previous etappen
+  // Add km from previous etappen (Tag 1 bis Tag etappeNum-1)
   let kmTotal = kmInEtappe;
-  for (let i = 0; i < etappeNum - 1; i++) {
-    kmTotal += ETAPPEN[i].distance || 0;
+  for (let n = 1; n < etappeNum; n++) {
+    const prev = ETAPPEN.find(e => e.num === n);
+    if (prev && prev.distance) kmTotal += prev.distance;
   }
 
   return Math.round(kmTotal * 10) / 10;  // 1 decimal
@@ -2479,6 +2480,10 @@ function initRealtimeSubscriptions() {
       renderGallery();
       renderStats();
       renderStatsPage();
+      // Foto-Karte neu rendern falls offen
+      if (photomapInstance) { photomapInstance.remove(); photomapInstance = null; }
+      const photomapTab = document.getElementById('tab-photomap');
+      if (photomapTab && photomapTab.classList.contains('active')) renderPhotomap();
     })
     .subscribe();
 
