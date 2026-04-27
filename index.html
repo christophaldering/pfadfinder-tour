@@ -505,17 +505,6 @@ footer .quote { font-style: italic; margin-top: 1rem; font-size: 0.85rem; color:
 <svg width="0" height="0" style="position:absolute">
 <symbol id="lily" viewBox="0 0 24 24"><path d="M12 2c-1 2-2 4-2 6 0 1.5.5 3 2 4 1.5-1 2-2.5 2-4 0-2-1-4-2-6zm-7 7c-1 1-2 3-2 5 0 2 1 3 3 4-1-2 0-5 2-6 1-2-1-3-3-3zm14 0c-2 0-4 1-3 3 2 1 3 4 2 6 2-1 3-2 3-4 0-2-1-4-2-5zm-7 8c-2 1-4 2-4 4h8c0-2-2-3-4-4z"/></symbol>
 </svg>
-<div class="password-gate" id="password-gate" style="--bg-img: var(--bg-img-source)">
-  <div class="password-gate-bg"></div>
-  <div class="password-card">
-    <svg class="lily-big"><use href="#lily"/></svg>
-    <h2>Pfadfinder auf Tour '26</h2>
-    <p>Zugangscode bitte</p>
-    <input type="password" id="password-input" placeholder="••••••••" autocomplete="off">
-    <button id="password-submit">Eintreten</button>
-    <div class="error" id="password-error">Falscher Code, nochmal versuchen</div>
-    <div class="hint">Den Code haben die Jungs verteilt</div>
-  </div>
 </div>
 
 <div class="container">
@@ -2083,7 +2072,6 @@ function initRealtimeSubscriptions() {
   renderGallery();
   renderStatsPage();
   initFilterBar();
-  initPasswordGate();
   initPacking();
   await loadPackingData();
   initRealtimeSubscriptions();
