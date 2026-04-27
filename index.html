@@ -500,8 +500,132 @@ footer .quote { font-style: italic; margin-top: 1rem; font-size: 0.85rem; color:
 .packing-row .delete-custom { background: none; border: none; color: var(--paper-dark); cursor: pointer; padding: 0.25rem; font-size: 0.85rem; align-self: center; }
 .packing-row .delete-custom:hover { color: #d44; }
 
+
+/* === LOGIN OVERLAY === */
+.login-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: linear-gradient(135deg, #1a1612 0%, #0d0a07 100%);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem; overflow-y: auto;
+}
+.login-card {
+  background: var(--bg-card); border: 1px solid var(--line-strong);
+  border-radius: 6px; padding: 2rem 1.75rem; max-width: 420px; width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  position: relative;
+}
+.login-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--rust), var(--gold), var(--moss));
+  border-radius: 6px 6px 0 0;
+}
+.login-card h2 {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 0.12em;
+  color: var(--paper); margin-bottom: 0.4rem;
+}
+.login-card .login-sub {
+  font-family: 'Caveat', cursive; font-size: 1.1rem; color: var(--gold);
+  margin-bottom: 1.5rem;
+}
+.login-card label {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--paper-dim);
+  margin-bottom: 0.4rem; display: block;
+}
+.login-card input[type="password"], .login-card select {
+  width: 100%; background: var(--bg); border: 1px solid var(--line-strong);
+  color: var(--paper); padding: 0.7rem 0.85rem; font-family: 'Fraunces', serif;
+  font-size: 1rem; border-radius: 3px; margin-bottom: 1rem; box-sizing: border-box;
+}
+.login-card select {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
+  appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23c9bda6' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 0.7rem center; padding-right: 2rem;
+}
+.login-card button {
+  width: 100%; background: var(--rust); color: var(--paper); border: none;
+  padding: 0.85rem; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+  letter-spacing: 0.18em; text-transform: uppercase; cursor: pointer;
+  border-radius: 3px; font-weight: 600; transition: background 0.2s;
+}
+.login-card button:hover { background: var(--rust-deep); }
+.login-card .login-error {
+  color: var(--rust); font-size: 0.85rem; margin-bottom: 0.8rem; min-height: 1.2rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+.login-card .login-hint {
+  font-size: 0.75rem; color: var(--paper-dim); margin-top: 1rem;
+  font-family: 'Caveat', cursive; font-size: 1rem; text-align: center;
+}
+.login-section { margin-bottom: 1.2rem; }
+.user-badge {
+  position: fixed; top: 0.5rem; right: 0.5rem; z-index: 100;
+  background: rgba(20, 17, 13, 0.85); backdrop-filter: blur(8px);
+  border: 1px solid var(--line); border-radius: 20px;
+  padding: 0.35rem 0.75rem 0.35rem 0.85rem;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+  color: var(--paper-dim); display: flex; align-items: center; gap: 0.5rem;
+  cursor: default;
+}
+.user-badge .badge-name { color: var(--gold); }
+.user-badge .badge-role { opacity: 0.6; font-size: 0.65rem; }
+.user-badge button {
+  background: transparent; border: 1px solid var(--line); color: var(--paper-dim);
+  font-size: 0.65rem; padding: 0.15rem 0.5rem; border-radius: 12px;
+  cursor: pointer; font-family: inherit; letter-spacing: 0.05em;
+}
+.user-badge button:hover { color: var(--rust); border-color: var(--rust); }
+.guest-mode .post-form, .guest-mode .etappe-actions, .guest-mode #post-submit { display: none !important; }
+.guest-mode #m-gpx, .guest-mode #m-km, .guest-mode #m-hm, .guest-mode #m-dur,
+.guest-mode #m-weather, .guest-mode #m-weather-icon, .guest-mode #m-notes { pointer-events: none; opacity: 0.6; }
+@media (max-width: 480px) {
+  .login-card { padding: 1.5rem 1.2rem; }
+  .login-card h2 { font-size: 1.3rem; }
+  .user-badge { font-size: 0.65rem; padding: 0.3rem 0.6rem; }
+}
+
 </style></head>
 <body>
+
+<!-- LOGIN OVERLAY -->
+<div id="login-overlay" class="login-overlay" style="display:none">
+  <div class="login-card">
+    <!-- Step 1: Passwort -->
+    <div id="login-step-pw">
+      <h2>Pfadfinder auf Tour '26</h2>
+      <div class="login-sub">Allzeit b(e)reit</div>
+      <div class="login-section">
+        <label>Zugangscode</label>
+        <input type="password" id="login-pw" placeholder="Code eingeben…" autocomplete="off" autofocus>
+        <div id="login-error" class="login-error"></div>
+        <button id="login-pw-btn">Weiter →</button>
+      </div>
+      <div class="login-hint">Pfadfinder & Frauen: euer Tour-Code · Familie & Freunde: Gäste-Code</div>
+    </div>
+    <!-- Step 2: Person wählen (Tour-Crew) -->
+    <div id="login-step-person" style="display:none">
+      <h2>Wer bist du?</h2>
+      <div class="login-sub">Damit man weiß, wer schreibt</div>
+      <div class="login-section">
+        <label>Mitfahrer / Frau</label>
+        <select id="login-person">
+          <option value="">— wählen —</option>
+          <optgroup label="🚴 Pfadfinder" id="login-group-riders"></optgroup>
+          <optgroup label="💝 Frauen" id="login-group-frauen"></optgroup>
+        </select>
+        <button id="login-person-btn">Los geht's →</button>
+      </div>
+    </div>
+    <!-- Step 3: Gäste-Bestätigung -->
+    <div id="login-step-guest" style="display:none">
+      <h2>Willkommen, Gast!</h2>
+      <div class="login-sub">Schön, dass du mitliest</div>
+      <p style="color:var(--paper-dim); font-size:0.9rem; line-height:1.5; margin-bottom:1.2rem">Du kannst alle Inhalte ansehen — Logbuch, Karte, Etappen, Fotos und Statistiken. Beiträge schreiben können nur die Mitfahrer.</p>
+      <button id="login-guest-btn">Tour ansehen →</button>
+    </div>
+  </div>
+</div>
+
 <svg width="0" height="0" style="position:absolute">
 <symbol id="lily" viewBox="0 0 24 24"><path d="M12 2c-1 2-2 4-2 6 0 1.5.5 3 2 4 1.5-1 2-2.5 2-4 0-2-1-4-2-6zm-7 7c-1 1-2 3-2 5 0 2 1 3 3 4-1-2 0-5 2-6 1-2-1-3-3-3zm14 0c-2 0-4 1-3 3 2 1 3 4 2 6 2-1 3-2 3-4 0-2-1-4-2-5zm-7 8c-2 1-4 2-4 4h8c0-2-2-3-4-4z"/></symbol>
 </svg>
@@ -575,6 +699,9 @@ footer .quote { font-style: italic; margin-top: 1rem; font-size: 0.85rem; color:
     <button class="filter-btn" data-filter="5">Tag 5</button>
     <button class="filter-btn" data-filter="0">🚗 An</button>
     <button class="filter-btn" data-filter="6">🚗 Ab</button>
+    <span class="filter-sep" style="opacity:0.3;align-self:center;font-family:'JetBrains Mono',monospace;font-size:0.7rem">|</span>
+    <button class="filter-btn" data-filter="before">📅 Vor</button>
+    <button class="filter-btn" data-filter="after">🏁 Nach</button>
     <button class="sort-toggle" id="sort-toggle">↓ Neueste</button>
   </div>
 
@@ -599,7 +726,8 @@ footer .quote { font-style: italic; margin-top: 1rem; font-size: 0.85rem; color:
   <div class="map-legend">
     <div class="legend-item"><div class="legend-line" style="background:#6b7e3d"></div>Gefahren</div>
     <div class="legend-item"><div class="legend-line" style="background:#c75c2e"></div>Heute</div>
-    <div class="legend-item"><div class="legend-line" style="background:#8a8068"></div>Geplant</div>
+    <div class="legend-item"><div class="legend-line" style="background:#8a8068"></div>Plan</div>
+    <div class="legend-item"><div class="legend-line" style="background:#8a8068; height:2px; background:repeating-linear-gradient(90deg, #8a8068 0 4px, transparent 4px 10px);"></div>Plan (überlagert)</div>
     <div class="legend-item"><div class="legend-dot" style="background:#d4a548"></div>Hotel</div>
   </div>
 </section>
@@ -1140,6 +1268,10 @@ function renderFeed() {
     const cur = getCurrentEtappe();
     if (cur && cur >= 1 && cur <= 5) filtered = posts.filter(p => p.etappe === cur);
     else filtered = [];
+  } else if (currentFilter === 'before') {
+    filtered = posts.filter(p => p.etappe === -1);
+  } else if (currentFilter === 'after') {
+    filtered = posts.filter(p => p.etappe === 99);
   } else if (currentFilter !== 'all') {
     const num = parseInt(currentFilter);
     filtered = posts.filter(p => p.etappe === num);
@@ -1169,7 +1301,12 @@ function renderFeed() {
 }
 
 function renderPost(p) {
-  const etappeTag = p.etappe ? `<span class="post-etappe-tag">Etappe ${p.etappe}</span>` : '';
+  let etappeTag = '';
+  if (p.etappe === -1) etappeTag = '<span class="post-etappe-tag">📅 Vor der Reise</span>';
+  else if (p.etappe === 99) etappeTag = '<span class="post-etappe-tag">🏁 Nach der Reise</span>';
+  else if (p.etappe === 0) etappeTag = '<span class="post-etappe-tag">🚗 Anreise</span>';
+  else if (p.etappe === 6) etappeTag = '<span class="post-etappe-tag">🚗 Rückreise</span>';
+  else if (p.etappe) etappeTag = `<span class="post-etappe-tag">Etappe ${p.etappe}</span>`;
   const kmTag = p.km ? `<span class="post-km-tag">${p.kmAuto ? '📍' : ''} km ${p.km}</span>` : '';
   const photos = (p.photos || []).map((src, i) => `<img class="post-photo" src="${src}" alt="" onclick="openLightbox('${p.id}', ${i})">`).join('');
   const postComments = comments[p.id] || [];
@@ -1278,12 +1415,37 @@ function renderMap() {
   ETAPPEN.forEach(e => {
     if (!e.coords) return;
     const status = getEtappeStatus(e.num);
-    const polyline = L.polyline(e.coords, {
-      color: colors[status], weight: status === 'current' ? 5 : 3.5,
-      opacity: status === 'future' ? 0.65 : 0.9, smoothFactor: 1.5
-    }).addTo(mapInstance);
-    polyline.bindPopup('<strong>Etappe ' + e.num + '</strong>' + e.from + ' → ' + e.to + '<br><small>' + e.distance + ' km · ' + e.elevation + ' hm</small>');
+    const stats = etappeStats[e.num];
+    const realCoords = stats && stats.gpxCoords && stats.gpxCoords.length ? stats.gpxCoords : null;
+
+    // Plan-Track: dünn + gestrichelt wenn Real-Track existiert, sonst normal
+    const planOpts = realCoords
+      ? { color: '#8a8068', weight: 2, opacity: 0.5, dashArray: '4 6', smoothFactor: 1.5 }
+      : { color: colors[status], weight: status === 'current' ? 5 : 3.5, opacity: status === 'future' ? 0.65 : 0.9, smoothFactor: 1.5 };
+    const planLine = L.polyline(e.coords, planOpts).addTo(mapInstance);
+    if (!realCoords) {
+      planLine.bindPopup('<strong>Etappe ' + e.num + '</strong>' + e.from + ' → ' + e.to + '<br><small>' + e.distance + ' km · ' + e.elevation + ' hm (geplant)</small>');
+    }
     e.coords.forEach(c => allBounds.push(c));
+
+    // Real-Track: solide + dick in Status-Farbe
+    if (realCoords) {
+      const realLine = L.polyline(realCoords, {
+        color: colors[status], weight: status === 'current' ? 5.5 : 4,
+        opacity: 0.95, smoothFactor: 1.2
+      }).addTo(mapInstance);
+      const km = stats.actualKm ? parseFloat(String(stats.actualKm).replace(',','.')) : null;
+      const hm = stats.actualHm || null;
+      const dur = stats.durationMin || null;
+      const popup = '<strong>Etappe ' + e.num + ' (gefahren)</strong>' + e.from + ' → ' + e.to
+        + (km ? '<br><small>' + km.toFixed(1) + ' km' : '<br><small>')
+        + (hm ? ' · ' + hm + ' hm' : '')
+        + (dur ? ' · ' + Math.floor(dur/60) + 'h ' + (dur%60) + 'min' : '')
+        + '</small>';
+      realLine.bindPopup(popup);
+      realCoords.forEach(c => allBounds.push(c));
+    }
+
     const icon = L.divIcon({ className: 'hotel-marker-wrap', html: '<div class="hotel-marker">' + e.num + '</div>', iconSize: [28, 28], iconAnchor: [14, 14] });
     L.marker([e.hotelLat, e.hotelLon], { icon }).addTo(mapInstance)
       .bindPopup('<strong>' + e.hotel + '</strong>' + e.hotelAddr + '<br><small style="opacity:0.7">Übernachtung Tag ' + e.num + '</small>');
@@ -1364,6 +1526,10 @@ function openEtappeModal(num) {
 }
 
 async function saveModalData() {
+  if (currentUser && currentUser.role === 'guest') {
+    toast('Gäste können keine Daten ändern 👀', true);
+    return;
+  }
   if (!modalState) return;
   if (modalState.type === 'etappe') {
     const data = {
@@ -1383,6 +1549,8 @@ async function saveModalData() {
     }
     etappeStats[modalState.num] = data;
     await saveEtappeStatToDb(modalState.num, data);
+    // Karte neu rendern falls sie offen war (damit Real-Track erscheint)
+    if (mapInstance) { mapInstance.remove(); mapInstance = null; if (document.getElementById('tab-map').classList.contains('active')) renderMap(); }
     renderEtappen();
     renderStats();
     renderStatsPage();
@@ -1398,6 +1566,10 @@ function closeModal() {
 
 // === ACTIONS ===
 async function submitPost() {
+  if (currentUser && currentUser.role === 'guest') {
+    toast('Gäste können nichts posten - nur lesen 👀', true);
+    return;
+  }
   const author = document.getElementById('post-author').value;
   const etappe = document.getElementById('post-etappe').value;
   const text = document.getElementById('post-text').value.trim();
@@ -1449,6 +1621,10 @@ async function submitPost() {
 }
 
 async function deletePost(id) {
+  if (currentUser && currentUser.role === 'guest') {
+    toast('Gäste können nichts löschen 👀', true);
+    return;
+  }
   if (!confirm('Eintrag wirklich löschen?')) return;
   posts = posts.filter(p => p.id !== id);
   delete comments[id];
@@ -1464,9 +1640,13 @@ function toggleComments(id) {
 }
 
 async function addComment(postId) {
+  if (currentUser && currentUser.role === 'guest') {
+    toast('Gäste können keine Kommentare schreiben 👀', true);
+    return;
+  }
   const a = document.getElementById('ca-' + postId);
   const t = document.getElementById('ct-' + postId);
-  const author = a.value.trim() || 'Anonym';
+  const author = a.value.trim() || (currentUser ? currentUser.name : 'Anonym');
   const text = t.value.trim();
   if (!text) return;
   if (!comments[postId]) comments[postId] = [];
@@ -2031,11 +2211,148 @@ function initPacking() {
   });
 }
 
+
+// === LOGIN SYSTEM ===
+const PWD_TOUR = 'pfadfinder2026';
+const PWD_GUEST = 'ruhrtour2026';
+let currentUser = null; // { name, role: 'rider'|'frau'|'guest' }
+
+function loadUserFromStorage() {
+  try {
+    const saved = localStorage.getItem('pfadfinderUser');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u && u.name && u.role) {
+        currentUser = u;
+        return true;
+      }
+    }
+  } catch (e) { console.warn('User-Load fehlgeschlagen:', e); }
+  return false;
+}
+
+function saveUserToStorage() {
+  try {
+    if (currentUser) localStorage.setItem('pfadfinderUser', JSON.stringify(currentUser));
+  } catch (e) { console.warn('User-Save fehlgeschlagen:', e); }
+}
+
+function logout() {
+  if (!confirm('Wirklich abmelden? Du musst dich dann neu einloggen.')) return;
+  try { localStorage.removeItem('pfadfinderUser'); } catch (e) {}
+  currentUser = null;
+  location.reload();
+}
+
+function showUserBadge() {
+  let badge = document.getElementById('user-badge');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'user-badge';
+    badge.className = 'user-badge';
+    document.body.appendChild(badge);
+  }
+  const roleLabel = currentUser.role === 'rider' ? 'Pfadfinder' : currentUser.role === 'frau' ? 'Frau' : 'Gast';
+  const icon = currentUser.role === 'rider' ? '🚴' : currentUser.role === 'frau' ? '💝' : '👀';
+  badge.innerHTML = '<span>' + icon + '</span><span class="badge-name">' + escapeHtml(currentUser.name) + '</span><span class="badge-role">· ' + roleLabel + '</span><button onclick="logout()">Abmelden</button>';
+}
+
+function applyGuestRestrictions() {
+  if (currentUser && currentUser.role === 'guest') {
+    document.body.classList.add('guest-mode');
+  } else {
+    document.body.classList.remove('guest-mode');
+  }
+}
+
+function setupLoginUI() {
+  // Personen-Dropdown füllen
+  const groupR = document.getElementById('login-group-riders');
+  const groupF = document.getElementById('login-group-frauen');
+  if (groupR && groupR.children.length === 0) {
+    RIDERS.forEach(r => { const o = document.createElement('option'); o.value = 'rider:' + r; o.textContent = r; groupR.appendChild(o); });
+    FRAUEN.forEach(f => { const o = document.createElement('option'); o.value = 'frau:' + f.name; o.textContent = f.name + ' (' + f.partner + ')'; groupF.appendChild(o); });
+  }
+
+  const overlay = document.getElementById('login-overlay');
+  const stepPw = document.getElementById('login-step-pw');
+  const stepPerson = document.getElementById('login-step-person');
+  const stepGuest = document.getElementById('login-step-guest');
+  const errEl = document.getElementById('login-error');
+  const pwInput = document.getElementById('login-pw');
+  const pwBtn = document.getElementById('login-pw-btn');
+  const personSel = document.getElementById('login-person');
+  const personBtn = document.getElementById('login-person-btn');
+  const guestBtn = document.getElementById('login-guest-btn');
+
+  // Passwort prüfen
+  function tryPassword() {
+    const pw = pwInput.value.trim();
+    errEl.textContent = '';
+    if (pw === PWD_TOUR) {
+      stepPw.style.display = 'none';
+      stepPerson.style.display = 'block';
+      personSel.focus();
+    } else if (pw === PWD_GUEST) {
+      stepPw.style.display = 'none';
+      stepGuest.style.display = 'block';
+    } else {
+      errEl.textContent = '❌ Code ist falsch.';
+      pwInput.value = '';
+      pwInput.focus();
+    }
+  }
+  pwBtn.onclick = tryPassword;
+  pwInput.onkeydown = (e) => { if (e.key === 'Enter') tryPassword(); };
+
+  // Person wählen
+  personBtn.onclick = () => {
+    const val = personSel.value;
+    if (!val) return alert('Bitte wähl eine Person aus.');
+    const [role, name] = val.split(':');
+    currentUser = { name, role };
+    saveUserToStorage();
+    overlay.style.display = 'none';
+    showUserBadge();
+    applyGuestRestrictions();
+    afterLoginInit();
+  };
+
+  // Gast bestätigen
+  guestBtn.onclick = () => {
+    currentUser = { name: 'Gast', role: 'guest' };
+    saveUserToStorage();
+    overlay.style.display = 'none';
+    showUserBadge();
+    applyGuestRestrictions();
+    afterLoginInit();
+  };
+}
+
+function afterLoginInit() {
+  // Wird aufgerufen NACHDEM Login erfolgreich war
+  // Setze post-author Dropdown auf den eingeloggten User
+  const authorSel = document.getElementById('post-author');
+  if (authorSel && currentUser && currentUser.role !== 'guest') {
+    authorSel.value = currentUser.name;
+  }
+}
+
 // === INIT ===
 function initDropdowns() {
   const authorSel = document.getElementById('post-author');
-  RIDERS.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; authorSel.appendChild(o); });
+  const ogR = document.createElement('optgroup'); ogR.label = '🚴 Pfadfinder';
+  RIDERS.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; ogR.appendChild(o); });
+  authorSel.appendChild(ogR);
+  const ogF = document.createElement('optgroup'); ogF.label = '💝 Frauen';
+  FRAUEN.forEach(f => { const o = document.createElement('option'); o.value = f.name; o.textContent = f.name; ogF.appendChild(o); });
+  authorSel.appendChild(ogF);
   const etappeSel = document.getElementById('post-etappe');
+  // VOR der Reise (-1)
+  const oBefore = document.createElement('option');
+  oBefore.value = -1;
+  oBefore.textContent = '📅 Vor der Reise';
+  etappeSel.appendChild(oBefore);
   ETAPPEN.forEach(e => {
     const o = document.createElement('option');
     o.value = e.num;
@@ -2047,6 +2364,11 @@ function initDropdowns() {
     }
     etappeSel.appendChild(o);
   });
+  // NACH der Reise (99)
+  const oAfter = document.createElement('option');
+  oAfter.value = 99;
+  oAfter.textContent = '🏁 Nach der Reise';
+  etappeSel.appendChild(oAfter);
   const cur = getCurrentEtappe();
   if (cur && cur >= 1 && cur <= 5) etappeSel.value = cur;
 }
@@ -2191,6 +2513,20 @@ function initRealtimeSubscriptions() {
 }
 
 (async function init() {
+  // === LOGIN GATE ===
+  const overlay = document.getElementById('login-overlay');
+  setupLoginUI();
+  if (!loadUserFromStorage()) {
+    // Kein User gespeichert → Login zeigen, App im Hintergrund laden
+    overlay.style.display = 'flex';
+  } else {
+    // User schon eingeloggt
+    overlay.style.display = 'none';
+    showUserBadge();
+    applyGuestRestrictions();
+  }
+
+  // App-Initialisierung läuft trotzdem (so dass Login-User direkt App sieht)
   await loadData();
   initDropdowns();
   initNav();
@@ -2206,6 +2542,9 @@ function initRealtimeSubscriptions() {
   document.getElementById('post-submit').addEventListener('click', submitPost);
   document.getElementById('tacho-start').addEventListener('click', () => tachoState.watching ? stopTacho() : startTacho());
   document.getElementById('tacho-reset').addEventListener('click', resetTacho);
+
+  // Wenn User schon eingeloggt: Author-Dropdown vorbelegen
+  if (currentUser) afterLoginInit();
 })();
 </script>
 </body>
