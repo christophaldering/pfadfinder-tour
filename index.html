@@ -600,18 +600,18 @@ footer .quote { font-style: italic; margin-top: 1rem; font-size: 0.85rem; color:
         <div id="login-error" class="login-error"></div>
         <button id="login-pw-btn">Weiter →</button>
       </div>
-      <div class="login-hint">Pfadfinder & Frauen: euer Tour-Code · Familie & Freunde: Gäste-Code</div>
+      <div class="login-hint">Pfadfinder & Göttergattinnen: euer Tour-Code · Familie & Freunde: Gäste-Code</div>
     </div>
     <!-- Step 2: Person wählen (Tour-Crew) -->
     <div id="login-step-person" style="display:none">
       <h2>Wer bist du?</h2>
       <div class="login-sub">Damit man weiß, wer schreibt</div>
       <div class="login-section">
-        <label>Mitfahrer / Frau</label>
+        <label>Mitfahrer / Göttergattin</label>
         <select id="login-person">
           <option value="">— wählen —</option>
           <optgroup label="🚴 Pfadfinder" id="login-group-riders"></optgroup>
-          <optgroup label="💝 Frauen" id="login-group-frauen"></optgroup>
+          <optgroup label="👑 Göttergattinnen" id="login-group-frauen"></optgroup>
         </select>
         <button id="login-person-btn">Los geht's →</button>
       </div>
@@ -830,9 +830,10 @@ footer .quote { font-style: italic; margin-top: 1rem; font-size: 0.85rem; color:
     </div>
   </div>
 
-  <div id="packing-progress-card" style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 4px; padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;">
+  <div id="packing-progress-card" style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 4px; padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; flex-wrap: wrap;">
     <span id="packing-rider-label" style="color: var(--gold); letter-spacing: 0.1em">Charly packt</span>
-    <span id="packing-stats-text" style="color: var(--paper-dim)">0 / 0 gepackt</span>
+    <span id="packing-stats-text" style="color: var(--paper-dim); flex: 1; text-align: center;">0 / 0 gepackt</span>
+    <button onclick="printPacking()" class="print-btn" title="Packliste drucken oder als PDF speichern" style="background: transparent; border: 1px solid var(--line-strong); color: var(--paper-dim); padding: 0.35rem 0.7rem; font-family: inherit; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 3px; cursor: pointer; transition: all 0.2s;">🖨 Drucken</button>
   </div>
 
   <div id="packing-categories"></div>
@@ -2132,6 +2133,71 @@ function renderPackingCategory(catName, icon, items, isCustom) {
   `;
 }
 
+function printPacking() {
+  // Erstelle ein eigenes Druck-Fenster mit nur der Packliste des aktuellen Riders
+  const rider = currentPackingRider;
+  const riderState = packingState[rider] || {};
+
+  // Stats berechnen
+  let allItems = 0, checkedItems = 0;
+  PACKING_LIST.forEach(cat => cat.items.forEach(item => { allItems++; if (riderState[item.id]) checkedItems++; }));
+  customPackingItems.forEach(item => { allItems++; if (riderState[item.id]) checkedItems++; });
+
+  // HTML zusammenbauen
+  let html = '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Packliste – ' + rider + ' – Pfadfinder auf Tour 26</title>';
+  html += '<style>';
+  html += 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 700px; margin: 2rem auto; padding: 1rem 1.5rem; color: #222; line-height: 1.5; }';
+  html += 'h1 { font-size: 1.6rem; margin: 0 0 0.3rem 0; color: #c75c2e; }';
+  html += '.sub { color: #777; font-size: 0.95rem; margin-bottom: 0.4rem; }';
+  html += '.stats { color: #555; font-size: 0.9rem; margin-bottom: 1.5rem; padding-bottom: 0.6rem; border-bottom: 1px solid #ddd; }';
+  html += 'h2 { font-size: 1.1rem; margin: 1.5rem 0 0.6rem 0; padding-bottom: 0.3rem; border-bottom: 1px solid #eee; color: #333; }';
+  html += 'ul { list-style: none; padding: 0; margin: 0; }';
+  html += 'li { padding: 0.35rem 0; display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.95rem; }';
+  html += '.box { display: inline-block; width: 14px; height: 14px; border: 1.5px solid #555; border-radius: 2px; flex-shrink: 0; margin-top: 0.15rem; position: relative; }';
+  html += '.box.checked { background: #6b7e3d; border-color: #6b7e3d; }';
+  html += '.box.checked::after { content: "✓"; color: white; position: absolute; top: -3px; left: 1px; font-size: 0.85rem; font-weight: bold; }';
+  html += '.item.checked { color: #999; text-decoration: line-through; }';
+  html += '.footer { margin-top: 2rem; padding-top: 0.8rem; border-top: 1px solid #ddd; font-size: 0.8rem; color: #888; text-align: center; }';
+  html += '@media print { body { margin: 0.5cm; max-width: 100%; } h1 { font-size: 1.4rem; } h2 { font-size: 1rem; page-break-after: avoid; } li { page-break-inside: avoid; } }';
+  html += '</style></head><body>';
+  html += '<h1>🎒 Packliste · ' + escapeHtml(rider) + '</h1>';
+  html += '<div class="sub">Pfadfinder auf Tour \'26 · Ruhrtalradweg · 29.04.–03.05.2026</div>';
+  html += '<div class="stats">' + checkedItems + ' von ' + allItems + ' Sachen gepackt</div>';
+
+  PACKING_LIST.forEach(cat => {
+    html += '<h2>' + cat.icon + ' ' + escapeHtml(cat.cat) + '</h2><ul>';
+    cat.items.forEach(item => {
+      const isChecked = !!riderState[item.id];
+      html += '<li><span class="box' + (isChecked ? ' checked' : '') + '"></span><span class="item' + (isChecked ? ' checked' : '') + '">' + escapeHtml(item.name) + '</span></li>';
+    });
+    html += '</ul>';
+  });
+
+  if (customPackingItems.length > 0) {
+    html += '<h2>➕ Eigene Einträge</h2><ul>';
+    customPackingItems.forEach(item => {
+      const isChecked = !!riderState[item.id];
+      html += '<li><span class="box' + (isChecked ? ' checked' : '') + '"></span><span class="item' + (isChecked ? ' checked' : '') + '">' + escapeHtml(item.name) + '</span></li>';
+    });
+    html += '</ul>';
+  }
+
+  html += '<div class="footer">Allzeit b(e)reit · Generiert am ' + new Date().toLocaleString('de-DE') + '</div>';
+  html += '</body></html>';
+
+  // Druck-Fenster öffnen
+  const w = window.open('', '_blank', 'width=800,height=900');
+  if (!w) {
+    alert('Pop-up wurde blockiert. Bitte erlaube Pop-ups für diese Seite.');
+    return;
+  }
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  // Nach kurzem Delay den Druck-Dialog öffnen
+  setTimeout(() => { w.focus(); w.print(); }, 400);
+}
+
 function renderPacking() {
   const container = document.getElementById('packing-categories');
   if (!container) return;
@@ -2253,8 +2319,8 @@ function showUserBadge() {
     badge.className = 'user-badge';
     document.body.appendChild(badge);
   }
-  const roleLabel = currentUser.role === 'rider' ? 'Pfadfinder' : currentUser.role === 'frau' ? 'Frau' : 'Gast';
-  const icon = currentUser.role === 'rider' ? '🚴' : currentUser.role === 'frau' ? '💝' : '👀';
+  const roleLabel = currentUser.role === 'rider' ? 'Pfadfinder' : currentUser.role === 'frau' ? 'Göttergattin' : 'Gast';
+  const icon = currentUser.role === 'rider' ? '🚴' : currentUser.role === 'frau' ? '👑' : '👀';
   badge.innerHTML = '<span>' + icon + '</span><span class="badge-name">' + escapeHtml(currentUser.name) + '</span><span class="badge-role">· ' + roleLabel + '</span><button onclick="logout()">Abmelden</button>';
 }
 
@@ -2345,7 +2411,7 @@ function initDropdowns() {
   const ogR = document.createElement('optgroup'); ogR.label = '🚴 Pfadfinder';
   RIDERS.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; ogR.appendChild(o); });
   authorSel.appendChild(ogR);
-  const ogF = document.createElement('optgroup'); ogF.label = '💝 Frauen';
+  const ogF = document.createElement('optgroup'); ogF.label = '👑 Göttergattinnen';
   FRAUEN.forEach(f => { const o = document.createElement('option'); o.value = f.name; o.textContent = f.name; ogF.appendChild(o); });
   authorSel.appendChild(ogF);
   const etappeSel = document.getElementById('post-etappe');
