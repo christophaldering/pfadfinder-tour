@@ -839,7 +839,8 @@ function getCurrentEtappe() {
 
 function getEtappeStatus(num) {
   const today = new Date(); today.setHours(0,0,0,0);
-  const e = ETAPPEN[num-1];
+  const e = ETAPPEN.find(et => et.num === num);
+  if (!e || !e.dateISO) return 'future';
   const d = new Date(e.dateISO); d.setHours(0,0,0,0);
   if (d < today) return 'done';
   if (d.getTime() === today.getTime()) return 'current';
@@ -1043,7 +1044,13 @@ function renderStats() {
 
 function renderEtappen() {
   const list = document.getElementById('etappen-list');
-  list.innerHTML = ETAPPEN.map(e => {
+  if (!list) {
+    console.error('[DEBUG] etappen-list element nicht gefunden!');
+    return;
+  }
+  try {
+    list.innerHTML = ETAPPEN.map(e => {
+
     const status = getEtappeStatus(e.num);
 
     // Transfer etappes (Anreise/Rückreise) get different rendering
@@ -1097,6 +1104,10 @@ function renderEtappen() {
       </div>
     `;
   }).join('');
+  } catch (err) {
+    console.error('[DEBUG] renderEtappen Fehler:', err);
+    list.innerHTML = '<div style="color:red;padding:1rem">Fehler: ' + err.message + '</div>';
+  }
 }
 
 function renderEtappeStats(stats, e) {
@@ -1282,19 +1293,12 @@ function renderMap() {
 
 // === ETAPPE MODAL ===
 function openEtappeModal(num) {
-  const e = ETAPPEN[num-1];
+  const e = ETAPPEN.find(et => et.num === num);
+  if (!e) { console.error('Etappe nicht gefunden:', num); return; }
   const existing = etappeStats[num] || {};
   modalState = { type: 'etappe', num };
   document.getElementById('modal-title').textContent = 'Etappe ' + num + ' · ' + e.from + ' → ' + e.to;
   document.getElementById('modal-body').innerHTML = `
-    <div style="background: rgba(199,92,46,0.08); padding: 0.7rem 0.8rem; border-radius: 4px; border: 1px dashed rgba(199,92,46,0.4); margin-bottom: 0.8rem;">
-      <label style="color: var(--rust); font-weight: 600; display: block; margin-bottom: 0.3rem;">📊 Strava-GPX hochladen</label>
-      <div style="font-size: 0.78rem; color: var(--paper-dim); margin-bottom: 0.4rem; font-style: italic;">
-        Auf Strava: Aktivität → "..." → "Export GPX" → Datei hier hochladen. km, hm, Zeit werden übernommen.
-      </div>
-      <input id="m-gpx-file" type="file" accept=".gpx,application/gpx+xml" style="font-size: 0.8rem; max-width: 100%;">
-      <div id="m-gpx-result" style="display: none; margin-top: 0.5rem; padding: 0.5rem 0.7rem; background: rgba(107,126,61,0.15); border-radius: 3px; font-size: 0.8rem; line-height: 1.5;"></div>
-    </div>
     <label>Tatsächliche Distanz (km)</label>
     <input type="number" step="0.1" id="m-km" value="${existing.actualKm || e.distance || ''}" placeholder="z.B. 52.3">
     <label>Tatsächliche Höhenmeter</label>
@@ -1319,43 +1323,6 @@ function openEtappeModal(num) {
     <textarea id="m-notes" rows="3" placeholder="z.B. Burkhards Reifenpanne in Arnsberg">${escapeHtml(existing.notes || '')}</textarea>
   `;
   document.getElementById('modal').classList.add('active');
-
-  // === Hook GPX file upload ===
-  const gpxInput = document.getElementById('m-gpx-file');
-  const gpxResult = document.getElementById('m-gpx-result');
-  if (gpxInput) {
-    gpxInput.value = '';
-    if (gpxResult) gpxResult.style.display = 'none';
-    gpxInput.onchange = async function() {
-      if (!gpxInput.files || gpxInput.files.length === 0) return;
-      const file = gpxInput.files[0];
-      gpxResult.style.display = 'block';
-      gpxResult.innerHTML = '⏳ Lese GPX-Datei...';
-      try {
-        const text = await file.text();
-        const data = parseGpx(text);
-        // Auto-fill modal fields
-        document.getElementById('m-km').value = data.distance_km;
-        document.getElementById('m-hm').value = data.elevation_gain_m;
-        if (data.duration_min) {
-          document.getElementById('m-dur').value = data.duration_min;
-        }
-        // Store GPX data for save
-        modalState.gpxData = data;
-        // Show summary
-        let summary = '<strong>✓ GPX gelesen:</strong><br>';
-        summary += '📏 ' + data.distance_km + ' km';
-        if (data.elevation_gain_m) summary += '  ·  ⛰ ' + data.elevation_gain_m + ' hm';
-        if (data.duration_min) summary += '  ·  ⏱ ' + Math.floor(data.duration_min/60) + 'h ' + (data.duration_min%60) + 'm';
-        if (data.avg_speed_kmh) summary += '<br>⚡ ⌀ ' + data.avg_speed_kmh + ' km/h';
-        summary += '<br><span style=\"font-size:0.7rem;color:var(--paper-dark)\">Felder oben wurden übernommen. Du kannst sie noch bearbeiten.</span>';
-        gpxResult.innerHTML = summary;
-      } catch (err) {
-        console.error('GPX parse error:', err);
-        gpxResult.innerHTML = '<span style=\"color:#d44\">⚠ ' + (err.message || 'GPX konnte nicht gelesen werden') + '</span>';
-      }
-    };
-  }
 }
 
 async function saveModalData() {
@@ -1369,13 +1336,6 @@ async function saveModalData() {
       weatherIcon: document.getElementById('m-weather-icon').value,
       notes: document.getElementById('m-notes').value
     };
-    // Include GPX coords if uploaded
-    if (modalState.gpxData) {
-      data.gpxCoords = modalState.gpxData.coords;
-      data.gpxAvgSpeed = modalState.gpxData.avg_speed_kmh;
-      data.gpxStartTime = modalState.gpxData.start_time;
-      data.gpxEndTime = modalState.gpxData.end_time;
-    }
     etappeStats[modalState.num] = data;
     await saveEtappeStatToDb(modalState.num, data);
     renderEtappen();
