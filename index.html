@@ -1289,8 +1289,10 @@ const ETAPPEN = [
     transfer: true, transferType: 'Rückreise mit 3 Autos', transferDistance: '~80 km',
     transferNote: '🚗 Auto 1 — Ulrike holt uns ab: Charly u. Christoph.\n🚗 Auto 2 — Gaby (+ ggf. Elke?) holen Willi und Stefan.\n🚗 Auto 3 — Theo holt Friedhelm und Burkhard. Gepäck-Logistik wie auf der Hinfahrt.' }
 ];
-ETAPPEN.forEach((e, i) => {
-  const g = ETAPPEN_GPX[i];
+ETAPPEN.forEach(e => {
+  // ETAPPEN_GPX hat 5 Einträge mit num 1-5, ETAPPEN hat 7 mit num 0-6
+  // Daher nach num matchen, nicht nach Array-Index
+  const g = ETAPPEN_GPX.find(x => x.num === e.num);
   if (g) { e.distance = g.distance_km; e.elevation = g.elevation_gain_m; e.coords = g.coords; }
 });
 const TOTAL_KM = ETAPPEN.reduce((s, e) => s + (e.distance || 0), 0);
@@ -1920,8 +1922,8 @@ function renderStatsPage() {
   posts.forEach(p => { if (photoCounts[p.author] !== undefined) photoCounts[p.author] += (p.photos || []).length; });
   renderRanking('rank-photographers', photoCounts, 'Fotos');
 
-  // Etappen-Vergleich
-  const etappeRanking = ETAPPEN.map(e => {
+  // Etappen-Vergleich (nur Fahrrad-Etappen, ohne Anreise/Rückreise)
+  const etappeRanking = ETAPPEN.filter(e => !e.transfer).map(e => {
     const stats = etappeStats[e.num];
     const dist = stats && stats.actualKm ? parseFloat(stats.actualKm) : (e.distance || 0);
     return { name: 'Etappe ' + e.num + ': ' + e.from + ' → ' + e.to, value: dist + ' km' };
