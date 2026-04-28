@@ -142,8 +142,8 @@ h1 .accent { color: var(--rust); font-style: italic; font-family: 'Fraunces', se
 /* NAV */
 nav { display: flex; border-top: 1px solid var(--line-strong); overflow-x: auto; scrollbar-width: none; background: rgba(20, 17, 13, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; padding: 0.3rem 0 calc(0.3rem + env(safe-area-inset-bottom, 0px)) 0; box-shadow: 0 -4px 20px rgba(0,0,0,0.4); }
 nav::-webkit-scrollbar { display: none; }
-nav button { background: none; border: none; color: var(--paper-dark); padding: 0.6rem 0.3rem; font-family: 'JetBrains Mono', monospace; font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
-nav button .tab-icon { font-size: 1.15rem; line-height: 1; }
+nav button { background: none; border: none; color: var(--paper-dark); padding: 0.6rem 0.2rem; font-family: 'JetBrains Mono', monospace; font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+nav button .tab-icon { font-size: 1.05rem; line-height: 1; }
 nav button .tab-label { font-size: 0.55rem; }
 nav button:hover { color: var(--paper); }
 nav button.active { color: var(--rust); border-bottom-color: var(--rust); }
@@ -604,7 +604,7 @@ footer .quote { font-style: italic; margin-top: 1rem; font-size: 0.85rem; color:
 }
 .container { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)) !important; }
 nav button { padding: 0.5rem 0.25rem !important; }
-nav button .tab-icon { font-size: 1.3rem !important; }
+nav button .tab-icon { font-size: 1.1rem !important; }
 
 /* === HERO COLLAPSE FEATURE === */
 .hero-collapsible {
@@ -786,6 +786,7 @@ body.hero-collapsed .hero-compact { display: flex; }
   <button data-tab="gallery"><span class="tab-icon">🖼</span><span class="tab-label">Galerie</span></button>
   <button data-tab="photomap"><span class="tab-icon">📸</span><span class="tab-label">Foto</span></button>
   <button data-tab="packing"><span class="tab-icon">🎒</span><span class="tab-label">Pack</span></button>
+  <button data-tab="book"><span class="tab-icon">📖</span><span class="tab-label">Buch</span></button>
 </nav>
 
 <section id="tab-feed" class="active">
@@ -956,6 +957,161 @@ body.hero-collapsed .hero-compact { display: flex; }
   </div>
 </section>
 
+<section id="tab-book">
+  <h2 class="section-title">Tour-Buch</h2>
+  <span class="section-subtitle">Das Tagebuch zum Mitnehmen</span>
+
+  <div class="book-preview" style="background: linear-gradient(135deg, rgba(199, 92, 46, 0.08), rgba(212, 165, 72, 0.05)); border: 1px solid rgba(212, 165, 72, 0.25); border-radius: 8px; padding: 1.4rem; margin-bottom: 1.5rem;">
+    <div style="display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.8rem;">
+      <span style="font-size: 1.6rem;">📖</span>
+      <strong style="font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 0.08em; color: var(--gold);">Dein persönliches Tour-Buch</strong>
+    </div>
+    <p style="color: var(--paper-dim); font-size: 0.85rem; line-height: 1.6; margin-bottom: 0.8rem;">
+      Nach der Tour kann <strong style="color: var(--paper);">jeder Mitreisende</strong> sein eigenes, voll personalisiertes Tour-Buch zusammenstellen – mit eigener Foto-Auswahl, eigener Widmung und hervorgehobenen eigenen Einträgen.
+    </p>
+    <p style="color: var(--paper-dim); font-size: 0.85rem; line-height: 1.6; margin-bottom: 1rem;">
+      Das Buch erkennt automatisch, wer eingeloggt ist, und passt sich an: <em style="color: var(--gold);">Charlys Tour-Buch</em>, <em style="color: var(--gold);">Stefans Tour-Buch</em> usw.
+    </p>
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--gold); letter-spacing: 0.05em;">
+      ✨ Schon während der Tour verfügbar — du kannst Snapshots erstellen, um den aktuellen Stand festzuhalten
+    </div>
+  </div>
+
+  <h3 style="font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.12em; color: var(--paper); margin-bottom: 0.8rem; font-size: 1rem;">📋 So wird's aufgebaut</h3>
+
+  <div class="book-spec" style="display: grid; gap: 0.7rem; margin-bottom: 1.5rem;">
+    <div class="book-spec-item" style="display: flex; gap: 0.7rem; padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--rust); border-radius: 4px;">
+      <span style="font-size: 1.2rem; flex-shrink: 0;">📕</span>
+      <div>
+        <strong style="color: var(--paper); font-size: 0.85rem;">Cover</strong>
+        <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">Tour-Titel · Datum · alle 6 Pfadfinder · Hero-Foto</div>
+      </div>
+    </div>
+    <div class="book-spec-item" style="display: flex; gap: 0.7rem; padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--gold); border-radius: 4px;">
+      <span style="font-size: 1.2rem; flex-shrink: 0;">📊</span>
+      <div>
+        <strong style="color: var(--paper); font-size: 0.85rem;">Übersichts-Doppelseite</strong>
+        <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">Gesamtbilanz (km, hm, Fahrzeit) · Karte mit allen 5 Etappen · Top-Chronist & Top-Fotograf</div>
+      </div>
+    </div>
+    <div class="book-spec-item" style="display: flex; gap: 0.7rem; padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--moss); border-radius: 4px;">
+      <span style="font-size: 1.2rem; flex-shrink: 0;">🚴</span>
+      <div>
+        <strong style="color: var(--paper); font-size: 0.85rem;">Pro Etappe (1-2 Doppelseiten)</strong>
+        <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">Etappen-Karte mit Real-Track · Plan vs. Ist · Hotel-Info · Logbuch-Einträge · ausgewählte Highlight-Fotos</div>
+      </div>
+    </div>
+    <div class="book-spec-item" style="display: flex; gap: 0.7rem; padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid #8a8068; border-radius: 4px;">
+      <span style="font-size: 1.2rem; flex-shrink: 0;">🎒</span>
+      <div>
+        <strong style="color: var(--paper); font-size: 0.85rem;">Anhang</strong>
+        <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">Anreise/Rückreise · Packlisten-Bilanz · dein Schlusswort</div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.12em; color: var(--paper); margin-bottom: 0.8rem; font-size: 1rem;">📚 Mehrere Versionen möglich</h3>
+  <p style="color: var(--paper-dim); font-size: 0.8rem; line-height: 1.6; margin-bottom: 1rem;">
+    Du kannst beliebig viele eigene Versionen erstellen — z.B. eine ausführliche für die Truppe, eine kuratierte für Familie/Freunde, eine kompakte als Mini-Buch.
+  </p>
+  <div style="display: grid; gap: 0.6rem; margin-bottom: 1rem;">
+    <div style="padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--rust); border-radius: 4px;">
+      <strong style="color: var(--paper); font-size: 0.85rem;">📖 Truppen-Edition</strong>
+      <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">Alle Einträge, viele Fotos, dunkles Tour-Design</div>
+    </div>
+    <div style="padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--gold); border-radius: 4px;">
+      <strong style="color: var(--paper); font-size: 0.85rem;">👨‍👩‍👧 Familien-Edition</strong>
+      <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">Kuratierte Auswahl, helles Druckdesign, Fokus auf eigene Fotos</div>
+    </div>
+    <div style="padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--moss); border-radius: 4px;">
+      <strong style="color: var(--paper); font-size: 0.85rem;">⚡ Kompakt</strong>
+      <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">Nur die Highlights als Mini-Buch (~10 Seiten)</div>
+    </div>
+  </div>
+  <p style="color: var(--paper-dim); font-size: 0.78rem; line-height: 1.6; margin-bottom: 1.5rem; font-style: italic;">
+    Plus automatische Snapshots am Ende jedes Tages — falls jemand was löscht oder du den "alten Stand" sehen willst.
+  </p>
+
+  <h3 style="font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.12em; color: var(--paper); margin-bottom: 0.8rem; font-size: 1rem;">💾 Wo wird gespeichert</h3>
+  <div style="display: grid; gap: 0.6rem; margin-bottom: 1.5rem;">
+    <div style="padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid #8a8068; border-radius: 4px;">
+      <strong style="color: var(--paper); font-size: 0.85rem;">📱 Lokal (Cache)</strong>
+      <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">Sofortiger Zugriff, funktioniert offline (z.B. bei schlechtem Empfang im Sauerland)</div>
+    </div>
+    <div style="padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--rust); border-radius: 4px;">
+      <strong style="color: var(--paper); font-size: 0.85rem;">☁️ Supabase (Master)</strong>
+      <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">Geräte-übergreifend — PC und Handy synchron, Backup in der Cloud</div>
+    </div>
+  </div>
+
+  <h3 style="font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.12em; color: var(--paper); margin-bottom: 0.8rem; font-size: 1rem;">✨ Was personalisiert ist</h3>
+  <div style="display: grid; gap: 0.6rem; margin-bottom: 1.5rem;">
+    <div style="padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--rust); border-radius: 4px;">
+      <strong style="color: var(--paper); font-size: 0.85rem;">📕 Cover mit deinem Namen</strong>
+      <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">"Pfadfinder auf Tour 2026 — Dein Tour-Buch"</div>
+    </div>
+    <div style="padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--gold); border-radius: 4px;">
+      <strong style="color: var(--paper); font-size: 0.85rem;">✍️ Eigene Widmung</strong>
+      <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">Freier Textblock am Anfang — z.B. eine Widmung für deine Liebsten</div>
+    </div>
+    <div style="padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--moss); border-radius: 4px;">
+      <strong style="color: var(--paper); font-size: 0.85rem;">★ Eigene Fotos markiert</strong>
+      <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">Bei der Auswahl sind deine Fotos klar erkennbar — Auto-Modus bevorzugt sie</div>
+    </div>
+    <div style="padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--gold); border-radius: 4px;">
+      <strong style="color: var(--paper); font-size: 0.85rem;">📝 Eigene Einträge hervorgehoben</strong>
+      <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">Was du selbst geschrieben hast, hebt sich vom Rest ab — wie dein eigenes Tagebuch</div>
+    </div>
+    <div style="padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid #8a8068; border-radius: 4px;">
+      <strong style="color: var(--paper); font-size: 0.85rem;">🔀 Eigene Reihenfolge (optional)</strong>
+      <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">Default chronologisch — du kannst aber Lieblingsetappen nach vorne ziehen</div>
+    </div>
+    <div style="padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--rust); border-radius: 4px;">
+      <strong style="color: var(--paper); font-size: 0.85rem;">📊 Persönliche Bilanz</strong>
+      <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">"Deine 3 Posts · 47 Fotos · 240 km" zusätzlich zur Gesamtbilanz</div>
+    </div>
+  </div>
+
+  <h3 style="font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.12em; color: var(--paper); margin-bottom: 0.8rem; font-size: 1rem;">📸 Foto-Auswahl</h3>
+  <div style="display: grid; gap: 0.6rem; margin-bottom: 1.5rem;">
+    <div style="padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--moss); border-radius: 4px;">
+      <strong style="color: var(--paper); font-size: 0.85rem;">⚡ Auto-Modus</strong>
+      <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">Top 6-8 Fotos pro Etappe automatisch (nach Reaktionen sortiert)</div>
+    </div>
+    <div style="padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--gold); border-radius: 4px;">
+      <strong style="color: var(--paper); font-size: 0.85rem;">✋ Manuell</strong>
+      <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">Du klickst pro Etappe deine Highlight-Fotos selbst aus</div>
+    </div>
+  </div>
+
+  <h3 style="font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.12em; color: var(--paper); margin-bottom: 0.8rem; font-size: 1rem;">⚙️ Zwei Versionen</h3>
+  <div style="display: grid; gap: 0.6rem; margin-bottom: 1.2rem;">
+    <div style="padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--rust); border-radius: 4px;">
+      <strong style="color: var(--paper); font-size: 0.85rem;">📱 Digital-Version</strong>
+      <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">Volle Farbe, dunkle Hero-Hintergründe, Tour-Atmosphäre · zum Lesen am Bildschirm</div>
+    </div>
+    <div style="padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid #8a8068; border-radius: 4px;">
+      <strong style="color: var(--paper); font-size: 0.85rem;">🖨️ Druck-Version</strong>
+      <div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.2rem;">Helle Hintergründe, schwarzer Text, druckerfreundlich · für ein echtes Buch zum Anfassen</div>
+    </div>
+  </div>
+  <p style="color: var(--paper-dim); font-size: 0.75rem; line-height: 1.5; font-style: italic;">
+    A4 Hochformat · Hausschriften: Bebas Neue, Fraunces, Caveat
+  </p>
+
+  <div style="display: grid; gap: 0.6rem; margin-top: 2rem;">
+    <button id="generate-book-btn" disabled style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.04); border: 1px dashed var(--line-strong); color: var(--paper-dark); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; border-radius: 6px; cursor: not-allowed;">
+      📖 Mein Tour-Buch zusammenstellen
+    </button>
+    <button id="snapshot-book-btn" disabled style="width: 100%; padding: 0.85rem; background: rgba(255,255,255,0.02); border: 1px dashed rgba(212, 165, 72, 0.3); color: var(--paper-dark); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; border-radius: 6px; cursor: not-allowed;">
+      📸 Snapshot vom aktuellen Stand erstellen
+    </button>
+    <p style="color: var(--paper-dark); font-size: 0.7rem; text-align: center; font-style: italic; margin-top: 0.4rem;">
+      Funktion wird vor Tour-Start aktiviert
+    </p>
+  </div>
+</section>
+
 <footer>
   <svg class="lily-big"><use href="#lily"/></svg>
   <div class="legacy">Allzeit b(e)reit</div>
@@ -1011,7 +1167,7 @@ const ETAPPEN = [
   { num: 0, date: 'Mi 29.04.', dateISO: '2026-04-29', from: 'Emmerich', to: 'Winterberg',
     hotel: '', hotelAddr: '', hotelTel: '', hotelLat: 51.1988, hotelLon: 8.5325,
     transfer: true, transferType: 'Anreise mit 3 Autos', transferDistance: '~250 km',
-    transferNote: '🚗 Auto 1 — Doris fährt dankenswerterweise, Lucia als Co-Pilotin (ist leider "knie-mäßig" etwas gehandicapt). An Bord: Charly, Christoph, Sammy.\n🚗 Auto 2 — Gaby + Elke holen Willi und Stefan.\n🚗 Auto 3 — Theo holt Friedhelm und Burkhard. Gepäck-Logistik wie auf der Hinfahrt.\n\nHinweis: Falls Lucia bis Sonntag wieder fit ist, fährt sie selbst zurück.' },
+    transferNote: '🚗 Auto 1 — Doris fährt dankenswerterweise, Lucia als Co-Pilotin (ist leider "knie-mäßig" etwas gehandicapt). An Bord: Charly, Christoph, Sammy.\n🚗 Auto 2 — Gaby + Elke holen Willi und Stefan.\n🚗 Auto 3 — Theo holt Friedhelm und Burkhard. Gepäck-Logistik wird am Vorabend abgestimmt.\n\nHinweis: Falls Lucia bis Sonntag wieder fit ist, fährt sie selbst zurück.' },
   { num: 1, date: 'Mi 29.04.', dateISO: '2026-04-29', from: 'Winterberg', to: 'Meschede',
     hotel: 'Landhotel Hütter', hotelAddr: 'Freienohler Str. 31, 59872 Meschede',
     hotelTel: '02903 9600', hotelLat: 51.3572, hotelLon: 8.1688 },
@@ -1043,6 +1199,144 @@ let comments = {};
 let etappeStats = {};  // { etappeNum: { actualKm, actualHm, durationMin, weather, weatherIcon, notes } }
 let mapInstance = null;
 let modalState = null;
+
+
+// === TOUR-BUCH PDF SPEC ===
+// 
+// VERFÜGBARKEIT: Schon WÄHREND der Tour, nicht erst danach!
+// User kann jederzeit Versionen erstellen, speichern, exportieren.
+// 
+// === KONZEPT: PERSÖNLICHES TOUR-BUCH MIT MEHREREN VERSIONEN ===
+// Jeder Pfadfinder bekommt sein eigenes Buch - voll personalisiert.
+// Login-Name wird als Basis genommen (currentUser.name).
+// Mehrere parallele Versionen pro User möglich (z.B. Truppen-Edition, Familien-Edition).
+// 
+// === VERSIONEN ===
+// Version-Objekt:
+// {
+//   id: uuid (z.B. v1683456789-Charly-truppen),
+//   user: 'Charly',
+//   name: 'Truppen-Edition',
+//   description: 'Mit allen Posts und vielen Fotos',
+//   created_at: timestamp,
+//   updated_at: timestamp,
+//   is_snapshot: bool (true = automatisch erstellter Tages-Snapshot),
+//   snapshot_day: int|null (Etappen-Nr beim Snapshot),
+//   settings: {
+//     dedication: string,           // Widmung
+//     reflection: string,           // Schlusswort
+//     photoSelection: { etappe_num: [photo_ids] },
+//     etappeOrder: [1,2,3,4,5],     // chronologisch oder custom
+//     highlightOwnEntries: bool,
+//     includeAllPosts: bool,        // false = nur eigene
+//     format: 'digital' | 'print' | 'both',
+//     templateStyle: 'truppen' | 'familie' | 'kompakt'
+//   },
+//   generated_pdfs: [{format, url, size, generated_at}]  // History der Exporte
+// }
+// 
+// === SPEICHERUNG (LOKAL + SUPABASE) ===
+// LOKAL (localStorage, Cache):
+//   - Key: 'bookVersions_<USER>' → Array von Versions
+//   - Sofortiger Zugriff, offline-fähig
+//   - Wichtig im Sauerland mit schlechtem Empfang!
+// SUPABASE (Master):
+//   - Tabelle 'book_versions': id, user_name, name, settings JSONB, 
+//     created_at, updated_at, is_snapshot, snapshot_day
+//   - Sync bei Online-Status, Queue lokal wenn offline
+//   - Geräte-übergreifend (PC + Handy)
+// 
+// === AUTO-SNAPSHOTS ===
+// Optional: jeden Abend automatisch ein Snapshot der aktuellen "Aktiven Version"
+//   - Trigger: bei Etappen-Statuswechsel (z.B. abends gegen 21 Uhr nach Etappe X)
+//   - Name: "Auto-Snapshot Tag 2 (Meschede→Menden)"
+//   - is_snapshot: true
+//   - Zweck: zurück zu früheren Tour-Ständen, falls jemand was löscht
+//   - User kann Auto-Snapshots an/aus stellen (Default: an)
+//   - Limit: max 10 Snapshots, dann wird ältester gelöscht
+// 
+// === MANUELLE VERSIONEN ===
+// User klickt "+ Neue Version":
+//   - Name eingeben (z.B. "Kompakt für Oma")
+//   - Beschreibung optional
+//   - Template auswählen: Truppen / Familie / Kompakt
+//   - Wird zur "Aktiven Version" für Bearbeitung
+// "Duplizieren": kopiert bestehende Version mit allen Settings
+// 
+// === UI IM BUCH-TAB ===
+// 1. "Aktive Version" oben groß: Name, Edit-Button, Generieren-Button
+// 2. "+ Neue Version" Button
+// 3. Versions-Liste:
+//    - Pro Version: Name, Datum, Größe (Anzahl Fotos/Posts), Snapshot-Badge
+//    - Aktionen: 📂 Aktivieren, ✏️ Bearbeiten, 🔄 Duplizieren, 📥 Generieren, 🗑 Löschen
+// 4. "Auto-Snapshots" als ausklappbarer Bereich (zusammen-gefaltet, weil viele)
+// 5. Beim Generieren: Preview zeigen, dann PDF erstellen
+// 
+// === COVER, AUFBAU, INHALTE ===
+// 1. Cover: "Pfadfinder auf Tour 2026 - [NAME]s Tour-Buch"
+//    + ggf. Versions-Untertitel ("Truppen-Edition" / "Stand: 02.05.2026")
+//    + Tour-Logo, Hero-Foto
+//    + alle 6 Mitfahrer (Name des Lesers hervorgehoben)
+//    + Datumsblock "29.04.-03.05.2026" (oder "Stand bis Tag X" bei Snapshot)
+// 
+// 2. Persönliche Widmung: Freier Textblock am Anfang
+// 
+// 3. Übersichts-Doppelseite:
+//    - Linke Seite: Gesamtbilanz + persönliche Bilanz
+//    - Rechte Seite: Karte mit Etappen + Hotels (Real-Tracks)
+// 
+// 4. Pro Etappe (1-2 Doppelseiten):
+//    - Header, Etappen-Karte mit Real-Track
+//    - Plan vs. Ist (km, hm, Tempo, Fahrzeit, Wetter, Notizen)
+//    - Hotel-Info
+//    - Logbuch-Einträge:
+//      * Eigene HERVORGEHOBEN (goldener Border-Left)
+//      * includeAllPosts=false → nur eigene Einträge
+//    - Highlight-Fotos: User-Auswahl
+// 
+// 5. Persönliche Reihenfolge: User kann Etappen umordnen
+// 
+// 6. Anhang: Anreise/Rückreise, Packlisten-Bilanz, Schlusswort
+// 
+// === FOTO-AUSWAHL ===
+// - Modal/Wizard mit allen Fotos pro Etappe
+// - Eigene Fotos (post.author === user) mit ★ markiert
+// - Zwei Modi:
+//   a) AUTO: top 6-8 pro Etappe (eigene Bonus-Gewichtung)
+//   b) MANUAL: User klickt Auswahl selbst
+// 
+// === FORMATE ===
+// - DIGITAL: A4 Hochformat, dunkle Atmosphäre, volle Farbe
+// - DRUCK: A4 Hochformat, hell, schwarzer Text, druckerfreundlich
+// - Beide aus gleichen Settings generierbar
+// 
+// === TEMPLATES ===
+// - 'truppen': alle Posts, viele Fotos, dunkles Design (Default)
+// - 'familie': kuratierte Auswahl, hell, Fokus auf eigene Fotos
+// - 'kompakt': nur Highlights, Mini-Format (~10 Seiten)
+// 
+// === TECHNIK ===
+// - jsPDF + html2canvas (HTML-Templates → PDF)
+// - Karten via leaflet-image (Leaflet Canvas-Snapshot)
+// - Hochformat A4 (210x297mm)
+// - Layout-Vorschau im Browser bevor PDF erstellt wird
+// - PDF-Generierung als Web Worker, damit UI nicht blockiert
+// 
+// === SUPABASE-TABELLE 'book_versions' ===
+// CREATE TABLE book_versions (
+//   id text primary key,
+//   user_name text not null,
+//   name text not null,
+//   description text,
+//   settings jsonb,
+//   is_snapshot boolean default false,
+//   snapshot_day int,
+//   created_at timestamptz default now(),
+//   updated_at timestamptz default now()
+// );
+// + RLS Policies wie bei posts (anyone read/write)
+// + Realtime-Subscription für Sync
+// ==============================================================
 
 function toast(msg, isError) {
   const t = document.getElementById('toast');
@@ -1122,12 +1416,20 @@ async function loadData() {
     if (statsErr) throw statsErr;
     etappeStats = {};
     (statsData || []).forEach(s => {
-      etappeStats[s.etappe_num] = {
+      const entry = {
         actualKm: s.actual_km, actualHm: s.actual_hm,
         durationMin: s.duration_min, weather: s.weather,
         weatherIcon: s.weather_icon, notes: s.notes,
         stravaId: s.strava_id
       };
+      // GPX-Track-Daten zurück-mappen falls vorhanden
+      if (s.gpx_data && typeof s.gpx_data === 'object') {
+        entry.gpxCoords = s.gpx_data.coords || null;
+        entry.gpxAvgSpeed = s.gpx_data.avgSpeed || null;
+        entry.gpxStartTime = s.gpx_data.startTime || null;
+        entry.gpxEndTime = s.gpx_data.endTime || null;
+      }
+      etappeStats[s.etappe_num] = entry;
     });
   } catch (e) {
     console.error('loadData error:', e);
@@ -1191,6 +1493,16 @@ async function saveEtappeStats() {
 
 async function saveEtappeStatToDb(etappeNum, stats) {
   try {
+    // GPX-Track-Daten zusammenstellen (falls vorhanden)
+    let gpxData = null;
+    if (stats.gpxCoords && stats.gpxCoords.length) {
+      gpxData = {
+        coords: stats.gpxCoords,
+        avgSpeed: stats.gpxAvgSpeed || null,
+        startTime: stats.gpxStartTime || null,
+        endTime: stats.gpxEndTime || null
+      };
+    }
     const { error } = await sb.from('etappe_stats').upsert({
       etappe_num: etappeNum,
       actual_km: stats.actualKm,
@@ -1199,7 +1511,8 @@ async function saveEtappeStatToDb(etappeNum, stats) {
       weather: stats.weather,
       weather_icon: stats.weatherIcon,
       notes: stats.notes,
-      strava_id: stats.stravaId
+      strava_id: stats.stravaId,
+      gpx_data: gpxData
     });
     if (error) throw error;
   } catch (e) {
@@ -1591,6 +1904,7 @@ function renderMap() {
 
     // Real-Track: solide + dick in Status-Farbe
     if (realCoords) {
+      realCoords.forEach(c => allBounds.push(c));
       const realLine = L.polyline(realCoords, {
         color: colors[status], weight: status === 'current' ? 5.5 : 4,
         opacity: 0.95, smoothFactor: 1.2
