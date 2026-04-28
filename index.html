@@ -783,9 +783,9 @@ body.hero-collapsed .hero-compact { display: flex; }
   <button data-tab="etappen"><span class="tab-icon">📍</span><span class="tab-label">Etap.</span></button>
   <button data-tab="stats"><span class="tab-icon">📊</span><span class="tab-label">Stats</span></button>
   <button data-tab="tacho"><span class="tab-icon">⚡</span><span class="tab-label">Tacho</span></button>
-  <button data-tab="gallery"><span class="tab-icon">🖼</span><span class="tab-label">Galerie</span></button>
-  <button data-tab="photomap"><span class="tab-icon">📸</span><span class="tab-label">Foto</span></button>
+  <button data-tab="fotos"><span class="tab-icon">📷</span><span class="tab-label">Fotos</span></button>
   <button data-tab="packing"><span class="tab-icon">🎒</span><span class="tab-label">Pack</span></button>
+  <button data-tab="kasse"><span class="tab-icon">💰</span><span class="tab-label">Kasse</span></button>
   <button data-tab="book"><span class="tab-icon">📖</span><span class="tab-label">Buch</span></button>
 </nav>
 
@@ -901,23 +901,29 @@ body.hero-collapsed .hero-compact { display: flex; }
   </div>
 </section>
 
-<section id="tab-gallery">
-  <h2 class="section-title">Galerie</h2>
-  <span class="section-subtitle">Alle Schnappschüsse</span>
-  <div class="gallery" id="gallery-grid"></div>
-  <div class="empty-state" id="gallery-empty">Noch keine Fotos.<br>Die kommen, sobald das erste Bier auf dem Tisch steht.</div>
-</section>
+<section id="tab-fotos">
+  <h2 class="section-title">Fotos</h2>
+  <span class="section-subtitle">Alle Schnappschüsse — als Galerie oder auf der Karte</span>
 
-<section id="tab-photomap">
-  <h2 class="section-title">Foto-Karte</h2>
-  <span class="section-subtitle">Wo welches Foto entstand</span>
-  <div id="photomap" style="height:420px;border-radius:4px;border:1px solid var(--line-strong);background:#1f1916;margin-bottom:0.75rem"></div>
-  <div class="map-legend" style="align-items: center;">
-    <button class="map-style-btn" onclick="toggleMapStyle()" style="background: transparent; border: 1px solid var(--line-strong); color: var(--paper-dim); padding: 0.3rem 0.65rem; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 12px; cursor: pointer; margin-right: 0.5rem;">🌙 Dunkel</button>
-    <div class="legend-item"><div class="legend-dot" style="background:#c75c2e"></div>Foto-Aufnahmeort</div>
-    <div class="legend-item"><div class="legend-line" style="background:#6b7e3d"></div>Strecke</div>
+  <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; padding: 0.3rem; background: rgba(255,255,255,0.03); border: 1px solid var(--line-strong); border-radius: 6px;">
+    <button class="fotos-view-btn active" data-view="grid" onclick="switchFotosView('grid')" style="flex: 1; padding: 0.6rem 0.8rem; background: var(--rust); border: none; color: white; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 4px; cursor: pointer; transition: all 0.15s;">🖼 Galerie</button>
+    <button class="fotos-view-btn" data-view="map" onclick="switchFotosView('map')" style="flex: 1; padding: 0.6rem 0.8rem; background: transparent; border: none; color: var(--paper-dim); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 4px; cursor: pointer; transition: all 0.15s;">📍 Karte</button>
   </div>
-  <div class="empty-state" id="photomap-empty">Noch keine Fotos mit GPS-Daten.<br>Beim Hochladen werden GPS-Daten automatisch ausgelesen, falls vorhanden.</div>
+
+  <div id="fotos-view-grid">
+    <div class="gallery" id="gallery-grid"></div>
+    <div class="empty-state" id="gallery-empty">Noch keine Fotos.<br>Die kommen, sobald das erste Bier auf dem Tisch steht.</div>
+  </div>
+
+  <div id="fotos-view-map" style="display: none;">
+    <div id="photomap" style="height:420px;border-radius:4px;border:1px solid var(--line-strong);background:#1f1916;margin-bottom:0.75rem"></div>
+    <div class="map-legend" style="align-items: center;">
+      <button class="map-style-btn" onclick="toggleMapStyle()" style="background: transparent; border: 1px solid var(--line-strong); color: var(--paper-dim); padding: 0.3rem 0.65rem; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 12px; cursor: pointer; margin-right: 0.5rem;">🌙 Dunkel</button>
+      <div class="legend-item"><div class="legend-dot" style="background:#c75c2e"></div>Foto-Aufnahmeort</div>
+      <div class="legend-item"><div class="legend-line" style="background:#6b7e3d"></div>Strecke</div>
+    </div>
+    <div class="empty-state" id="photomap-empty">Noch keine Fotos mit GPS-Daten.<br>Beim Hochladen werden GPS-Daten automatisch ausgelesen, falls vorhanden.</div>
+  </div>
 </section>
 
 
@@ -953,6 +959,96 @@ body.hero-collapsed .hero-compact { display: flex; }
     </div>
     <div style="font-style: italic; font-size: 0.75rem; color: var(--paper-dark); margin-top: 0.5rem;">
       Wird der gemeinsamen Liste hinzugefügt, alle sehen es.
+    </div>
+  </div>
+</section>
+
+<section id="tab-kasse">
+  <h2 class="section-title">Reisekasse</h2>
+  <span class="section-subtitle">Auslagen tracken · Abrechnung am Ende</span>
+
+  <!-- Eingabe-Bereich (nur Pfadfinder) -->
+  <div id="kasse-locked" style="display: none; padding: 1.4rem; background: rgba(255,255,255,0.03); border: 1px solid var(--line-strong); border-radius: 8px; text-align: center; color: var(--paper-dim); font-size: 0.85rem; line-height: 1.6;">
+    🔒 Auslagen können nur von eingeloggten Pfadfindern eingetragen werden.
+  </div>
+
+  <div id="kasse-input">
+    <h3 style="font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.12em; color: var(--paper); margin-bottom: 0.8rem; font-size: 1rem;">💸 Neue Auslage erfassen</h3>
+
+    <form id="expense-form" onsubmit="submitExpense(event)" style="display: grid; gap: 0.8rem; margin-bottom: 2rem;">
+      <div>
+        <label style="display:block; color: var(--paper-dim); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; font-family: 'JetBrains Mono', monospace;">Betrag (€) *</label>
+        <input type="number" id="exp-amount" step="0.01" min="0" required placeholder="0.00" style="width:100%; padding:0.7rem 0.9rem; background:rgba(255,255,255,0.04); border:1px solid var(--line-strong); border-radius:4px; color:var(--paper); font-family:'JetBrains Mono', monospace; font-size:1rem;">
+      </div>
+
+      <div>
+        <label style="display:block; color: var(--paper-dim); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; font-family: 'JetBrains Mono', monospace;">Wofür? *</label>
+        <input type="text" id="exp-description" required placeholder="z.B. Pizza in Wetter, Hotel-Aufpreis, Tanken..." style="width:100%; padding:0.7rem 0.9rem; background:rgba(255,255,255,0.04); border:1px solid var(--line-strong); border-radius:4px; color:var(--paper); font-family:'Fraunces', serif; font-size:0.95rem;">
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+        <div>
+          <label style="display:block; color: var(--paper-dim); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; font-family: 'JetBrains Mono', monospace;">Kategorie</label>
+          <select id="exp-category" style="width:100%; padding:0.7rem 0.9rem; background:rgba(255,255,255,0.04); border:1px solid var(--line-strong); border-radius:4px; color:var(--paper); font-family:'JetBrains Mono', monospace; font-size:0.85rem;">
+            <option value="">— wählen —</option>
+            <option value="🍺 Essen/Trinken">🍺 Essen/Trinken</option>
+            <option value="🏨 Hotel">🏨 Hotel</option>
+            <option value="⛽ Tanken">⛽ Tanken</option>
+            <option value="🚆 Bahn/Transport">🚆 Bahn/Transport</option>
+            <option value="🛒 Einkauf">🛒 Einkauf</option>
+            <option value="🔧 Reparatur">🔧 Reparatur</option>
+            <option value="🎫 Eintritt/Tickets">🎫 Eintritt/Tickets</option>
+            <option value="🎁 Sonstiges">🎁 Sonstiges</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block; color: var(--paper-dim); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; font-family: 'JetBrains Mono', monospace;">Datum</label>
+          <input type="date" id="exp-date" style="width:100%; padding:0.7rem 0.9rem; background:rgba(255,255,255,0.04); border:1px solid var(--line-strong); border-radius:4px; color:var(--paper); font-family:'JetBrains Mono', monospace; font-size:0.85rem;">
+        </div>
+      </div>
+
+      <div>
+        <label style="display:block; color: var(--paper-dim); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; font-family: 'JetBrains Mono', monospace;">Für wen? <span style="color: var(--paper-dark); text-transform: none; letter-spacing: 0.05em;">(default: alle)</span></label>
+        <div id="exp-paid-for" style="display: flex; flex-wrap: wrap; gap: 0.4rem;"></div>
+        <div style="margin-top: 0.5rem;">
+          <button type="button" onclick="toggleAllPaidFor(true)" style="background: transparent; border: 1px solid var(--line-strong); color: var(--paper-dim); padding: 0.3rem 0.7rem; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 12px; cursor: pointer; margin-right: 0.4rem;">Alle</button>
+          <button type="button" onclick="toggleAllPaidFor(false)" style="background: transparent; border: 1px solid var(--line-strong); color: var(--paper-dim); padding: 0.3rem 0.7rem; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 12px; cursor: pointer;">Keine</button>
+        </div>
+      </div>
+
+      <div>
+        <label style="display:block; color: var(--paper-dim); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; font-family: 'JetBrains Mono', monospace;">📷 Quittung (optional)</label>
+        <input type="file" id="exp-receipt" accept="image/*" capture="environment" style="width:100%; padding:0.5rem 0.6rem; background:rgba(255,255,255,0.02); border:1px dashed var(--line-strong); border-radius:4px; color:var(--paper-dim); font-family:'JetBrains Mono', monospace; font-size:0.75rem;">
+        <div id="exp-receipt-preview" style="margin-top: 0.5rem;"></div>
+      </div>
+
+      <div>
+        <label style="display:block; color: var(--paper-dim); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; font-family: 'JetBrains Mono', monospace;">Notiz (optional)</label>
+        <input type="text" id="exp-notes" placeholder="Zusatz-Info..." style="width:100%; padding:0.7rem 0.9rem; background:rgba(255,255,255,0.04); border:1px solid var(--line-strong); border-radius:4px; color:var(--paper); font-family:'Fraunces', serif; font-size:0.9rem;">
+      </div>
+
+      <button type="submit" id="exp-submit-btn" style="padding: 1rem; background: linear-gradient(135deg, var(--rust), #a84a26); border: none; color: white; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; border-radius: 6px; cursor: pointer; font-weight: 600; margin-top: 0.5rem;">
+        💸 Auslage speichern
+      </button>
+    </form>
+  </div>
+
+  <!-- Übersicht (passwort-geschützt) -->
+  <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--line-strong);">
+    <h3 style="font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.12em; color: var(--paper); margin-bottom: 0.8rem; font-size: 1rem;">📊 Abrechnungs-Übersicht</h3>
+
+    <div id="kasse-locked-overview" style="padding: 1.2rem; background: rgba(255,255,255,0.02); border: 1px solid var(--line-strong); border-radius: 6px;">
+      <p style="color: var(--paper-dim); font-size: 0.85rem; line-height: 1.6; margin-bottom: 1rem;">
+        🔒 Die Übersicht ist passwortgeschützt. Frage den Kassenwart nach dem Code.
+      </p>
+      <form onsubmit="checkKassePassword(event)" style="display: flex; gap: 0.5rem;">
+        <input type="password" id="kasse-pwd" placeholder="Passwort..." style="flex:1; padding:0.6rem 0.8rem; background:rgba(255,255,255,0.04); border:1px solid var(--line-strong); border-radius:4px; color:var(--paper); font-family:'JetBrains Mono', monospace; font-size:0.85rem;">
+        <button type="submit" style="padding: 0.6rem 1.2rem; background: var(--rust); border: none; color: white; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 4px; cursor: pointer;">Öffnen</button>
+      </form>
+    </div>
+
+    <div id="kasse-overview" style="display: none;">
+      <!-- Wird per JS gefüllt -->
     </div>
   </div>
 </section>
@@ -1101,15 +1197,16 @@ body.hero-collapsed .hero-compact { display: flex; }
 
   <div style="display: grid; gap: 0.6rem; margin-top: 2rem;">
     <button id="generate-book-btn" disabled style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.04); border: 1px dashed var(--line-strong); color: var(--paper-dark); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; border-radius: 6px; cursor: not-allowed;">
-      📖 Mein Tour-Buch zusammenstellen
+      📖 Mein Tour-Buch zusammenstellen (verfügbar nach Tour)
     </button>
-    <button id="snapshot-book-btn" disabled style="width: 100%; padding: 0.85rem; background: rgba(255,255,255,0.02); border: 1px dashed rgba(212, 165, 72, 0.3); color: var(--paper-dark); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; border-radius: 6px; cursor: not-allowed;">
+    <button id="snapshot-book-btn" onclick="createSnapshot()" style="width: 100%; padding: 0.95rem; background: linear-gradient(135deg, var(--rust), #a84a26); border: 1px solid var(--rust); color: white; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; border-radius: 6px; cursor: pointer; font-weight: 600; transition: transform 0.15s;">
       📸 Snapshot vom aktuellen Stand erstellen
     </button>
-    <p style="color: var(--paper-dark); font-size: 0.7rem; text-align: center; font-style: italic; margin-top: 0.4rem;">
-      Funktion wird vor Tour-Start aktiviert
-    </p>
   </div>
+
+  <h3 style="font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.12em; color: var(--paper); margin: 2.5rem 0 0.8rem; font-size: 1rem;">📚 Deine Snapshots</h3>
+  <div id="snapshots-list" style="display: grid; gap: 0.7rem;"></div>
+  <div id="snapshots-empty" class="empty-state" style="display: none;">Noch keine Snapshots erstellt. Klick oben auf 📸, um einen anzulegen.</div>
 </section>
 
 <footer>
@@ -2792,6 +2889,447 @@ function initPacking() {
 const PWD_TOUR = 'pfadfinder2026';
 const PWD_GUEST = 'ruhrtour2026';
 let currentUser = null; // { name, role: 'rider'|'frau'|'guest' }
+let snapshots = []; // Liste der Snapshots aus DB
+
+async function createSnapshot() {
+  if (!currentUser || currentUser.role === 'guest') {
+    toast('Bitte erst einloggen, dann Snapshot erstellen', true);
+    return;
+  }
+  const cur = (typeof getCurrentEtappe === 'function') ? getCurrentEtappe() : null;
+  let defaultName;
+  if (cur && cur >= 1 && cur <= 5) defaultName = 'Stand nach Tag ' + cur;
+  else if (cur === 0) defaultName = 'Stand bei Anreise';
+  else if (cur > 5) defaultName = 'Stand nach der Tour';
+  else defaultName = 'Stand vor der Tour';
+  defaultName += ' (' + new Date().toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit' }) + ')';
+
+  const name = prompt('Name für den Snapshot:', defaultName);
+  if (!name || !name.trim()) return;
+  const description = prompt('Beschreibung (optional):', '') || '';
+
+  // Daten zusammenstellen
+  const snapshotData = {
+    posts: posts || [],
+    comments: comments || {},
+    etappeStats: etappeStats || {},
+    packing: packingState || {},
+    capturedAt: new Date().toISOString(),
+    capturedBy: currentUser.name
+  };
+
+  const id = 'snap-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+  try {
+    const { error } = await sb.from('book_snapshots').insert({
+      id: id,
+      user_name: currentUser.name,
+      name: name.trim(),
+      description: description.trim() || null,
+      data: snapshotData,
+      current_etappe: cur
+    });
+    if (error) throw error;
+    toast('📸 Snapshot gespeichert: ' + name);
+    await loadSnapshots();
+  } catch (e) {
+    console.error('createSnapshot error:', e);
+    toast('Snapshot fehlgeschlagen: ' + e.message, true);
+  }
+}
+
+async function loadSnapshots() {
+  try {
+    const { data, error } = await sb.from('book_snapshots')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    snapshots = data || [];
+    renderSnapshots();
+  } catch (e) {
+    console.error('loadSnapshots error:', e);
+  }
+}
+
+function renderSnapshots() {
+  const listEl = document.getElementById('snapshots-list');
+  const emptyEl = document.getElementById('snapshots-empty');
+  if (!listEl || !emptyEl) return;
+  if (!snapshots || snapshots.length === 0) {
+    listEl.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  listEl.innerHTML = snapshots.map(s => {
+    const d = s.data || {};
+    const postsCount = (d.posts || []).length;
+    const photosCount = (d.posts || []).reduce((sum, p) => sum + ((p.photos || []).length), 0);
+    const date = new Date(s.created_at);
+    const dateStr = date.toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    const isMine = currentUser && s.user_name === currentUser.name;
+    const desc = s.description ? '<div style="color: var(--paper-dim); font-size: 0.75rem; margin-top: 0.3rem; font-style: italic;">' + escapeHtml(s.description) + '</div>' : '';
+    return '<div style="background: rgba(255,255,255,0.02); border: 1px solid var(--line-strong); border-left: 3px solid ' + (isMine ? 'var(--rust)' : '#8a8068') + '; border-radius: 4px; padding: 0.9rem 1rem;">'
+      + '<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.4rem;">'
+      +   '<div>'
+      +     '<strong style="color: var(--paper); font-size: 0.9rem;">📸 ' + escapeHtml(s.name) + '</strong>'
+      +     '<div style="color: var(--paper-dim); font-size: 0.7rem; font-family: \'JetBrains Mono\', monospace; margin-top: 0.2rem; letter-spacing: 0.05em;">'
+      +       (isMine ? 'von DIR' : 'von ' + escapeHtml(s.user_name)) + ' · ' + dateStr
+      +     '</div>'
+      +   '</div>'
+      +   '<button onclick="deleteSnapshot(\'' + s.id + '\', \'' + escapeHtml(s.name).replace(/'/g, "\\'") + '\')" style="background: none; border: 1px solid var(--line-strong); color: var(--paper-dark); padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer; font-size: 0.7rem; flex-shrink: 0;" title="Snapshot löschen">🗑</button>'
+      + '</div>'
+      + '<div style="color: var(--paper-dim); font-size: 0.75rem; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.05em;">'
+      +   '📝 ' + postsCount + ' Einträge · 📷 ' + photosCount + ' Fotos'
+      +   (s.current_etappe !== null && s.current_etappe !== undefined ? ' · 📍 Tag ' + s.current_etappe : '')
+      + '</div>'
+      + desc
+      + '</div>';
+  }).join('');
+}
+
+// === FOTOS VIEW TOGGLE (Galerie / Karte) ===
+function switchFotosView(view) {
+  document.querySelectorAll('.fotos-view-btn').forEach(b => {
+    b.classList.remove('active');
+    b.style.background = 'transparent';
+    b.style.color = 'var(--paper-dim)';
+  });
+  const activeBtn = document.querySelector('.fotos-view-btn[data-view="' + view + '"]');
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+    activeBtn.style.background = 'var(--rust)';
+    activeBtn.style.color = 'white';
+  }
+  document.getElementById('fotos-view-grid').style.display = view === 'grid' ? 'block' : 'none';
+  document.getElementById('fotos-view-map').style.display = view === 'map' ? 'block' : 'none';
+  if (view === 'map') setTimeout(renderPhotomap, 50);
+}
+
+// === KASSE / EXPENSES ===
+let expenses = [];
+let kasseUnlocked = false;
+const KASSE_PASSWORD = 'Finanzen2026';
+
+async function loadExpenses() {
+  // UI vorbereiten - Eingabe nur für Pfadfinder
+  const isRider = currentUser && currentUser.role === 'rider';
+  document.getElementById('kasse-input').style.display = isRider ? 'block' : 'none';
+  document.getElementById('kasse-locked').style.display = isRider ? 'none' : 'block';
+
+  // Default-Datum auf heute setzen
+  const dateInput = document.getElementById('exp-date');
+  if (dateInput && !dateInput.value) {
+    dateInput.value = new Date().toISOString().split('T')[0];
+  }
+
+  // "Für wen" Checkboxes generieren (alle Pfadfinder)
+  const paidForContainer = document.getElementById('exp-paid-for');
+  if (paidForContainer && paidForContainer.children.length === 0) {
+    paidForContainer.innerHTML = RIDERS.map(name =>
+      '<label style="display:flex; align-items:center; gap:0.35rem; padding: 0.4rem 0.7rem; background: rgba(255,255,255,0.04); border:1px solid var(--line-strong); border-radius: 12px; cursor:pointer; font-size: 0.8rem; color: var(--paper);">' +
+      '<input type="checkbox" name="paid-for-rider" value="' + escapeHtml(name) + '" checked style="cursor:pointer;">' +
+      escapeHtml(name) +
+      '</label>'
+    ).join('');
+  }
+
+  // Receipt-Preview-Listener
+  const receiptInput = document.getElementById('exp-receipt');
+  if (receiptInput && !receiptInput._previewBound) {
+    receiptInput._previewBound = true;
+    receiptInput.addEventListener('change', e => {
+      const file = e.target.files && e.target.files[0];
+      const preview = document.getElementById('exp-receipt-preview');
+      if (file && preview) {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          preview.innerHTML = '<div style="position: relative; display:inline-block; margin-top: 0.3rem;"><img src="' + ev.target.result + '" style="max-width: 200px; max-height: 200px; border-radius: 4px; border: 1px solid var(--line-strong);"><span style="position:absolute; top:-8px; right:-8px; background: var(--moss); color: white; border-radius: 50%; width: 24px; height: 24px; display:flex; align-items:center; justify-content:center; font-size: 0.85rem;">✓</span></div>';
+        };
+        reader.readAsDataURL(file);
+      } else if (preview) {
+        preview.innerHTML = '';
+      }
+    });
+  }
+
+  // Daten laden
+  try {
+    const { data, error } = await sb.from('expenses').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    expenses = data || [];
+    if (kasseUnlocked) renderKasseOverview();
+  } catch (e) {
+    console.error('loadExpenses error:', e);
+  }
+}
+
+function toggleAllPaidFor(checked) {
+  document.querySelectorAll('#exp-paid-for input[name="paid-for-rider"]').forEach(cb => cb.checked = checked);
+}
+
+async function submitExpense(e) {
+  e.preventDefault();
+  if (!currentUser || currentUser.role !== 'rider') {
+    toast('Nur Pfadfinder können Auslagen eintragen', true);
+    return;
+  }
+
+  const amount = parseFloat(document.getElementById('exp-amount').value);
+  const description = document.getElementById('exp-description').value.trim();
+  const category = document.getElementById('exp-category').value;
+  const date = document.getElementById('exp-date').value;
+  const notes = document.getElementById('exp-notes').value.trim();
+  const paidFor = Array.from(document.querySelectorAll('#exp-paid-for input[name="paid-for-rider"]:checked')).map(cb => cb.value);
+
+  if (!amount || amount <= 0) { toast('Bitte gültigen Betrag eingeben', true); return; }
+  if (!description) { toast('Bitte Beschreibung eingeben', true); return; }
+  if (paidFor.length === 0) { toast('Bitte mind. eine Person auswählen', true); return; }
+
+  const submitBtn = document.getElementById('exp-submit-btn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = '⏳ Speichere...';
+
+  try {
+    // Receipt hochladen falls vorhanden
+    let receiptUrl = null;
+    const receiptFile = document.getElementById('exp-receipt').files[0];
+    if (receiptFile) {
+      submitBtn.textContent = '📷 Lade Quittung hoch...';
+      const ext = receiptFile.name.split('.').pop().toLowerCase() || 'jpg';
+      const fileName = 'receipt-' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+      const { error: uploadErr } = await sb.storage.from('receipts').upload(fileName, receiptFile, { contentType: receiptFile.type });
+      if (uploadErr) throw uploadErr;
+      const { data: urlData } = sb.storage.from('receipts').getPublicUrl(fileName);
+      receiptUrl = urlData.publicUrl;
+    }
+
+    const id = 'exp-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
+    const { error } = await sb.from('expenses').insert({
+      id: id,
+      amount: amount,
+      description: description,
+      paid_by: currentUser.name,
+      paid_for: paidFor,
+      category: category || null,
+      receipt_url: receiptUrl,
+      expense_date: date || null,
+      notes: notes || null
+    });
+    if (error) throw error;
+
+    // Bestätigung
+    const summary = '💸 ' + amount.toFixed(2) + '€ · ' + description + ' · ' + currentUser.name + ' für ' + paidFor.length + ' Person' + (paidFor.length !== 1 ? 'en' : '') + (receiptUrl ? ' · Quittung ✓' : '');
+    toast(summary);
+
+    // Form reset
+    document.getElementById('expense-form').reset();
+    document.getElementById('exp-receipt-preview').innerHTML = '';
+    if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+    toggleAllPaidFor(true);
+
+    await loadExpenses();
+  } catch (err) {
+    console.error('submitExpense error:', err);
+    toast('Speichern fehlgeschlagen: ' + err.message, true);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = '💸 Auslage speichern';
+  }
+}
+
+function checkKassePassword(e) {
+  e.preventDefault();
+  const pwd = document.getElementById('kasse-pwd').value;
+  if (pwd === KASSE_PASSWORD) {
+    kasseUnlocked = true;
+    try { sessionStorage.setItem('kasseUnlocked', '1'); } catch(err) {}
+    document.getElementById('kasse-locked-overview').style.display = 'none';
+    document.getElementById('kasse-overview').style.display = 'block';
+    renderKasseOverview();
+    toast('🔓 Kasse entsperrt');
+  } else {
+    toast('Falsches Passwort', true);
+    document.getElementById('kasse-pwd').value = '';
+  }
+}
+
+function renderKasseOverview() {
+  const container = document.getElementById('kasse-overview');
+  if (!container) return;
+
+  if (!expenses || expenses.length === 0) {
+    container.innerHTML = '<div class="empty-state">Noch keine Auslagen erfasst.</div>';
+    return;
+  }
+
+  // Berechnungen
+  const totalAll = expenses.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+  // Pro Person: was hat sie bezahlt?
+  const paidByPerson = {};
+  // Pro Person: was schuldet sie aus geteilten Auslagen?
+  const owesByPerson = {};
+  RIDERS.forEach(r => { paidByPerson[r] = 0; owesByPerson[r] = 0; });
+
+  expenses.forEach(e => {
+    const amt = parseFloat(e.amount || 0);
+    if (paidByPerson[e.paid_by] !== undefined) paidByPerson[e.paid_by] += amt;
+    const paidFor = (e.paid_for || []);
+    if (paidFor.length > 0) {
+      const share = amt / paidFor.length;
+      paidFor.forEach(person => {
+        if (owesByPerson[person] !== undefined) owesByPerson[person] += share;
+      });
+    }
+  });
+
+  // Salden berechnen: positiv = bekommt Geld zurück, negativ = schuldet noch
+  const balance = {};
+  RIDERS.forEach(r => { balance[r] = paidByPerson[r] - owesByPerson[r]; });
+
+  // Settlements: wer schuldet wem? (Greedy-Algorithmus)
+  const settlements = calculateSettlements(balance);
+
+  let html = '';
+  html += '<div style="background: linear-gradient(135deg, rgba(199, 92, 46, 0.08), rgba(212, 165, 72, 0.05)); border: 1px solid rgba(212, 165, 72, 0.25); border-radius: 8px; padding: 1.2rem; margin-bottom: 1.5rem;">';
+  html += '<div style="font-family: \'JetBrains Mono\', monospace; font-size: 0.7rem; color: var(--paper-dim); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.4rem;">Gesamtsumme</div>';
+  html += '<div style="font-family: \'Bebas Neue\', sans-serif; font-size: 2rem; color: var(--gold); letter-spacing: 0.05em;">' + totalAll.toFixed(2) + ' €</div>';
+  html += '<div style="font-family: \'JetBrains Mono\', monospace; font-size: 0.75rem; color: var(--paper-dim); margin-top: 0.3rem;">' + expenses.length + ' Eintr' + (expenses.length === 1 ? 'ag' : 'äge') + '</div>';
+  html += '</div>';
+
+  // Salden pro Person
+  html += '<h4 style="font-family: \'Bebas Neue\', sans-serif; letter-spacing: 0.12em; color: var(--paper); margin-bottom: 0.8rem; font-size: 0.95rem;">💼 Salden</h4>';
+  html += '<div style="display: grid; gap: 0.5rem; margin-bottom: 1.5rem;">';
+  RIDERS.forEach(r => {
+    const bal = balance[r];
+    const color = Math.abs(bal) < 0.01 ? '#8a8068' : (bal > 0 ? 'var(--moss)' : '#c75c2e');
+    const sign = bal > 0 ? '+' : '';
+    html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.9rem; background: rgba(255,255,255,0.02); border-left: 3px solid ' + color + '; border-radius: 4px;">';
+    html += '<div><strong style="color: var(--paper); font-size: 0.9rem;">' + escapeHtml(r) + '</strong>';
+    html += '<div style="color: var(--paper-dim); font-size: 0.7rem; font-family: \'JetBrains Mono\', monospace; margin-top: 0.15rem;">bezahlt: ' + paidByPerson[r].toFixed(2) + ' € · Anteil: ' + owesByPerson[r].toFixed(2) + ' €</div></div>';
+    html += '<div style="font-family: \'JetBrains Mono\', monospace; font-size: 1rem; color: ' + color + '; font-weight: 600;">' + sign + bal.toFixed(2) + ' €</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // Settlements
+  if (settlements.length > 0) {
+    html += '<h4 style="font-family: \'Bebas Neue\', sans-serif; letter-spacing: 0.12em; color: var(--paper); margin-bottom: 0.8rem; font-size: 0.95rem;">💰 Wer zahlt wem? <span style="color: var(--paper-dark); font-size: 0.75rem; letter-spacing: 0.05em; text-transform: none;">(' + settlements.length + ' Überweisung' + (settlements.length === 1 ? '' : 'en') + ')</span></h4>';
+    html += '<div style="display: grid; gap: 0.5rem; margin-bottom: 1.5rem;">';
+    settlements.forEach(s => {
+      html += '<div style="display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 0.9rem; background: rgba(107, 126, 61, 0.08); border: 1px solid rgba(107, 126, 61, 0.25); border-radius: 4px;">';
+      html += '<div style="color: var(--paper); font-size: 0.9rem;"><strong>' + escapeHtml(s.from) + '</strong> → <strong style="color: var(--gold);">' + escapeHtml(s.to) + '</strong></div>';
+      html += '<div style="font-family: \'JetBrains Mono\', monospace; color: var(--moss); font-weight: 600;">' + s.amount.toFixed(2) + ' €</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  } else {
+    html += '<div style="padding: 1rem; background: rgba(107, 126, 61, 0.08); border: 1px solid rgba(107, 126, 61, 0.25); border-radius: 4px; color: var(--moss); font-size: 0.9rem; text-align: center; margin-bottom: 1.5rem;">✅ Alles ausgeglichen — keine Überweisungen nötig.</div>';
+  }
+
+  // Liste aller Auslagen
+  html += '<h4 style="font-family: \'Bebas Neue\', sans-serif; letter-spacing: 0.12em; color: var(--paper); margin-bottom: 0.8rem; font-size: 0.95rem;">📜 Alle Auslagen</h4>';
+  html += '<div style="display: grid; gap: 0.5rem;">';
+  expenses.forEach(e => {
+    const amt = parseFloat(e.amount || 0);
+    const dateStr = e.expense_date ? new Date(e.expense_date).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit' }) : '';
+    const cat = e.category || '';
+    const paidFor = e.paid_for || [];
+    const paidForStr = paidFor.length === RIDERS.length ? 'alle' : paidFor.join(', ');
+    const isMine = currentUser && e.paid_by === currentUser.name;
+    const canDelete = isMine || kasseUnlocked;
+    html += '<div style="background: rgba(255,255,255,0.02); border: 1px solid var(--line-strong); border-left: 3px solid ' + (isMine ? 'var(--rust)' : '#8a8068') + '; border-radius: 4px; padding: 0.8rem 0.9rem;">';
+    html += '<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.3rem;">';
+    html += '<div style="flex:1;">';
+    html += '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.2rem;">';
+    html += '<strong style="color: var(--paper); font-size: 0.9rem;">' + escapeHtml(e.description) + '</strong>';
+    if (cat) html += '<span style="font-size: 0.7rem; color: var(--paper-dim); font-family: \'JetBrains Mono\', monospace;">' + escapeHtml(cat) + '</span>';
+    html += '</div>';
+    html += '<div style="color: var(--paper-dim); font-size: 0.7rem; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.05em;">' + escapeHtml(e.paid_by) + ' → ' + escapeHtml(paidForStr) + (dateStr ? ' · ' + dateStr : '') + '</div>';
+    if (e.notes) html += '<div style="color: var(--paper-dim); font-size: 0.78rem; font-style: italic; margin-top: 0.3rem;">' + escapeHtml(e.notes) + '</div>';
+    html += '</div>';
+    html += '<div style="text-align: right; flex-shrink: 0;"><div style="font-family: \'JetBrains Mono\', monospace; color: var(--gold); font-size: 1rem; font-weight: 600;">' + amt.toFixed(2) + ' €</div>';
+    if (canDelete) html += '<button onclick="deleteExpense(\'' + e.id + '\')" style="background:none; border: 1px solid var(--line-strong); color: var(--paper-dark); padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer; font-size: 0.65rem; margin-top: 0.3rem;" title="Löschen">🗑</button>';
+    html += '</div>';
+    html += '</div>';
+    if (e.receipt_url) html += '<a href="' + e.receipt_url + '" target="_blank" rel="noopener" style="display: inline-block; margin-top: 0.5rem;"><img src="' + e.receipt_url + '" alt="Quittung" style="max-width: 120px; max-height: 120px; border-radius: 4px; border: 1px solid var(--line-strong); cursor: zoom-in;"></a>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  container.innerHTML = html;
+}
+
+function calculateSettlements(balance) {
+  // Greedy: größter Schuldner zahlt an größten Gläubiger, bis ausgeglichen
+  const debtors = [];
+  const creditors = [];
+  Object.keys(balance).forEach(name => {
+    const b = balance[name];
+    if (b < -0.01) debtors.push({ name: name, amount: -b });
+    else if (b > 0.01) creditors.push({ name: name, amount: b });
+  });
+  debtors.sort((a, b) => b.amount - a.amount);
+  creditors.sort((a, b) => b.amount - a.amount);
+
+  const settlements = [];
+  let i = 0, j = 0;
+  while (i < debtors.length && j < creditors.length) {
+    const d = debtors[i];
+    const c = creditors[j];
+    const transfer = Math.min(d.amount, c.amount);
+    if (transfer > 0.01) {
+      settlements.push({ from: d.name, to: c.name, amount: transfer });
+    }
+    d.amount -= transfer;
+    c.amount -= transfer;
+    if (d.amount < 0.01) i++;
+    if (c.amount < 0.01) j++;
+  }
+  return settlements;
+}
+
+async function deleteExpense(id) {
+  const exp = expenses.find(e => e.id === id);
+  if (!exp) return;
+  if (!confirm('Auslage "' + exp.description + '" (' + parseFloat(exp.amount).toFixed(2) + '€) wirklich löschen?')) return;
+  try {
+    // Receipt aus Storage löschen falls vorhanden
+    if (exp.receipt_url) {
+      try {
+        const fileName = exp.receipt_url.split('/').pop();
+        if (fileName) await sb.storage.from('receipts').remove([fileName]);
+      } catch (e) { console.warn('Receipt delete warning:', e); }
+    }
+    const { error } = await sb.from('expenses').delete().eq('id', id);
+    if (error) throw error;
+    toast('Auslage gelöscht');
+    await loadExpenses();
+  } catch (e) {
+    console.error('deleteExpense error:', e);
+    toast('Löschen fehlgeschlagen', true);
+  }
+}
+
+// Bei App-Start: Kasse-Unlock aus sessionStorage prüfen
+(function() {
+  try {
+    if (sessionStorage.getItem('kasseUnlocked') === '1') kasseUnlocked = true;
+  } catch (e) {}
+})();
+
+async function deleteSnapshot(id, name) {
+  if (!confirm('Snapshot "' + name + '" wirklich löschen?\n\nDer Snapshot ist dann unwiderruflich weg.')) return;
+  try {
+    const { error } = await sb.from('book_snapshots').delete().eq('id', id);
+    if (error) throw error;
+    toast('Snapshot gelöscht');
+    await loadSnapshots();
+  } catch (e) {
+    console.error('deleteSnapshot error:', e);
+    toast('Löschen fehlgeschlagen', true);
+  }
+}
+
 
 function loadUserFromStorage() {
   try {
@@ -3009,8 +3547,14 @@ function initNav() {
       }
       if (tab === 'map') setTimeout(renderMap, 50);
       if (tab === 'stats') renderStatsPage();
-      if (tab === 'photomap') setTimeout(renderPhotomap, 50);
+      if (tab === 'fotos') {
+        // Reset to grid view by default
+        const currentView = document.querySelector('.fotos-view-btn.active');
+        if (!currentView) switchFotosView('grid');
+      }
       if (tab === 'packing') renderPacking();
+      if (tab === 'kasse') loadExpenses();
+      if (tab === 'book') loadSnapshots();
     });
   });
 }
@@ -3107,7 +3651,7 @@ function initRealtimeSubscriptions() {
       renderStatsPage();
       // Foto-Karte neu rendern falls offen
       if (photomapInstance) { photomapInstance.remove(); photomapInstance = null; }
-      const photomapTab = document.getElementById('tab-photomap');
+      const photomapTab = document.getElementById('tab-fotos');
       if (photomapTab && photomapTab.classList.contains('active')) renderPhotomap();
     })
     .subscribe();
