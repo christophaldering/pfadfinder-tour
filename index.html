@@ -1925,11 +1925,20 @@ function renderStatsPage() {
   // Etappen-Vergleich (nur Fahrrad-Etappen, ohne Anreise/Rückreise)
   const etappeRanking = ETAPPEN.filter(e => !e.transfer).map(e => {
     const stats = etappeStats[e.num];
-    const dist = stats && stats.actualKm ? parseFloat(stats.actualKm) : (e.distance || 0);
-    return { name: 'Etappe ' + e.num + ': ' + e.from + ' → ' + e.to, value: dist + ' km' };
+    const planKm = e.distance || 0;
+    const actualKm = stats && stats.actualKm ? parseFloat(stats.actualKm) : null;
+    let valueHtml;
+    if (actualKm !== null) {
+      // Beide Werte zeigen - Ist groß, Plan klein dahinter
+      valueHtml = `<span class="ranking-value">${actualKm.toFixed(1)} km <span style="color: var(--paper-dark); font-size: 0.7rem; font-weight: normal;">(Plan: ${planKm} km)</span></span>`;
+    } else {
+      // Nur Plan-Wert
+      valueHtml = `<span class="ranking-value" style="color: var(--paper-dim);">${planKm} km <span style="color: var(--paper-dark); font-size: 0.7rem; font-weight: normal;">(Plan)</span></span>`;
+    }
+    return { name: 'Etappe ' + e.num + ': ' + e.from + ' → ' + e.to, valueHtml: valueHtml };
   });
   document.getElementById('rank-etappen').innerHTML = etappeRanking.map((e, i) =>
-    `<li class="ranking-item"><span class="ranking-pos">${i+1}</span><span class="ranking-name">${e.name}</span><span class="ranking-value">${e.value}</span></li>`
+    `<li class="ranking-item"><span class="ranking-pos">${i+1}</span><span class="ranking-name">${e.name}</span>${e.valueHtml}</li>`
   ).join('');
 }
 
