@@ -576,6 +576,9 @@ footer .quote { font-style: italic; margin-top: 1rem; font-size: 0.85rem; color:
 }
 .user-badge button:hover { color: var(--rust); border-color: var(--rust); }
 .guest-mode .post-form, .guest-mode .etappe-actions, .guest-mode #post-submit { display: none !important; }
+/* Kasse nur für eingeloggte Pfadfinder sichtbar */
+body:not(.is-rider) nav button[data-tab="kasse"] { display: none !important; }
+body:not(.is-rider) #tab-kasse { display: none !important; }
 .guest-mode #m-gpx, .guest-mode #m-km, .guest-mode #m-hm, .guest-mode #m-dur,
 .guest-mode #m-weather, .guest-mode #m-weather-icon, .guest-mode #m-notes { pointer-events: none; opacity: 0.6; }
 @media (max-width: 480px) {
@@ -2976,7 +2979,10 @@ function renderSnapshots() {
       +       (isMine ? 'von DIR' : 'von ' + escapeHtml(s.user_name)) + ' · ' + dateStr
       +     '</div>'
       +   '</div>'
-      +   '<button onclick="deleteSnapshot(\'' + s.id + '\', \'' + escapeHtml(s.name).replace(/'/g, "\\'") + '\')" style="background: none; border: 1px solid var(--line-strong); color: var(--paper-dark); padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer; font-size: 0.7rem; flex-shrink: 0;" title="Snapshot löschen">🗑</button>'
+      +   '<div style="display: flex; gap: 0.3rem; flex-shrink: 0;">'
+      +     '<button onclick="downloadSnapshot(\'' + s.id + '\')" style="background: none; border: 1px solid var(--line-strong); color: var(--gold); padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer; font-size: 0.75rem;" title="Snapshot herunterladen">💾</button>'
+      +     '<button onclick="deleteSnapshot(\'' + s.id + '\', \'' + escapeHtml(s.name).replace(/'/g, "\\'") + '\')" style="background: none; border: 1px solid var(--line-strong); color: var(--paper-dark); padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer; font-size: 0.7rem;" title="Snapshot löschen">🗑</button>'
+      +   '</div>'
       + '</div>'
       + '<div style="color: var(--paper-dim); font-size: 0.75rem; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.05em;">'
       +   '📝 ' + postsCount + ' Einträge · 📷 ' + photosCount + ' Fotos'
@@ -3317,6 +3323,42 @@ async function deleteExpense(id) {
   } catch (e) {}
 })();
 
+function downloadSnapshot(id) {
+  const snap = snapshots.find(s => s.id === id);
+  if (!snap) { toast('Snapshot nicht gefunden', true); return; }
+
+  // Hübsch formatiertes JSON für späteres Restore
+  const exportData = {
+    _format: 'pfadfinder-tour-2026-snapshot',
+    _version: 1,
+    snapshot: {
+      id: snap.id,
+      name: snap.name,
+      description: snap.description,
+      user_name: snap.user_name,
+      created_at: snap.created_at,
+      current_etappe: snap.current_etappe,
+      data: snap.data
+    }
+  };
+
+  const json = JSON.stringify(exportData, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+
+  // Dateiname: "Snapshot_NAME_DATUM.json"
+  const safeName = snap.name.replace(/[^a-zA-Z0-9-äöüÄÖÜß_]/g, '_').slice(0, 60);
+  const dateStr = new Date(snap.created_at).toISOString().split('T')[0];
+  a.download = 'Pfadfinder26_' + safeName + '_' + dateStr + '.json';
+  a.href = url;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('💾 Snapshot heruntergeladen');
+}
+
 async function deleteSnapshot(id, name) {
   if (!confirm('Snapshot "' + name + '" wirklich löschen?\n\nDer Snapshot ist dann unwiderruflich weg.')) return;
   try {
@@ -3376,6 +3418,22 @@ function applyGuestRestrictions() {
     document.body.classList.add('guest-mode');
   } else {
     document.body.classList.remove('guest-mode');
+  }
+  // Kasse-Tab nur für eingeloggte Pfadfinder
+  if (currentUser && currentUser.role === 'rider') {
+    document.body.classList.add('is-rider');
+  } else {
+    document.body.classList.remove('is-rider');
+    // Falls aktueller Tab KASSE ist und User wechselt zu Frau/Gast: zurück zu LOG
+    const kasseSection = document.getElementById('tab-kasse');
+    if (kasseSection && kasseSection.classList.contains('active')) {
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+      const feedBtn = document.querySelector('nav button[data-tab="feed"]');
+      const feedSection = document.getElementById('tab-feed');
+      if (feedBtn) feedBtn.classList.add('active');
+      if (feedSection) feedSection.classList.add('active');
+    }
   }
 }
 
