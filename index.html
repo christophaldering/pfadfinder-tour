@@ -1208,7 +1208,7 @@ body.hero-collapsed .hero-compact { display: flex; }
     </button>
   </div>
 
-  <h3 style="font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.12em; color: var(--paper); margin: 2.5rem 0 0.8rem; font-size: 1rem;">📚 Deine Snapshots</h3>
+<h3 style="font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.12em; color: var(--paper); margin: 2.5rem 0 0.8rem; font-size: 1rem;">📚 Deine Snapshots</h3>
   <div id="snapshots-list" style="display: grid; gap: 0.7rem;"></div>
   <div id="snapshots-empty" class="empty-state" style="display: none;">Noch keine Snapshots erstellt. Klick oben auf 📸, um einen anzulegen.</div>
 </section>
@@ -2906,7 +2906,7 @@ const PWD_GUEST = 'ruhrtour2026';
 let currentUser = null; // { name, role: 'rider'|'frau'|'guest' }
 let snapshots = []; // Liste der Snapshots aus DB
 
-async function createSnapshot() {
+function createSnapshot() {
   if (!currentUser || currentUser.role === 'guest') {
     toast('Bitte erst einloggen, dann Snapshot erstellen', true);
     return;
@@ -2919,10 +2919,50 @@ async function createSnapshot() {
   else defaultName = 'Stand vor der Tour';
   defaultName += ' (' + new Date().toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit' }) + ')';
 
-  const name = prompt('Name für den Snapshot:', defaultName);
-  if (!name || !name.trim()) return;
-  const description = prompt('Beschreibung (optional):', '') || '';
+  // Modal-Backdrop + Modal anzeigen
+  const backdrop = document.createElement('div');
+  backdrop.id = 'snapshot-modal-backdrop';
+  backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;';
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:linear-gradient(135deg,#2a1f1a,#3a2a22);border:1px solid var(--gold);border-radius:8px;padding:1.5rem;max-width:420px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.6);';
+  modal.innerHTML = 
+    '<h3 style="font-family:\'Bebas Neue\',sans-serif;letter-spacing:0.1em;color:var(--paper);font-size:1.2rem;margin-bottom:1rem;">📸 Neuen Snapshot erstellen</h3>' +
+    '<label style="display:block;color:var(--paper-dim);font-family:\'JetBrains Mono\',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.3rem;">Name *</label>' +
+    '<input id="snap-name-input" type="text" value="' + defaultName.replace(/"/g, '&quot;') + '" style="width:100%;padding:0.7rem;background:rgba(255,255,255,0.05);border:1px solid var(--line-strong);border-radius:4px;color:var(--paper);font-family:\'Fraunces\',serif;font-size:0.95rem;margin-bottom:1rem;box-sizing:border-box;">' +
+    '<label style="display:block;color:var(--paper-dim);font-family:\'JetBrains Mono\',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.3rem;">Beschreibung (optional)</label>' +
+    '<textarea id="snap-desc-input" rows="2" placeholder="z.B. besondere Ereignisse..." style="width:100%;padding:0.7rem;background:rgba(255,255,255,0.05);border:1px solid var(--line-strong);border-radius:4px;color:var(--paper);font-family:\'Fraunces\',serif;font-size:0.9rem;margin-bottom:1.2rem;resize:vertical;box-sizing:border-box;"></textarea>' +
+    '<div style="display:flex;gap:0.6rem;">' +
+      '<button id="snap-cancel-btn" style="flex:1;padding:0.7rem;background:transparent;border:1px solid var(--line-strong);color:var(--paper-dim);font-family:\'JetBrains Mono\',monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;border-radius:4px;cursor:pointer;">Abbrechen</button>' +
+      '<button id="snap-save-btn" style="flex:1;padding:0.7rem;background:var(--rust);border:none;color:white;font-family:\'JetBrains Mono\',monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;border-radius:4px;cursor:pointer;font-weight:600;">📸 Speichern</button>' +
+    '</div>';
+  
+  backdrop.appendChild(modal);
+  document.body.appendChild(backdrop);
+  
+  // Focus auf Name-Input
+  setTimeout(() => {
+    const inp = document.getElementById('snap-name-input');
+    if (inp) { inp.focus(); inp.select(); }
+  }, 50);
+  
+  const closeModal = () => {
+    if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+  };
+  
+  document.getElementById('snap-cancel-btn').addEventListener('click', closeModal);
+  backdrop.addEventListener('click', e => { if (e.target === backdrop) closeModal(); });
+  
+  document.getElementById('snap-save-btn').addEventListener('click', async () => {
+    const name = document.getElementById('snap-name-input').value.trim();
+    const description = document.getElementById('snap-desc-input').value.trim();
+    if (!name) { toast('Bitte Name eingeben', true); return; }
+    closeModal();
+    await saveSnapshot(name, description, cur);
+  });
+}
 
+async function saveSnapshot(name, description, cur) {
   // Daten zusammenstellen
   const snapshotData = {
     posts: posts || [],
@@ -3092,6 +3132,12 @@ async function submitExpense(e) {
     toast('Nur Pfadfinder können Auslagen eintragen', true);
     return;
   }
+  // Doppel-Submit-Schutz
+  const submitBtnEarly = document.getElementById('exp-submit-btn');
+  if (submitBtnEarly && submitBtnEarly.disabled) {
+    console.log('Submit bereits in Progress - ignoriert');
+    return;
+  }
 
   const amount = parseFloat(document.getElementById('exp-amount').value);
   const description = document.getElementById('exp-description').value.trim();
@@ -3143,7 +3189,8 @@ async function submitExpense(e) {
     // Form reset
     document.getElementById('expense-form').reset();
     document.getElementById('exp-receipt-preview').innerHTML = '';
-    if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+    const dateField = document.getElementById('exp-date');
+    if (dateField) dateField.value = new Date().toISOString().split('T')[0];
     toggleAllPaidFor(true);
 
     await loadExpenses();
@@ -3558,28 +3605,56 @@ async function downloadSnapshotPDF(id) {
   }
   const result = buildSnapshotHTML(id);
   if (!result) { toast('Snapshot nicht gefunden', true); return; }
+
   toast('⏳ PDF wird erstellt — kann etwas dauern...');
 
-  // HTML in unsichtbares iframe rendern, damit Fonts und Layout sauber sind
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.left = '-9999px';
-  iframe.style.top = '0';
-  iframe.style.width = '820px';
-  iframe.style.height = '100vh';
-  iframe.style.border = '0';
-  document.body.appendChild(iframe);
+  // Container im DOM rendern (sichtbar aber off-screen)
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'fixed';
+  wrapper.style.left = '0';
+  wrapper.style.top = '0';
+  wrapper.style.width = '820px';
+  wrapper.style.zIndex = '-1';
+  wrapper.style.opacity = '0';
+  wrapper.style.pointerEvents = 'none';
+  wrapper.style.overflow = 'visible';
+  wrapper.style.background = 'white';
 
-  await new Promise((resolve, reject) => {
-    iframe.onload = () => resolve();
-    iframe.onerror = reject;
-    iframe.srcdoc = result.html;
-  });
+  // Den HTML-Body-Inhalt extrahieren (alles in <body>...</body>)
+  const bodyMatch = result.html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  const styleMatch = result.html.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+  
+  // Style ins Wrapper-Scope einfügen
+  if (styleMatch) {
+    const styleEl = document.createElement('style');
+    styleEl.textContent = styleMatch[1];
+    wrapper.appendChild(styleEl);
+  }
+  
+  // Body-Inhalt einfügen
+  const contentDiv = document.createElement('div');
+  contentDiv.innerHTML = bodyMatch ? bodyMatch[1] : result.html;
+  wrapper.appendChild(contentDiv);
+  
+  document.body.appendChild(wrapper);
 
-  // Kurze Wartezeit für Fonts und Bilder
+  // Auf alle Bilder warten
+  const images = wrapper.querySelectorAll('img');
+  console.log('PDF: Warte auf', images.length, 'Bilder...');
+  
+  await Promise.all(Array.from(images).map(img => {
+    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+    return new Promise(resolve => {
+      const timer = setTimeout(() => { console.warn('Bild-Timeout:', img.src.slice(0, 50)); resolve(); }, 8000);
+      img.addEventListener('load', () => { clearTimeout(timer); resolve(); });
+      img.addEventListener('error', () => { clearTimeout(timer); resolve(); });
+    });
+  }));
+
+  // Extra-Wartezeit für Layout (Fonts etc.)
   await new Promise(r => setTimeout(r, 1500));
+  console.log('PDF: Bilder geladen, starte Konvertierung...');
 
-  const target = iframe.contentDocument.querySelector('.book') || iframe.contentDocument.body;
   const safeName = result.snap.name.replace(/[^a-zA-Z0-9-äöüÄÖÜß_]/g, '_').slice(0, 60);
   const dateStr = new Date(result.snap.created_at).toISOString().split('T')[0];
   const filename = 'Pfadfinder26_' + safeName + '_' + dateStr + '.pdf';
@@ -3589,16 +3664,25 @@ async function downloadSnapshotPDF(id) {
       margin: [10, 10, 10, 10],
       filename: filename,
       image: { type: 'jpeg', quality: 0.92 },
-      html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-    }).from(target).save();
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true, 
+        allowTaint: true, 
+        backgroundColor: '#ffffff',
+        logging: false,
+        windowWidth: 820,
+        scrollX: 0,
+        scrollY: 0
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+      pagebreak: { mode: ['css', 'legacy'] }
+    }).from(contentDiv).save();
     toast('📄 PDF heruntergeladen!');
   } catch (e) {
     console.error('PDF generation error:', e);
-    toast('PDF-Erstellung fehlgeschlagen: ' + e.message, true);
+    toast('PDF-Erstellung fehlgeschlagen — bitte HTML-Download (💾) nutzen', true);
   } finally {
-    document.body.removeChild(iframe);
+    if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
   }
 }
 
