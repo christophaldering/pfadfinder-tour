@@ -1239,7 +1239,7 @@ body.hero-collapsed .hero-compact { display: flex; }
   <button class="lightbox-close" onclick="closeLightbox()" aria-label="Schließen">✕</button>
   <button class="lightbox-prev" onclick="lightboxPrev(event)" aria-label="Zurück">‹</button>
   <button class="lightbox-next" onclick="lightboxNext(event)" aria-label="Weiter">›</button>
-  <button class="lightbox-play" onclick="lightboxToggleSlideshow(event)" id="lightbox-play-btn" aria-label="Diashow" style="display:none">▶</button>
+  <!-- Diashow-Button entfernt (Notfall-Fix) -->
   <div class="lightbox-counter" id="lightbox-counter">1 / 1</div>
   <div class="lightbox-meta" id="lightbox-meta"></div>
   <div class="lightbox-imgwrap" id="lightbox-imgwrap">
@@ -1642,7 +1642,7 @@ async function saveEtappeStatToDb(etappeNum, stats) {
   }
 }
 
-function compressImage(file, maxSize = 800, quality = 0.55) {
+function compressImage(file, maxSize = 1200, quality = 0.78) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = e => {
@@ -2399,18 +2399,9 @@ function lightboxPrev(e) {
 }
 
 function lightboxToggleSlideshow(e) {
+  // Diashow deaktiviert (Notfall-Fix)
   if (e) e.stopPropagation();
-  const btn = document.getElementById('lightbox-play-btn');
-  if (lightboxSlideshow) {
-    stopSlideshow();
-  } else {
-    if (lightboxItems.length <= 1) return;
-    lightboxSlideshow = setInterval(() => {
-      lightboxIdx = (lightboxIdx + 1) % lightboxItems.length;
-      showLightboxImage();
-    }, 3500);
-    if (btn) btn.textContent = '⏸';
-  }
+  return;
 }
 
 function stopSlideshow() {
@@ -2444,7 +2435,6 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') { lightboxNext(); }
   else if (e.key === 'ArrowLeft') { lightboxPrev(); }
   else if (e.key === 'Escape') { closeLightbox(); }
-  else if (e.key === ' ') { e.preventDefault(); lightboxToggleSlideshow(); }
 });
 
 // Touch / Swipe
