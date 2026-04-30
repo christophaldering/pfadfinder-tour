@@ -2217,7 +2217,19 @@ async function submitPost() {
   const btn = document.getElementById('post-submit');
   if (!author) { toast('Wer schreibt denn da?', true); return; }
   if (!text && fileInput.files.length === 0) { toast('Text oder Foto, irgendwas?', true); return; }
+  // Wenn Button bereits disabled (z.B. von hängendem Versuch davor), zurücksetzen und neu starten
+  if (btn.disabled) {
+    console.log('Button war disabled - reset und neuer Versuch');
+    btn.disabled = false;
+  }
   btn.disabled = true; btn.textContent = 'Sende...';
+  // Sicherheits-Timeout: nach 90 Sek den Button auf jeden Fall wieder freigeben
+  const safetyTimeout = setTimeout(() => {
+    if (btn.disabled) {
+      btn.disabled = false; btn.textContent = 'Posten';
+      toast('Verbindung wackelt — bitte nochmal versuchen', true);
+    }
+  }, 90000);
   try {
     const photos = [];
     const photoGps = [];
@@ -2256,6 +2268,7 @@ async function submitPost() {
   } catch (e) {
     console.error(e); toast('Fehler beim Posten', true);
   } finally {
+    clearTimeout(safetyTimeout);
     btn.disabled = false; btn.textContent = 'Posten';
   }
 }
