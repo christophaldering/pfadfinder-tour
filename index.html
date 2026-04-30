@@ -994,6 +994,11 @@ body.hero-collapsed .hero-compact { display: flex; }
         <input type="text" id="exp-description" required placeholder="z.B. Pizza in Wetter, Hotel-Aufpreis, Tanken..." style="width:100%; padding:0.7rem 0.9rem; background:rgba(255,255,255,0.04); border:1px solid var(--line-strong); border-radius:4px; color:var(--paper); font-family:'Fraunces', serif; font-size:0.95rem;">
       </div>
 
+      <div>
+        <label style="display:block; color: var(--paper-dim); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; font-family: 'JetBrains Mono', monospace;">Wer hat bezahlt? *</label>
+        <select id="exp-paid-by" required style="width:100%; padding:0.7rem 0.9rem; background:rgba(255,255,255,0.04); border:1px solid var(--line-strong); border-radius:4px; color:var(--paper); font-family:'JetBrains Mono', monospace; font-size:0.85rem;"></select>
+      </div>
+
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
         <div>
           <label style="display:block; color: var(--paper-dim); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; font-family: 'JetBrains Mono', monospace;">Kategorie</label>
@@ -3105,6 +3110,14 @@ async function loadExpenses() {
     dateInput.value = new Date().toISOString().split('T')[0];
   }
 
+  // "Wer hat bezahlt"-Dropdown füllen (eigener Name als Default)
+  const paidBySelect = document.getElementById('exp-paid-by');
+  if (paidBySelect && paidBySelect.children.length === 0) {
+    paidBySelect.innerHTML = RIDERS.map(name =>
+      '<option value="' + escapeHtml(name) + '"' + (currentUser && name === currentUser.name ? ' selected' : '') + '>' + escapeHtml(name) + (currentUser && name === currentUser.name ? ' (du)' : '') + '</option>'
+    ).join('');
+  }
+
   // "Für wen" Checkboxes generieren (alle Pfadfinder)
   const paidForContainer = document.getElementById('exp-paid-for');
   if (paidForContainer && paidForContainer.children.length === 0) {
@@ -3274,12 +3287,14 @@ async function submitExpense(e) {
 
   const amount = parseFloat(document.getElementById('exp-amount').value);
   const description = document.getElementById('exp-description').value.trim();
+  const paidBy = document.getElementById('exp-paid-by').value;
   const category = document.getElementById('exp-category').value;
   const date = document.getElementById('exp-date').value;
   const notes = document.getElementById('exp-notes').value.trim();
 
   if (!amount || amount <= 0) { toast('Bitte gültigen Betrag eingeben', true); return; }
   if (!description) { toast('Bitte Beschreibung eingeben', true); return; }
+  if (!paidBy) { toast('Bitte angeben, wer bezahlt hat', true); return; }
 
   // Aufteilungs-Modus prüfen
   const customArea = document.getElementById('split-custom-area');
@@ -3330,6 +3345,7 @@ async function submitExpense(e) {
       const update = {
         amount: amount,
         description: description,
+        paid_by: paidBy,
         paid_for: paidFor,
         custom_shares: customShares,
         category: category || null,
@@ -3347,7 +3363,7 @@ async function submitExpense(e) {
         id: id,
         amount: amount,
         description: description,
-        paid_by: currentUser.name,
+        paid_by: paidBy,
         paid_for: paidFor,
         custom_shares: customShares,
         category: category || null,
@@ -3361,7 +3377,7 @@ async function submitExpense(e) {
 
     // Bestätigung
     const action = editingExpenseId ? '✏️ aktualisiert' : '💸 gespeichert';
-    const summary = action + ': ' + amount.toFixed(2) + '€ · ' + description + ' · ' + paidFor.length + ' Person' + (paidFor.length !== 1 ? 'en' : '') + (receiptUrl ? ' · Quittung ✓' : '');
+    const summary = action + ': ' + amount.toFixed(2) + '€ · ' + description + ' (bezahlt: ' + paidBy + ') · ' + paidFor.length + ' Person' + (paidFor.length !== 1 ? 'en' : '') + (receiptUrl ? ' · Quittung ✓' : '');
     toast(summary);
     editingExpenseId = null;
 
@@ -3370,6 +3386,9 @@ async function submitExpense(e) {
     document.getElementById('exp-receipt-preview').innerHTML = '';
     const dateField = document.getElementById('exp-date');
     if (dateField) dateField.value = new Date().toISOString().split('T')[0];
+    // paid-by zurück auf eigenen User setzen
+    const paidBySel = document.getElementById('exp-paid-by');
+    if (paidBySel && currentUser) paidBySel.value = currentUser.name;
     toggleAllPaidFor(true);
     setSplitMode('equal'); // zurück zum Default
     document.getElementById('exp-custom-shares').innerHTML = '';
@@ -3400,6 +3419,7 @@ function startEditExpense(id) {
   editingExpenseId = id;
   document.getElementById('exp-amount').value = exp.amount;
   document.getElementById('exp-description').value = exp.description || '';
+  document.getElementById('exp-paid-by').value = exp.paid_by || '';
   document.getElementById('exp-category').value = exp.category || '';
   document.getElementById('exp-date').value = exp.expense_date || '';
   document.getElementById('exp-notes').value = exp.notes || '';
@@ -3440,6 +3460,8 @@ function cancelEditExpense() {
   document.getElementById('exp-receipt-preview').innerHTML = '';
   const dateField = document.getElementById('exp-date');
   if (dateField) dateField.value = new Date().toISOString().split('T')[0];
+  const paidBySel2 = document.getElementById('exp-paid-by');
+  if (paidBySel2 && currentUser) paidBySel2.value = currentUser.name;
   toggleAllPaidFor(true);
   setSplitMode('equal');
   document.getElementById('exp-custom-shares').innerHTML = '';
