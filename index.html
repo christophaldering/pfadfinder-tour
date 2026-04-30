@@ -1030,8 +1030,8 @@ body.hero-collapsed .hero-compact { display: flex; }
       </div>
 
       <div>
-        <label style="display:block; color: var(--paper-dim); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; font-family: 'JetBrains Mono', monospace;">📷 Quittung (optional)</label>
-        <input type="file" id="exp-receipt" accept="image/*" capture="environment" style="width:100%; padding:0.5rem 0.6rem; background:rgba(255,255,255,0.02); border:1px dashed var(--line-strong); border-radius:4px; color:var(--paper-dim); font-family:'JetBrains Mono', monospace; font-size:0.75rem;">
+        <label style="display:block; color: var(--paper-dim); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; font-family: 'JetBrains Mono', monospace;">📷 Quittung (Foto / PDF / beliebige Datei, optional)</label>
+        <input type="file" id="exp-receipt" accept="image/*,application/pdf,*/*" style="width:100%; padding:0.5rem 0.6rem; background:rgba(255,255,255,0.02); border:1px dashed var(--line-strong); border-radius:4px; color:var(--paper-dim); font-family:'JetBrains Mono', monospace; font-size:0.75rem;">
         <div id="exp-receipt-preview" style="margin-top: 0.5rem;"></div>
       </div>
 
@@ -3317,14 +3317,21 @@ async function loadExpenses() {
     receiptInput.addEventListener('change', e => {
       const file = e.target.files && e.target.files[0];
       const preview = document.getElementById('exp-receipt-preview');
-      if (file && preview) {
+      if (!preview) return;
+      if (!file) { preview.innerHTML = ''; return; }
+      const sizeKB = (file.size / 1024).toFixed(0);
+      const fileLabel = escapeHtml(file.name) + ' · ' + sizeKB + ' KB';
+      if (file.type && file.type.startsWith('image/')) {
+        // Bild-Vorschau
         const reader = new FileReader();
         reader.onload = ev => {
-          preview.innerHTML = '<div style="position: relative; display:inline-block; margin-top: 0.3rem;"><img src="' + ev.target.result + '" style="max-width: 200px; max-height: 200px; border-radius: 4px; border: 1px solid var(--line-strong);"><span style="position:absolute; top:-8px; right:-8px; background: var(--moss); color: white; border-radius: 50%; width: 24px; height: 24px; display:flex; align-items:center; justify-content:center; font-size: 0.85rem;">✓</span></div>';
+          preview.innerHTML = '<div style="position: relative; display:inline-block; margin-top: 0.3rem;"><img src="' + ev.target.result + '" style="max-width: 200px; max-height: 200px; border-radius: 4px; border: 1px solid var(--line-strong);"><span style="position:absolute; top:-8px; right:-8px; background: var(--moss); color: white; border-radius: 50%; width: 24px; height: 24px; display:flex; align-items:center; justify-content:center; font-size: 0.85rem;">✓</span></div><div style="font-size: 0.7rem; color: var(--paper-dim); margin-top: 0.3rem; font-family: \'JetBrains Mono\', monospace;">' + fileLabel + '</div>';
         };
         reader.readAsDataURL(file);
-      } else if (preview) {
-        preview.innerHTML = '';
+      } else {
+        // Nicht-Bild (PDF, Word, etc.) - nur Datei-Symbol + Name
+        const icon = (file.type === 'application/pdf') ? '📄' : '📎';
+        preview.innerHTML = '<div style="display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.9rem; background: rgba(255,255,255,0.04); border: 1px solid var(--line-strong); border-radius: 4px; margin-top: 0.3rem;"><span style="font-size: 1.4rem;">' + icon + '</span><div><div style="color: var(--paper); font-size: 0.85rem; font-family: \'Fraunces\', serif;">' + escapeHtml(file.name) + '</div><div style="color: var(--paper-dim); font-size: 0.7rem; font-family: \'JetBrains Mono\', monospace;">' + sizeKB + ' KB · bereit zum Hochladen</div></div><span style="background: var(--moss); color: white; border-radius: 50%; width: 22px; height: 22px; display:flex; align-items:center; justify-content:center; font-size: 0.8rem;">✓</span></div>';
       }
     });
   }
@@ -3788,7 +3795,20 @@ function renderKasseOverview() {
     html += '</div>';
     html += '</div>';
     html += '</div>';
-    if (e.receipt_url) html += '<a href="' + e.receipt_url + '" target="_blank" rel="noopener" style="display: inline-block; margin-top: 0.5rem;"><img src="' + e.receipt_url + '" alt="Quittung" style="max-width: 120px; max-height: 120px; border-radius: 4px; border: 1px solid var(--line-strong); cursor: zoom-in;"></a>';
+    if (e.receipt_url) {
+      // Erkennen ob Bild (über URL-Endung) oder andere Datei
+      const url = e.receipt_url;
+      const lower = url.toLowerCase().split('?')[0]; // ohne Query-String
+      const isImage = /\.(jpe?g|png|gif|webp|heic|heif|bmp)$/i.test(lower);
+      if (isImage) {
+        html += '<a href="' + url + '" target="_blank" rel="noopener" style="display: inline-block; margin-top: 0.5rem;"><img src="' + url + '" alt="Quittung" style="max-width: 120px; max-height: 120px; border-radius: 4px; border: 1px solid var(--line-strong); cursor: zoom-in;"></a>';
+      } else {
+        const isPdf = /\.pdf$/i.test(lower);
+        const icon = isPdf ? '📄' : '📎';
+        const label = isPdf ? 'Quittung (PDF)' : 'Quittung (Datei)';
+        html += '<a href="' + url + '" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; padding: 0.5rem 0.8rem; background: rgba(255,255,255,0.04); border: 1px solid var(--line-strong); border-radius: 4px; color: var(--gold); text-decoration: none; font-family: \'JetBrains Mono\', monospace; font-size: 0.75rem;"><span style="font-size: 1.1rem;">' + icon + '</span>' + label + ' öffnen ↗</a>';
+      }
+    }
     html += '</div>';
   });
   html += '</div>';
