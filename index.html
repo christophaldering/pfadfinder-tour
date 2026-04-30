@@ -262,9 +262,44 @@ section.active { display: block; animation: fadeIn 0.4s ease-out; }
 .gallery img:hover { transform: scale(1.03); }
 
 /* MODAL/LIGHTBOX */
-.lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.94); z-index: 9999; align-items: center; justify-content: center; padding: 1rem; cursor: pointer; }
+.lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.96); z-index: 9999; align-items: center; justify-content: center; padding: 0; user-select: none; -webkit-user-select: none; }
 .lightbox.active { display: flex; }
-.lightbox img { max-width: 100%; max-height: 90vh; object-fit: contain; }
+.lightbox-imgwrap { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 3rem 0.5rem; }
+.lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; transition: opacity 0.2s; }
+.lightbox img.fading { opacity: 0; }
+.lightbox-close, .lightbox-prev, .lightbox-next, .lightbox-play {
+  position: fixed; background: rgba(20,17,13,0.7); border: 1px solid rgba(212,165,72,0.3); color: var(--paper);
+  width: 46px; height: 46px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; transition: all 0.2s; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 10000;
+}
+.lightbox-close:hover, .lightbox-prev:hover, .lightbox-next:hover, .lightbox-play:hover {
+  background: rgba(199,92,46,0.7); border-color: var(--rust);
+}
+.lightbox-close { top: 1rem; right: 1rem; }
+.lightbox-play { top: 1rem; left: 1rem; font-size: 1rem; }
+.lightbox-prev { left: 0.7rem; top: 50%; transform: translateY(-50%); font-size: 1.8rem; }
+.lightbox-next { right: 0.7rem; top: 50%; transform: translateY(-50%); font-size: 1.8rem; }
+.lightbox-counter {
+  position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
+  background: rgba(20,17,13,0.7); padding: 0.4rem 0.9rem; border-radius: 14px;
+  color: var(--paper); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+  letter-spacing: 0.1em; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 10000;
+}
+.lightbox-meta {
+  position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%);
+  background: rgba(20,17,13,0.7); padding: 0.5rem 1rem; border-radius: 8px; max-width: 90%;
+  color: var(--paper-dim); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+  letter-spacing: 0.05em; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 10000;
+  text-align: center;
+}
+.lightbox-meta .lb-author { color: var(--rust); font-weight: 600; margin-right: 0.4rem; }
+.lightbox-meta .lb-date { color: var(--gold); }
+@media (max-width: 480px) {
+  .lightbox-close, .lightbox-prev, .lightbox-next, .lightbox-play { width: 40px; height: 40px; }
+  .lightbox-counter, .lightbox-meta { font-size: 0.6rem; }
+  .lightbox-imgwrap { padding: 4rem 0.3rem; }
+}
+.lightbox-prev.disabled, .lightbox-next.disabled { opacity: 0.3; pointer-events: none; }
 .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; align-items: flex-start; justify-content: center; padding: 2rem 1rem; overflow-y: auto; }
 .modal.active { display: flex; }
 .modal-content { background: var(--bg-card); border: 1px solid var(--line-strong); border-radius: 4px; padding: 1.5rem; max-width: 500px; width: 100%; position: relative; }
@@ -784,11 +819,8 @@ body.hero-collapsed .hero-compact { display: flex; }
 <nav>
   <button data-tab="feed" class="active"><span class="tab-icon">📝</span><span class="tab-label">Log</span></button>
   <button data-tab="map"><span class="tab-icon">🗺</span><span class="tab-label">Karte</span></button>
-  <button data-tab="etappen"><span class="tab-icon">📍</span><span class="tab-label">Etap.</span></button>
-  <button data-tab="stats"><span class="tab-icon">📊</span><span class="tab-label">Stats</span></button>
-  <button data-tab="tacho"><span class="tab-icon">⚡</span><span class="tab-label">Tacho</span></button>
+  <button data-tab="tour"><span class="tab-icon">🚴</span><span class="tab-label">Tour</span></button>
   <button data-tab="fotos"><span class="tab-icon">📷</span><span class="tab-label">Fotos</span></button>
-  <button data-tab="packing"><span class="tab-icon">🎒</span><span class="tab-label">Pack</span></button>
   <button data-tab="kasse"><span class="tab-icon">💰</span><span class="tab-label">Kasse</span></button>
   <button data-tab="book"><span class="tab-icon">📖</span><span class="tab-label">Buch</span></button>
 </nav>
@@ -842,15 +874,23 @@ body.hero-collapsed .hero-compact { display: flex; }
   </div>
 </section>
 
-<section id="tab-etappen">
-  <h2 class="section-title">5 Etappen</h2>
-  <span class="section-subtitle">Vom Sauerland ins Ruhrgebiet</span>
-  <div id="etappen-list"></div>
-</section>
+<section id="tab-tour">
+  <h2 class="section-title">Tour</h2>
+  <span class="section-subtitle">Etappen, Statistik, Bilanz</span>
 
-<section id="tab-stats">
-  <h2 class="section-title">Statistik</h2>
-  <span class="section-subtitle">Zahlen, Daten, Fakten</span>
+  <!-- Sub-Toggle: Etappen / Statistik -->
+  <div style="display: flex; gap: 0.4rem; margin-bottom: 1.2rem; padding: 0.3rem; background: rgba(255,255,255,0.03); border: 1px solid var(--line-strong); border-radius: 6px;">
+    <button class="tour-view-btn active" data-view="etappen" onclick="switchTourView('etappen')" style="flex: 1; padding: 0.6rem 0.8rem; background: var(--rust); border: none; color: white; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 4px; cursor: pointer; transition: all 0.15s;">📍 Etappen</button>
+    <button class="tour-view-btn" data-view="stats" onclick="switchTourView('stats')" style="flex: 1; padding: 0.6rem 0.8rem; background: transparent; border: none; color: var(--paper-dim); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 4px; cursor: pointer; transition: all 0.15s;">📊 Statistik</button>
+  </div>
+
+  <!-- Etappen-Bereich -->
+  <div id="tour-view-etappen">
+    <div id="etappen-list"></div>
+  </div>
+
+  <!-- Statistik-Bereich -->
+  <div id="tour-view-stats" style="display: none;">
 
   <div class="stat-card">
     <div class="stat-card-title">Gesamtbilanz</div>
@@ -878,31 +918,7 @@ body.hero-collapsed .hero-compact { display: flex; }
     <div class="stat-card-title">Etappen-Vergleich</div>
     <ol class="ranking-list" id="rank-etappen"></ol>
   </div>
-</section>
-
-<section id="tab-tacho">
-  <h2 class="section-title">Tacho</h2>
-  <span class="section-subtitle">Live-Geschwindigkeit · GPS</span>
-
-  <div class="tacho-card">
-    <div class="tacho-display" id="tacho-speed">--</div>
-    <div class="tacho-unit">km/h</div>
-    <div class="tacho-secondary">
-      <div class="tacho-sec-stat"><div class="v" id="tacho-max">--</div><div class="l">Max km/h</div></div>
-      <div class="tacho-sec-stat"><div class="v" id="tacho-dist">0.0</div><div class="l">km</div></div>
-      <div class="tacho-sec-stat"><div class="v" id="tacho-time">00:00</div><div class="l">Zeit</div></div>
-    </div>
-    <div class="tacho-controls">
-      <button class="tacho-btn" id="tacho-start">Start</button>
-      <button class="tacho-btn stop" id="tacho-reset">Reset</button>
-    </div>
-    <div class="tacho-info" id="tacho-info">Bereit · GPS noch nicht aktiv</div>
-  </div>
-
-  <div class="empty-state" style="font-size:0.85rem;padding:1rem">
-    Funktioniert nur, wenn die Seite während der Fahrt offen bleibt.<br>
-    Eher Spielerei als echter Tacho.
-  </div>
+  </div><!-- /tour-view-stats -->
 </section>
 
 <section id="tab-fotos">
@@ -931,42 +947,6 @@ body.hero-collapsed .hero-compact { display: flex; }
 </section>
 
 
-<section id="tab-packing">
-  <h2 class="section-title">Packliste</h2>
-  <span class="section-subtitle">Was muss in die Satteltasche</span>
-
-  <div style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 4px; padding: 1rem 1.1rem; margin-bottom: 1rem;">
-    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--paper-dark); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.6rem;">Wer packt gerade?</div>
-    <div id="packing-rider-bar" style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
-      <button class="filter-btn active" data-rider="Charly">Charly</button>
-      <button class="filter-btn" data-rider="Burkhard">Burkhard</button>
-      <button class="filter-btn" data-rider="Friedhelm">Friedhelm</button>
-      <button class="filter-btn" data-rider="Willi">Willi</button>
-      <button class="filter-btn" data-rider="Stefan">Stefan</button>
-      <button class="filter-btn" data-rider="Christoph">Christoph</button>
-    </div>
-  </div>
-
-  <div id="packing-progress-card" style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 4px; padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; flex-wrap: wrap;">
-    <span id="packing-rider-label" style="color: var(--gold); letter-spacing: 0.1em">Charly packt</span>
-    <span id="packing-stats-text" style="color: var(--paper-dim); flex: 1; text-align: center;">0 / 0 gepackt</span>
-    <button onclick="printPacking()" class="print-btn" title="Packliste drucken oder als PDF speichern" style="background: transparent; border: 1px solid var(--line-strong); color: var(--paper-dim); padding: 0.35rem 0.7rem; font-family: inherit; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 3px; cursor: pointer; transition: all 0.2s;">🖨 Drucken</button>
-  </div>
-
-  <div id="packing-categories"></div>
-
-  <div style="background: var(--bg-card); border: 1px dashed var(--line-strong); border-radius: 4px; padding: 1rem; margin-top: 1rem;">
-    <div style="font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; letter-spacing: 0.12em; color: var(--gold); margin-bottom: 0.75rem;">Eigener Eintrag</div>
-    <div style="display: flex; gap: 0.5rem;">
-      <input type="text" id="packing-custom-input" placeholder="Was soll noch mit?" style="flex: 1; background: var(--bg); border: 1px solid var(--line-strong); color: var(--paper); padding: 0.5rem 0.7rem; font-family: 'Fraunces', serif; font-size: 0.9rem; border-radius: 3px;">
-      <button id="packing-custom-add-btn" style="background: var(--moss); border: none; color: var(--paper); padding: 0 0.85rem; border-radius: 3px; cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;">Add</button>
-    </div>
-    <div style="font-style: italic; font-size: 0.75rem; color: var(--paper-dark); margin-top: 0.5rem;">
-      Wird der gemeinsamen Liste hinzugefügt, alle sehen es.
-    </div>
-  </div>
-</section>
-
 <section id="tab-kasse">
   <h2 class="section-title">Reisekasse</h2>
   <span class="section-subtitle">Auslagen tracken · Abrechnung am Ende</span>
@@ -992,6 +972,11 @@ body.hero-collapsed .hero-compact { display: flex; }
       <div>
         <label style="display:block; color: var(--paper-dim); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; font-family: 'JetBrains Mono', monospace;">Wofür? *</label>
         <input type="text" id="exp-description" required placeholder="z.B. Pizza in Wetter, Hotel-Aufpreis, Tanken..." style="width:100%; padding:0.7rem 0.9rem; background:rgba(255,255,255,0.04); border:1px solid var(--line-strong); border-radius:4px; color:var(--paper); font-family:'Fraunces', serif; font-size:0.95rem;">
+      </div>
+
+      <div>
+        <label style="display:block; color: var(--paper-dim); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; font-family: 'JetBrains Mono', monospace;">Wer hat bezahlt? *</label>
+        <select id="exp-paid-by" required style="width:100%; padding:0.7rem 0.9rem; background:rgba(255,255,255,0.04); border:1px solid var(--line-strong); border-radius:4px; color:var(--paper); font-family:'JetBrains Mono', monospace; font-size:0.85rem;"></select>
       </div>
 
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
@@ -1250,8 +1235,16 @@ body.hero-collapsed .hero-compact { display: flex; }
 
 </div>
 
-<div class="lightbox" id="lightbox" onclick="if(event.target===this)this.classList.remove('active')">
-  <img id="lightbox-img" src="" alt="">
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()" aria-label="Schließen">✕</button>
+  <button class="lightbox-prev" onclick="lightboxPrev(event)" aria-label="Zurück">‹</button>
+  <button class="lightbox-next" onclick="lightboxNext(event)" aria-label="Weiter">›</button>
+  <button class="lightbox-play" onclick="lightboxToggleSlideshow(event)" id="lightbox-play-btn" aria-label="Diashow">▶</button>
+  <div class="lightbox-counter" id="lightbox-counter">1 / 1</div>
+  <div class="lightbox-meta" id="lightbox-meta"></div>
+  <div class="lightbox-imgwrap" id="lightbox-imgwrap">
+    <img id="lightbox-img" src="" alt="">
+  </div>
 </div>
 
 <div class="modal" id="modal">
@@ -1914,7 +1907,7 @@ function renderGallery() {
   if (allPhotos.length === 0) { grid.style.display = 'none'; empty.style.display = 'block'; return; }
   grid.style.display = 'grid'; empty.style.display = 'none';
   allPhotos.sort((a, b) => b.ts - a.ts);
-  grid.innerHTML = allPhotos.map(p => `<img src="${p.src}" alt="" onclick="openLightbox('${p.postId}', ${p.idx})">`).join('');
+  grid.innerHTML = allPhotos.map(p => `<img src="${p.src}" alt="" onclick="openLightbox('${p.postId}', ${p.idx}, 'gallery')">`).join('');
 }
 
 function renderStatsPage() {
@@ -2305,14 +2298,167 @@ async function addComment(postId) {
   toast('Kommentar gespeichert');
 }
 
-let lightboxPhotos = [];
-function openLightbox(postId, idx) {
-  const post = posts.find(p => p.id === postId);
-  if (!post) return;
-  lightboxPhotos = post.photos;
-  document.getElementById('lightbox-img').src = lightboxPhotos[idx];
+// === LIGHTBOX mit Navigation + Slideshow ===
+let lightboxItems = []; // [{ src, postId, author, timestamp }, ...]
+let lightboxIdx = 0;
+let lightboxSlideshow = null;
+
+function openLightbox(postId, idx, mode) {
+  // mode: 'gallery' = alle Fotos chronologisch, sonst nur Fotos des einen Posts
+  if (mode === 'gallery') {
+    // Alle Fotos aller Posts chronologisch sammeln
+    lightboxItems = [];
+    const sortedPosts = posts.slice().sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    sortedPosts.forEach(p => {
+      (p.photos || []).forEach((src, i) => {
+        lightboxItems.push({ src: src, postId: p.id, author: p.author, timestamp: p.timestamp });
+      });
+    });
+    // Index in der Gesamtliste finden
+    lightboxIdx = lightboxItems.findIndex(it => it.postId === postId && it.src === posts.find(p => p.id === postId).photos[idx]);
+    if (lightboxIdx < 0) lightboxIdx = 0;
+  } else {
+    // Nur Fotos dieses Posts
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+    lightboxItems = (post.photos || []).map(src => ({ src: src, postId: post.id, author: post.author, timestamp: post.timestamp }));
+    lightboxIdx = idx || 0;
+  }
+  showLightboxImage();
   document.getElementById('lightbox').classList.add('active');
+  // Body scroll lock
+  document.body.style.overflow = 'hidden';
 }
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+  document.body.style.overflow = '';
+  stopSlideshow();
+}
+
+function showLightboxImage() {
+  const item = lightboxItems[lightboxIdx];
+  if (!item) return;
+  const img = document.getElementById('lightbox-img');
+  const counter = document.getElementById('lightbox-counter');
+  const meta = document.getElementById('lightbox-meta');
+  const prevBtn = document.querySelector('.lightbox-prev');
+  const nextBtn = document.querySelector('.lightbox-next');
+
+  // Fade-Effekt
+  img.classList.add('fading');
+  setTimeout(() => {
+    img.src = item.src;
+    img.classList.remove('fading');
+  }, 150);
+
+  if (counter) counter.textContent = (lightboxIdx + 1) + ' / ' + lightboxItems.length;
+  if (meta) {
+    let date = '';
+    if (item.timestamp) {
+      const d = new Date(item.timestamp);
+      date = d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'2-digit' }) + ', ' + d.toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
+    }
+    meta.innerHTML = '<span class="lb-author">' + escapeHtml(item.author || '') + '</span>' + (date ? '<span class="lb-date">· ' + date + '</span>' : '');
+  }
+  // Pfeile bei einem einzigen Bild ausblenden
+  if (lightboxItems.length <= 1) {
+    if (prevBtn) prevBtn.style.display = 'none';
+    if (nextBtn) nextBtn.style.display = 'none';
+  } else {
+    if (prevBtn) prevBtn.style.display = 'flex';
+    if (nextBtn) nextBtn.style.display = 'flex';
+  }
+}
+
+function lightboxNext(e) {
+  if (e) e.stopPropagation();
+  if (lightboxItems.length <= 1) return;
+  lightboxIdx = (lightboxIdx + 1) % lightboxItems.length;
+  showLightboxImage();
+}
+
+function lightboxPrev(e) {
+  if (e) e.stopPropagation();
+  if (lightboxItems.length <= 1) return;
+  lightboxIdx = (lightboxIdx - 1 + lightboxItems.length) % lightboxItems.length;
+  showLightboxImage();
+}
+
+function lightboxToggleSlideshow(e) {
+  if (e) e.stopPropagation();
+  const btn = document.getElementById('lightbox-play-btn');
+  if (lightboxSlideshow) {
+    stopSlideshow();
+  } else {
+    if (lightboxItems.length <= 1) return;
+    lightboxSlideshow = setInterval(() => {
+      lightboxIdx = (lightboxIdx + 1) % lightboxItems.length;
+      showLightboxImage();
+    }, 3500);
+    if (btn) btn.textContent = '⏸';
+  }
+}
+
+function stopSlideshow() {
+  if (lightboxSlideshow) {
+    clearInterval(lightboxSlideshow);
+    lightboxSlideshow = null;
+  }
+  const btn = document.getElementById('lightbox-play-btn');
+  if (btn) btn.textContent = '▶';
+}
+
+// Klick außerhalb schließt
+document.addEventListener('DOMContentLoaded', () => {
+  const lb = document.getElementById('lightbox');
+  if (lb) {
+    lb.addEventListener('click', e => {
+      // Nur schließen wenn Klick auf den schwarzen Hintergrund (nicht auf Bild oder Buttons)
+      if (e.target === lb || e.target.id === 'lightbox-imgwrap' || e.target.id === 'lightbox-img') {
+        // Nur das Bild selbst soll NICHT schließen, der Wrap und der schwarze Hintergrund schon
+        if (e.target.id === 'lightbox-img') return;
+        closeLightbox();
+      }
+    });
+  }
+});
+
+// Tastatur: Pfeile + ESC
+document.addEventListener('keydown', e => {
+  const lb = document.getElementById('lightbox');
+  if (!lb || !lb.classList.contains('active')) return;
+  if (e.key === 'ArrowRight') { lightboxNext(); }
+  else if (e.key === 'ArrowLeft') { lightboxPrev(); }
+  else if (e.key === 'Escape') { closeLightbox(); }
+  else if (e.key === ' ') { e.preventDefault(); lightboxToggleSlideshow(); }
+});
+
+// Touch / Swipe
+(function() {
+  let touchStartX = 0;
+  let touchStartY = 0;
+  document.addEventListener('touchstart', e => {
+    const lb = document.getElementById('lightbox');
+    if (!lb || !lb.classList.contains('active')) return;
+    if (e.touches && e.touches[0]) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const lb = document.getElementById('lightbox');
+    if (!lb || !lb.classList.contains('active')) return;
+    if (!e.changedTouches || !e.changedTouches[0]) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    // Nur als horizontaler Swipe werten wenn dx größer als dy ist
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+      if (dx > 0) lightboxPrev(); else lightboxNext();
+    }
+  }, { passive: true });
+})();
+
 
 function copyLink() {
   navigator.clipboard.writeText(window.location.href)
@@ -2998,21 +3144,30 @@ async function saveSnapshot(name, description, cur) {
   };
 
   const id = 'snap-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+  const insertData = {
+    id: id,
+    user_name: currentUser.name,
+    name: name.trim(),
+    description: description.trim() || null,
+    data: snapshotData,
+    current_etappe: cur
+  };
+  console.log('Snapshot Insert versuche:', { id: insertData.id, name: insertData.name, user: insertData.user_name, dataSize: JSON.stringify(snapshotData).length });
+
   try {
-    const { error } = await sb.from('book_snapshots').insert({
-      id: id,
-      user_name: currentUser.name,
-      name: name.trim(),
-      description: description.trim() || null,
-      data: snapshotData,
-      current_etappe: cur
-    });
-    if (error) throw error;
+    // Insert OHNE .select() - select kann an RLS-Policy scheitern
+    const { error } = await sb.from('book_snapshots').insert(insertData);
+    if (error) {
+      console.error('Snapshot Insert Error:', error);
+      throw new Error(error.message + (error.details ? ' [' + error.details + ']' : '') + (error.hint ? ' Hint: ' + error.hint : ''));
+    }
+    console.log('Snapshot Insert OK, lade Liste neu...');
     toast('📸 Snapshot gespeichert: ' + name);
+    // Komplette Liste neu laden (sicherer als lokales Adden)
     await loadSnapshots();
   } catch (e) {
-    console.error('createSnapshot error:', e);
-    toast('Snapshot fehlgeschlagen: ' + e.message, true);
+    console.error('Snapshot speichern fehlgeschlagen:', e);
+    toast('Fehler: ' + (e.message || 'Unbekannt'), true);
   }
 }
 
@@ -3071,6 +3226,24 @@ function renderSnapshots() {
 }
 
 // === FOTOS VIEW TOGGLE (Galerie / Karte) ===
+function switchTourView(view) {
+  document.querySelectorAll('.tour-view-btn').forEach(b => {
+    b.classList.remove('active');
+    b.style.background = 'transparent';
+    b.style.color = 'var(--paper-dim)';
+  });
+  const activeBtn = document.querySelector('.tour-view-btn[data-view="' + view + '"]');
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+    activeBtn.style.background = 'var(--rust)';
+    activeBtn.style.color = 'white';
+  }
+  document.getElementById('tour-view-etappen').style.display = view === 'etappen' ? 'block' : 'none';
+  document.getElementById('tour-view-stats').style.display = view === 'stats' ? 'block' : 'none';
+  if (view === 'stats') renderStatsPage();
+  else renderEtappen();
+}
+
 function switchFotosView(view) {
   document.querySelectorAll('.fotos-view-btn').forEach(b => {
     b.classList.remove('active');
@@ -3103,6 +3276,14 @@ async function loadExpenses() {
   const dateInput = document.getElementById('exp-date');
   if (dateInput && !dateInput.value) {
     dateInput.value = new Date().toISOString().split('T')[0];
+  }
+
+  // "Wer hat bezahlt"-Dropdown füllen (eigener Name als Default)
+  const paidBySelect = document.getElementById('exp-paid-by');
+  if (paidBySelect && paidBySelect.children.length === 0) {
+    paidBySelect.innerHTML = RIDERS.map(name =>
+      '<option value="' + escapeHtml(name) + '"' + (currentUser && name === currentUser.name ? ' selected' : '') + '>' + escapeHtml(name) + (currentUser && name === currentUser.name ? ' (du)' : '') + '</option>'
+    ).join('');
   }
 
   // "Für wen" Checkboxes generieren (alle Pfadfinder)
@@ -3274,12 +3455,14 @@ async function submitExpense(e) {
 
   const amount = parseFloat(document.getElementById('exp-amount').value);
   const description = document.getElementById('exp-description').value.trim();
+  const paidBy = document.getElementById('exp-paid-by').value;
   const category = document.getElementById('exp-category').value;
   const date = document.getElementById('exp-date').value;
   const notes = document.getElementById('exp-notes').value.trim();
 
   if (!amount || amount <= 0) { toast('Bitte gültigen Betrag eingeben', true); return; }
   if (!description) { toast('Bitte Beschreibung eingeben', true); return; }
+  if (!paidBy) { toast('Bitte angeben, wer bezahlt hat', true); return; }
 
   // Aufteilungs-Modus prüfen
   const customArea = document.getElementById('split-custom-area');
@@ -3330,6 +3513,7 @@ async function submitExpense(e) {
       const update = {
         amount: amount,
         description: description,
+        paid_by: paidBy,
         paid_for: paidFor,
         custom_shares: customShares,
         category: category || null,
@@ -3347,7 +3531,7 @@ async function submitExpense(e) {
         id: id,
         amount: amount,
         description: description,
-        paid_by: currentUser.name,
+        paid_by: paidBy,
         paid_for: paidFor,
         custom_shares: customShares,
         category: category || null,
@@ -3361,7 +3545,7 @@ async function submitExpense(e) {
 
     // Bestätigung
     const action = editingExpenseId ? '✏️ aktualisiert' : '💸 gespeichert';
-    const summary = action + ': ' + amount.toFixed(2) + '€ · ' + description + ' · ' + paidFor.length + ' Person' + (paidFor.length !== 1 ? 'en' : '') + (receiptUrl ? ' · Quittung ✓' : '');
+    const summary = action + ': ' + amount.toFixed(2) + '€ · ' + description + ' (bezahlt: ' + paidBy + ') · ' + paidFor.length + ' Person' + (paidFor.length !== 1 ? 'en' : '') + (receiptUrl ? ' · Quittung ✓' : '');
     toast(summary);
     editingExpenseId = null;
 
@@ -3370,6 +3554,9 @@ async function submitExpense(e) {
     document.getElementById('exp-receipt-preview').innerHTML = '';
     const dateField = document.getElementById('exp-date');
     if (dateField) dateField.value = new Date().toISOString().split('T')[0];
+    // paid-by zurück auf eigenen User setzen
+    const paidBySel = document.getElementById('exp-paid-by');
+    if (paidBySel && currentUser) paidBySel.value = currentUser.name;
     toggleAllPaidFor(true);
     setSplitMode('equal'); // zurück zum Default
     document.getElementById('exp-custom-shares').innerHTML = '';
@@ -3400,6 +3587,7 @@ function startEditExpense(id) {
   editingExpenseId = id;
   document.getElementById('exp-amount').value = exp.amount;
   document.getElementById('exp-description').value = exp.description || '';
+  document.getElementById('exp-paid-by').value = exp.paid_by || '';
   document.getElementById('exp-category').value = exp.category || '';
   document.getElementById('exp-date').value = exp.expense_date || '';
   document.getElementById('exp-notes').value = exp.notes || '';
@@ -3440,6 +3628,8 @@ function cancelEditExpense() {
   document.getElementById('exp-receipt-preview').innerHTML = '';
   const dateField = document.getElementById('exp-date');
   if (dateField) dateField.value = new Date().toISOString().split('T')[0];
+  const paidBySel2 = document.getElementById('exp-paid-by');
+  if (paidBySel2 && currentUser) paidBySel2.value = currentUser.name;
   toggleAllPaidFor(true);
   setSplitMode('equal');
   document.getElementById('exp-custom-shares').innerHTML = '';
@@ -4152,7 +4342,6 @@ function toggleHero(e) {
   if (e) e.stopPropagation();
   document.body.classList.toggle('hero-collapsed');
   const collapsed = document.body.classList.contains('hero-collapsed');
-  try { localStorage.setItem('heroCollapsed', collapsed ? '1' : '0'); } catch(err) {}
   if (collapsed) {
     syncCompactStats();
   } else {
@@ -4180,13 +4369,11 @@ function syncCompactStats() {
   if (hcPosts && posts) hcPosts.textContent = posts.textContent;
 }
 
-// Beim Laden: localStorage prüfen
+// Beim Laden: Hero ist IMMER offen (Landing-Page erscheint immer)
+// Auto-Collapse passiert erst beim ersten Tab-Wechsel
 (function initHeroCollapse() {
-  try {
-    if (localStorage.getItem('heroCollapsed') === '1') {
-      document.body.classList.add('hero-collapsed');
-    }
-  } catch(e) {}
+  // localStorage cleanup: alte Speicherung des Collapse-Status entfernen
+  try { localStorage.removeItem('heroCollapsed'); } catch(e) {}
 })();
 
 function initNav() {
@@ -4197,21 +4384,24 @@ function initNav() {
       btn.classList.add('active');
       const tab = btn.dataset.tab;
       document.getElementById('tab-' + tab).classList.add('active');
-      // Hero automatisch collapsen wenn noch offen (nur beim ersten Tab-Wechsel)
+      // Hero automatisch collapsen wenn noch offen (sanfter Übergang nach oben)
       if (!document.body.classList.contains('hero-collapsed') && !document.body.classList.contains('hero-auto-collapsed')) {
         document.body.classList.add('hero-collapsed');
         document.body.classList.add('hero-auto-collapsed');
-        try { localStorage.setItem('heroCollapsed', '1'); } catch(e) {}
         syncCompactStats();
       }
       if (tab === 'map') setTimeout(renderMap, 50);
-      if (tab === 'stats') renderStatsPage();
+      if (tab === 'tour') {
+        // Reset to etappen view by default
+        const currentView = document.querySelector('.tour-view-btn.active');
+        if (!currentView) switchTourView('etappen');
+        else renderEtappen();
+      }
       if (tab === 'fotos') {
         // Reset to grid view by default
         const currentView = document.querySelector('.fotos-view-btn.active');
         if (!currentView) switchFotosView('grid');
       }
-      if (tab === 'packing') renderPacking();
       if (tab === 'kasse') loadExpenses();
       if (tab === 'book') loadSnapshots();
     });
