@@ -977,7 +977,11 @@ body.hero-collapsed .hero-compact { display: flex; }
   </div>
 
   <div id="kasse-input">
-    <h3 style="font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.12em; color: var(--paper); margin-bottom: 0.8rem; font-size: 1rem;">💸 Neue Auslage erfassen</h3>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+      <h3 id="expense-form-title" style="font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.12em; color: var(--paper); font-size: 1rem; margin: 0;">💸 Neue Auslage erfassen</h3>
+      <button type="button" id="cancel-edit-btn" onclick="cancelEditExpense()" style="display: none; background: transparent; border: 1px solid var(--line-strong); color: var(--paper-dim); padding: 0.4rem 0.8rem; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 12px; cursor: pointer;">✕ Abbrechen</button>
+    </div>
+    <p style="color: var(--paper-dark); font-size: 0.72rem; line-height: 1.5; margin-bottom: 1rem; font-style: italic;">💡 Bei Tippfehlern oder falschen Zuordnungen bitte beim Kassenwart melden — Korrekturen können nur dort vorgenommen werden.</p>
 
     <form id="expense-form" onsubmit="submitExpense(event)" style="display: grid; gap: 0.8rem; margin-bottom: 2rem;">
       <div>
@@ -1012,11 +1016,31 @@ body.hero-collapsed .hero-compact { display: flex; }
       </div>
 
       <div>
-        <label style="display:block; color: var(--paper-dim); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; font-family: 'JetBrains Mono', monospace;">Für wen? <span style="color: var(--paper-dark); text-transform: none; letter-spacing: 0.05em;">(default: alle)</span></label>
-        <div id="exp-paid-for" style="display: flex; flex-wrap: wrap; gap: 0.4rem;"></div>
-        <div style="margin-top: 0.5rem;">
-          <button type="button" onclick="toggleAllPaidFor(true)" style="background: transparent; border: 1px solid var(--line-strong); color: var(--paper-dim); padding: 0.3rem 0.7rem; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 12px; cursor: pointer; margin-right: 0.4rem;">Alle</button>
-          <button type="button" onclick="toggleAllPaidFor(false)" style="background: transparent; border: 1px solid var(--line-strong); color: var(--paper-dim); padding: 0.3rem 0.7rem; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 12px; cursor: pointer;">Keine</button>
+        <label style="display:block; color: var(--paper-dim); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; font-family: 'JetBrains Mono', monospace;">Aufteilung <span style="color: var(--paper-dark); text-transform: none; letter-spacing: 0.05em;">(default: gleichmäßig auf alle)</span></label>
+
+        <!-- Modus-Toggle -->
+        <div style="display: flex; gap: 0.4rem; margin-bottom: 0.7rem; padding: 0.25rem; background: rgba(255,255,255,0.03); border-radius: 6px;">
+          <button type="button" id="split-mode-equal" onclick="setSplitMode('equal')" style="flex: 1; padding: 0.5rem; background: var(--rust); border: none; color: white; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 4px; cursor: pointer;">Gleichmäßig</button>
+          <button type="button" id="split-mode-custom" onclick="setSplitMode('custom')" style="flex: 1; padding: 0.5rem; background: transparent; border: none; color: var(--paper-dim); font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 4px; cursor: pointer;">Individuell €</button>
+        </div>
+
+        <!-- EQUAL: Personen-Auswahl mit Checkboxes -->
+        <div id="split-equal-area">
+          <div id="exp-paid-for" style="display: flex; flex-wrap: wrap; gap: 0.4rem;"></div>
+          <div style="margin-top: 0.5rem;">
+            <button type="button" onclick="toggleAllPaidFor(true)" style="background: transparent; border: 1px solid var(--line-strong); color: var(--paper-dim); padding: 0.3rem 0.7rem; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 12px; cursor: pointer; margin-right: 0.4rem;">Alle</button>
+            <button type="button" onclick="toggleAllPaidFor(false)" style="background: transparent; border: 1px solid var(--line-strong); color: var(--paper-dim); padding: 0.3rem 0.7rem; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 12px; cursor: pointer;">Keine</button>
+          </div>
+        </div>
+
+        <!-- CUSTOM: Pro Person ein Eurobetrag -->
+        <div id="split-custom-area" style="display: none;">
+          <div id="exp-custom-shares" style="display: grid; gap: 0.4rem;"></div>
+          <div style="margin-top: 0.7rem; padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.03); border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.4rem;">
+            <span style="color: var(--paper-dim);">Verteilt: <span id="custom-sum" style="color: var(--paper);">0,00 €</span> / <span id="custom-target" style="color: var(--gold);">0,00 €</span></span>
+            <span id="custom-status" style="color: var(--rust);">⚠ Beträge eintragen</span>
+          </div>
+          <button type="button" onclick="autoFillCustomRest()" style="margin-top: 0.5rem; background: transparent; border: 1px solid var(--line-strong); color: var(--paper-dim); padding: 0.4rem 0.8rem; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 12px; cursor: pointer;">⚖ Rest gleichmäßig verteilen</button>
         </div>
       </div>
 
@@ -3122,9 +3146,118 @@ async function loadExpenses() {
   }
 }
 
+function setSplitMode(mode) {
+  const equalArea = document.getElementById('split-equal-area');
+  const customArea = document.getElementById('split-custom-area');
+  const equalBtn = document.getElementById('split-mode-equal');
+  const customBtn = document.getElementById('split-mode-custom');
+  if (!equalArea || !customArea) return;
+  
+  if (mode === 'custom') {
+    equalArea.style.display = 'none';
+    customArea.style.display = 'block';
+    equalBtn.style.background = 'transparent'; equalBtn.style.color = 'var(--paper-dim)';
+    customBtn.style.background = 'var(--rust)'; customBtn.style.color = 'white';
+    renderCustomShareInputs();
+  } else {
+    equalArea.style.display = 'block';
+    customArea.style.display = 'none';
+    equalBtn.style.background = 'var(--rust)'; equalBtn.style.color = 'white';
+    customBtn.style.background = 'transparent'; customBtn.style.color = 'var(--paper-dim)';
+  }
+}
+
+function renderCustomShareInputs() {
+  const container = document.getElementById('exp-custom-shares');
+  if (!container) return;
+  // Übernehme bestehende Werte falls schon eingegeben
+  const existing = {};
+  container.querySelectorAll('input[type="number"]').forEach(inp => {
+    existing[inp.dataset.rider] = inp.value;
+  });
+  container.innerHTML = RIDERS.map(name => {
+    const val = existing[name] || '';
+    return '<div style="display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.7rem; background: rgba(255,255,255,0.03); border: 1px solid var(--line-strong); border-radius: 4px;">'
+      + '<span style="flex: 1; color: var(--paper); font-size: 0.85rem;">' + escapeHtml(name) + '</span>'
+      + '<input type="number" step="0.01" min="0" placeholder="0.00" value="' + val + '" data-rider="' + escapeHtml(name) + '" oninput="updateCustomSum()" style="width: 90px; padding: 0.4rem 0.6rem; background: rgba(255,255,255,0.05); border: 1px solid var(--line-strong); border-radius: 4px; color: var(--paper); font-family: \'JetBrains Mono\', monospace; font-size: 0.85rem; text-align: right;">'
+      + '<span style="color: var(--paper-dim); font-size: 0.85rem;">€</span>'
+      + '</div>';
+  }).join('');
+  updateCustomSum();
+}
+
+function updateCustomSum() {
+  const inputs = document.querySelectorAll('#exp-custom-shares input[type="number"]');
+  let sum = 0;
+  inputs.forEach(inp => {
+    const v = parseFloat(inp.value);
+    if (!isNaN(v) && v > 0) sum += v;
+  });
+  const target = parseFloat(document.getElementById('exp-amount').value) || 0;
+  const sumEl = document.getElementById('custom-sum');
+  const targetEl = document.getElementById('custom-target');
+  const statusEl = document.getElementById('custom-status');
+  if (sumEl) sumEl.textContent = sum.toFixed(2).replace('.', ',') + ' €';
+  if (targetEl) targetEl.textContent = target.toFixed(2).replace('.', ',') + ' €';
+  if (statusEl) {
+    const diff = Math.abs(sum - target);
+    if (target === 0) {
+      statusEl.textContent = '⚠ Erst Gesamtbetrag eingeben';
+      statusEl.style.color = 'var(--paper-dark)';
+    } else if (diff < 0.01) {
+      statusEl.textContent = '✓ passt';
+      statusEl.style.color = 'var(--moss)';
+    } else if (sum < target) {
+      statusEl.textContent = '⚠ noch ' + (target - sum).toFixed(2).replace('.', ',') + ' € zu verteilen';
+      statusEl.style.color = 'var(--rust)';
+    } else {
+      statusEl.textContent = '⚠ ' + (sum - target).toFixed(2).replace('.', ',') + ' € zu viel';
+      statusEl.style.color = 'var(--rust)';
+    }
+  }
+}
+
+function autoFillCustomRest() {
+  const target = parseFloat(document.getElementById('exp-amount').value) || 0;
+  if (target <= 0) { toast('Erst Gesamtbetrag eingeben', true); return; }
+  const inputs = Array.from(document.querySelectorAll('#exp-custom-shares input[type="number"]'));
+  let assigned = 0;
+  const empty = [];
+  inputs.forEach(inp => {
+    const v = parseFloat(inp.value);
+    if (!isNaN(v) && v > 0) {
+      assigned += v;
+    } else {
+      empty.push(inp);
+    }
+  });
+  const remaining = target - assigned;
+  if (empty.length === 0) { toast('Keine leeren Felder mehr', true); return; }
+  if (remaining <= 0) { toast('Schon alles verteilt', true); return; }
+  const perPerson = remaining / empty.length;
+  empty.forEach((inp, i) => {
+    // Last person gets the rounding diff
+    if (i === empty.length - 1) {
+      const distributed = (empty.length - 1) * (Math.round(perPerson * 100) / 100);
+      inp.value = (remaining - distributed).toFixed(2);
+    } else {
+      inp.value = (Math.round(perPerson * 100) / 100).toFixed(2);
+    }
+  });
+  updateCustomSum();
+}
+
+// Live-Update von custom-target wenn exp-amount geändert wird
+document.addEventListener('DOMContentLoaded', () => {
+  const amountInput = document.getElementById('exp-amount');
+  if (amountInput) amountInput.addEventListener('input', updateCustomSum);
+});
+
 function toggleAllPaidFor(checked) {
   document.querySelectorAll('#exp-paid-for input[name="paid-for-rider"]').forEach(cb => cb.checked = checked);
 }
+
+let editingExpenseId = null; // null = neu, sonst ID des zu bearbeitenden Eintrags
 
 async function submitExpense(e) {
   e.preventDefault();
@@ -3144,11 +3277,34 @@ async function submitExpense(e) {
   const category = document.getElementById('exp-category').value;
   const date = document.getElementById('exp-date').value;
   const notes = document.getElementById('exp-notes').value.trim();
-  const paidFor = Array.from(document.querySelectorAll('#exp-paid-for input[name="paid-for-rider"]:checked')).map(cb => cb.value);
 
   if (!amount || amount <= 0) { toast('Bitte gültigen Betrag eingeben', true); return; }
   if (!description) { toast('Bitte Beschreibung eingeben', true); return; }
-  if (paidFor.length === 0) { toast('Bitte mind. eine Person auswählen', true); return; }
+
+  // Aufteilungs-Modus prüfen
+  const customArea = document.getElementById('split-custom-area');
+  const isCustom = customArea && customArea.style.display !== 'none';
+  let paidFor, customShares = null;
+
+  if (isCustom) {
+    // Custom-Modus: pro Person ein Eurobetrag
+    customShares = {};
+    let sum = 0;
+    document.querySelectorAll('#exp-custom-shares input[type="number"]').forEach(inp => {
+      const v = parseFloat(inp.value);
+      if (!isNaN(v) && v > 0) {
+        customShares[inp.dataset.rider] = Math.round(v * 100) / 100;
+        sum += v;
+      }
+    });
+    if (Object.keys(customShares).length === 0) { toast('Bitte mind. eine Person mit Betrag eintragen', true); return; }
+    if (Math.abs(sum - amount) > 0.01) { toast('Summe (' + sum.toFixed(2) + ' €) stimmt nicht mit Gesamtbetrag (' + amount.toFixed(2) + ' €) überein', true); return; }
+    paidFor = Object.keys(customShares);
+  } else {
+    // Equal-Modus: Checkboxes
+    paidFor = Array.from(document.querySelectorAll('#exp-paid-for input[name="paid-for-rider"]:checked')).map(cb => cb.value);
+    if (paidFor.length === 0) { toast('Bitte mind. eine Person auswählen', true); return; }
+  }
 
   const submitBtn = document.getElementById('exp-submit-btn');
   submitBtn.disabled = true;
@@ -3168,23 +3324,46 @@ async function submitExpense(e) {
       receiptUrl = urlData.publicUrl;
     }
 
-    const id = 'exp-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
-    const { error } = await sb.from('expenses').insert({
-      id: id,
-      amount: amount,
-      description: description,
-      paid_by: currentUser.name,
-      paid_for: paidFor,
-      category: category || null,
-      receipt_url: receiptUrl,
-      expense_date: date || null,
-      notes: notes || null
-    });
+    let error;
+    if (editingExpenseId) {
+      // UPDATE: bestehenden Eintrag ändern
+      const update = {
+        amount: amount,
+        description: description,
+        paid_for: paidFor,
+        custom_shares: customShares,
+        category: category || null,
+        expense_date: date || null,
+        notes: notes || null
+      };
+      // receipt_url nur überschreiben wenn neue Quittung hochgeladen
+      if (receiptUrl) update.receipt_url = receiptUrl;
+      const r = await sb.from('expenses').update(update).eq('id', editingExpenseId);
+      error = r.error;
+    } else {
+      // INSERT: neuer Eintrag
+      const id = 'exp-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
+      const r = await sb.from('expenses').insert({
+        id: id,
+        amount: amount,
+        description: description,
+        paid_by: currentUser.name,
+        paid_for: paidFor,
+        custom_shares: customShares,
+        category: category || null,
+        receipt_url: receiptUrl,
+        expense_date: date || null,
+        notes: notes || null
+      });
+      error = r.error;
+    }
     if (error) throw error;
 
     // Bestätigung
-    const summary = '💸 ' + amount.toFixed(2) + '€ · ' + description + ' · ' + currentUser.name + ' für ' + paidFor.length + ' Person' + (paidFor.length !== 1 ? 'en' : '') + (receiptUrl ? ' · Quittung ✓' : '');
+    const action = editingExpenseId ? '✏️ aktualisiert' : '💸 gespeichert';
+    const summary = action + ': ' + amount.toFixed(2) + '€ · ' + description + ' · ' + paidFor.length + ' Person' + (paidFor.length !== 1 ? 'en' : '') + (receiptUrl ? ' · Quittung ✓' : '');
     toast(summary);
+    editingExpenseId = null;
 
     // Form reset
     document.getElementById('expense-form').reset();
@@ -3192,6 +3371,13 @@ async function submitExpense(e) {
     const dateField = document.getElementById('exp-date');
     if (dateField) dateField.value = new Date().toISOString().split('T')[0];
     toggleAllPaidFor(true);
+    setSplitMode('equal'); // zurück zum Default
+    document.getElementById('exp-custom-shares').innerHTML = '';
+    // Submit-Button-Text zurücksetzen falls Edit-Mode war
+    const formTitle = document.getElementById('expense-form-title');
+    if (formTitle) formTitle.textContent = '💸 Neue Auslage erfassen';
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    if (cancelEditBtn) cancelEditBtn.style.display = 'none';
 
     await loadExpenses();
   } catch (err) {
@@ -3201,6 +3387,65 @@ async function submitExpense(e) {
     submitBtn.disabled = false;
     submitBtn.textContent = '💸 Auslage speichern';
   }
+}
+
+function startEditExpense(id) {
+  const exp = expenses.find(e => e.id === id);
+  if (!exp) { toast('Auslage nicht gefunden', true); return; }
+  if (!kasseUnlocked) {
+    toast('Bearbeiten nur mit Kassenwart-Passwort möglich', true);
+    return;
+  }
+  // Form befüllen
+  editingExpenseId = id;
+  document.getElementById('exp-amount').value = exp.amount;
+  document.getElementById('exp-description').value = exp.description || '';
+  document.getElementById('exp-category').value = exp.category || '';
+  document.getElementById('exp-date').value = exp.expense_date || '';
+  document.getElementById('exp-notes').value = exp.notes || '';
+  document.getElementById('exp-receipt-preview').innerHTML = exp.receipt_url
+    ? '<div style="font-size: 0.75rem; color: var(--paper-dim); margin-top: 0.3rem;">📷 Bestehende Quittung bleibt — neue hochladen zum Ersetzen</div>'
+    : '';
+
+  // Modus setzen je nachdem ob custom_shares vorhanden
+  if (exp.custom_shares && Object.keys(exp.custom_shares).length > 0) {
+    setSplitMode('custom');
+    setTimeout(() => {
+      document.querySelectorAll('#exp-custom-shares input[type="number"]').forEach(inp => {
+        const v = exp.custom_shares[inp.dataset.rider];
+        inp.value = (v !== undefined && v !== null) ? v : '';
+      });
+      updateCustomSum();
+    }, 50);
+  } else {
+    setSplitMode('equal');
+    setTimeout(() => {
+      document.querySelectorAll('#exp-paid-for input[name="paid-for-rider"]').forEach(cb => {
+        cb.checked = (exp.paid_for || []).includes(cb.value);
+      });
+    }, 50);
+  }
+
+  // UI in Edit-Mode
+  document.getElementById('expense-form-title').textContent = '✏️ Auslage bearbeiten';
+  document.getElementById('cancel-edit-btn').style.display = 'inline-block';
+  document.getElementById('exp-submit-btn').textContent = '✏️ Änderungen speichern';
+  // Hochscrollen zum Form
+  document.getElementById('expense-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelEditExpense() {
+  editingExpenseId = null;
+  document.getElementById('expense-form').reset();
+  document.getElementById('exp-receipt-preview').innerHTML = '';
+  const dateField = document.getElementById('exp-date');
+  if (dateField) dateField.value = new Date().toISOString().split('T')[0];
+  toggleAllPaidFor(true);
+  setSplitMode('equal');
+  document.getElementById('exp-custom-shares').innerHTML = '';
+  document.getElementById('expense-form-title').textContent = '💸 Neue Auslage erfassen';
+  document.getElementById('cancel-edit-btn').style.display = 'none';
+  document.getElementById('exp-submit-btn').textContent = '💸 Auslage speichern';
 }
 
 function checkKassePassword(e) {
@@ -3239,12 +3484,20 @@ function renderKasseOverview() {
   expenses.forEach(e => {
     const amt = parseFloat(e.amount || 0);
     if (paidByPerson[e.paid_by] !== undefined) paidByPerson[e.paid_by] += amt;
-    const paidFor = (e.paid_for || []);
-    if (paidFor.length > 0) {
-      const share = amt / paidFor.length;
-      paidFor.forEach(person => {
+    // Custom-Shares haben Vorrang vor gleichmäßiger Aufteilung
+    if (e.custom_shares && typeof e.custom_shares === 'object' && Object.keys(e.custom_shares).length > 0) {
+      Object.keys(e.custom_shares).forEach(person => {
+        const share = parseFloat(e.custom_shares[person]) || 0;
         if (owesByPerson[person] !== undefined) owesByPerson[person] += share;
       });
+    } else {
+      const paidFor = (e.paid_for || []);
+      if (paidFor.length > 0) {
+        const share = amt / paidFor.length;
+        paidFor.forEach(person => {
+          if (owesByPerson[person] !== undefined) owesByPerson[person] += share;
+        });
+      }
     }
   });
 
@@ -3300,21 +3553,36 @@ function renderKasseOverview() {
     const dateStr = e.expense_date ? new Date(e.expense_date).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit' }) : '';
     const cat = e.category || '';
     const paidFor = e.paid_for || [];
-    const paidForStr = paidFor.length === RIDERS.length ? 'alle' : paidFor.join(', ');
+    const hasCustom = e.custom_shares && typeof e.custom_shares === 'object' && Object.keys(e.custom_shares).length > 0;
+    let paidForStr;
+    if (hasCustom) {
+      const parts = Object.keys(e.custom_shares).map(p => p + ' ' + parseFloat(e.custom_shares[p]).toFixed(2) + '€');
+      paidForStr = parts.join(', ');
+    } else {
+      paidForStr = paidFor.length === RIDERS.length ? 'alle gleich' : paidFor.join(', ');
+    }
     const isMine = currentUser && e.paid_by === currentUser.name;
-    const canDelete = isMine || kasseUnlocked;
+    // Bearbeiten/Löschen nur durch Kassenwart (mit Passwort)
+    const canEdit = kasseUnlocked;
+    const canDelete = kasseUnlocked;
     html += '<div style="background: rgba(255,255,255,0.02); border: 1px solid var(--line-strong); border-left: 3px solid ' + (isMine ? 'var(--rust)' : '#8a8068') + '; border-radius: 4px; padding: 0.8rem 0.9rem;">';
     html += '<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.3rem;">';
     html += '<div style="flex:1;">';
     html += '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.2rem;">';
     html += '<strong style="color: var(--paper); font-size: 0.9rem;">' + escapeHtml(e.description) + '</strong>';
     if (cat) html += '<span style="font-size: 0.7rem; color: var(--paper-dim); font-family: \'JetBrains Mono\', monospace;">' + escapeHtml(cat) + '</span>';
+    if (hasCustom) html += '<span style="font-size: 0.6rem; color: var(--gold); font-family: \'JetBrains Mono\', monospace; padding: 0.1rem 0.4rem; border: 1px solid var(--gold); border-radius: 8px; letter-spacing: 0.05em;">INDIVID.</span>';
     html += '</div>';
-    html += '<div style="color: var(--paper-dim); font-size: 0.7rem; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.05em;">' + escapeHtml(e.paid_by) + ' → ' + escapeHtml(paidForStr) + (dateStr ? ' · ' + dateStr : '') + '</div>';
+    html += '<div style="color: var(--paper-dim); font-size: 0.7rem; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.05em; margin-bottom: 0.2rem;"><strong>' + escapeHtml(e.paid_by) + '</strong> bezahlt' + (dateStr ? ' · ' + dateStr : '') + '</div>';
+    html += '<div style="color: var(--paper-dim); font-size: 0.7rem; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.03em;">für: ' + escapeHtml(paidForStr) + '</div>';
     if (e.notes) html += '<div style="color: var(--paper-dim); font-size: 0.78rem; font-style: italic; margin-top: 0.3rem;">' + escapeHtml(e.notes) + '</div>';
     html += '</div>';
-    html += '<div style="text-align: right; flex-shrink: 0;"><div style="font-family: \'JetBrains Mono\', monospace; color: var(--gold); font-size: 1rem; font-weight: 600;">' + amt.toFixed(2) + ' €</div>';
-    if (canDelete) html += '<button onclick="deleteExpense(\'' + e.id + '\')" style="background:none; border: 1px solid var(--line-strong); color: var(--paper-dark); padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer; font-size: 0.65rem; margin-top: 0.3rem;" title="Löschen">🗑</button>';
+    html += '<div style="text-align: right; flex-shrink: 0; display: flex; flex-direction: column; gap: 0.3rem; align-items: flex-end;">';
+    html += '<div style="font-family: \'JetBrains Mono\', monospace; color: var(--gold); font-size: 1rem; font-weight: 600;">' + amt.toFixed(2) + ' €</div>';
+    html += '<div style="display: flex; gap: 0.3rem;">';
+    if (canEdit) html += '<button onclick="startEditExpense(\'' + e.id + '\')" style="background:none; border: 1px solid var(--line-strong); color: var(--gold); padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer; font-size: 0.7rem;" title="Bearbeiten">✏️</button>';
+    if (canDelete) html += '<button onclick="deleteExpense(\'' + e.id + '\')" style="background:none; border: 1px solid var(--line-strong); color: var(--paper-dark); padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer; font-size: 0.65rem;" title="Löschen">🗑</button>';
+    html += '</div>';
     html += '</div>';
     html += '</div>';
     if (e.receipt_url) html += '<a href="' + e.receipt_url + '" target="_blank" rel="noopener" style="display: inline-block; margin-top: 0.5rem;"><img src="' + e.receipt_url + '" alt="Quittung" style="max-width: 120px; max-height: 120px; border-radius: 4px; border: 1px solid var(--line-strong); cursor: zoom-in;"></a>';
@@ -3355,6 +3623,10 @@ function calculateSettlements(balance) {
 }
 
 async function deleteExpense(id) {
+  if (!kasseUnlocked) {
+    toast('Löschen nur mit Kassenwart-Passwort möglich', true);
+    return;
+  }
   const exp = expenses.find(e => e.id === id);
   if (!exp) return;
   if (!confirm('Auslage "' + exp.description + '" (' + parseFloat(exp.amount).toFixed(2) + '€) wirklich löschen?')) return;
