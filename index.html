@@ -1673,9 +1673,22 @@ function getKmGefahren() {
   ETAPPEN.forEach(e => {
     const s = getEtappeStatus(e.num);
     if (s === 'done') {
+      // Abgeschlossene Etappe: actualKm aus etappeStats, sonst geplante Distanz
       const stats = etappeStats[e.num];
       km += (stats && stats.actualKm) ? parseFloat(stats.actualKm) : (e.distance || 0);
+    } else if (s === 'current') {
+      // Laufende Etappe: höchster km-Wert aus heutigen Posts dieser Etappe
+      // (Posts haben km = Tageskilometer, also der bisher weiteste Punkt)
+      let maxKm = 0;
+      posts.forEach(p => {
+        if (p.etappe === e.num && p.km != null) {
+          const v = parseFloat(p.km);
+          if (!isNaN(v) && v > maxKm) maxKm = v;
+        }
+      });
+      km += maxKm;
     }
+    // future: 0, nicht zählen
   });
   return km;
 }
