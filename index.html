@@ -1239,7 +1239,7 @@ body.hero-collapsed .hero-compact { display: flex; }
   <button class="lightbox-close" onclick="closeLightbox()" aria-label="Schließen">✕</button>
   <button class="lightbox-prev" onclick="lightboxPrev(event)" aria-label="Zurück">‹</button>
   <button class="lightbox-next" onclick="lightboxNext(event)" aria-label="Weiter">›</button>
-  <!-- Diashow-Button entfernt (Notfall-Fix) -->
+  <button class="lightbox-play" onclick="lightboxToggleSlideshow(event)" id="lightbox-play-btn" aria-label="Diashow">▶</button>
   <div class="lightbox-counter" id="lightbox-counter">1 / 1</div>
   <div class="lightbox-meta" id="lightbox-meta"></div>
   <div class="lightbox-imgwrap" id="lightbox-imgwrap">
@@ -2399,9 +2399,18 @@ function lightboxPrev(e) {
 }
 
 function lightboxToggleSlideshow(e) {
-  // Diashow deaktiviert (Notfall-Fix)
   if (e) e.stopPropagation();
-  return;
+  const btn = document.getElementById('lightbox-play-btn');
+  if (lightboxSlideshow) {
+    stopSlideshow();
+  } else {
+    if (lightboxItems.length <= 1) return;
+    lightboxSlideshow = setInterval(() => {
+      lightboxIdx = (lightboxIdx + 1) % lightboxItems.length;
+      showLightboxImage();
+    }, 3500);
+    if (btn) btn.textContent = '⏸';
+  }
 }
 
 function stopSlideshow() {
@@ -2435,6 +2444,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') { lightboxNext(); }
   else if (e.key === 'ArrowLeft') { lightboxPrev(); }
   else if (e.key === 'Escape') { closeLightbox(); }
+  else if (e.key === ' ') { e.preventDefault(); lightboxToggleSlideshow(); }
 });
 
 // Touch / Swipe
@@ -4552,6 +4562,15 @@ function initRealtimeSubscriptions() {
     applyGuestRestrictions();
   }
 
+  // WICHTIG: Click-Listener SOFORT registrieren, damit Buttons auch funktionieren,
+  // wenn die awaits unten hängen (z.B. wackeliges Netz beim Realtime-Subscribe)
+  const postSubmitBtn = document.getElementById('post-submit');
+  if (postSubmitBtn) postSubmitBtn.addEventListener('click', submitPost);
+  const tachoStartBtn = document.getElementById('tacho-start');
+  if (tachoStartBtn) tachoStartBtn.addEventListener('click', () => tachoState.watching ? stopTacho() : startTacho());
+  const tachoResetBtn = document.getElementById('tacho-reset');
+  if (tachoResetBtn) tachoResetBtn.addEventListener('click', resetTacho);
+
   // App-Initialisierung läuft trotzdem (so dass Login-User direkt App sieht)
   await loadData();
   initDropdowns();
@@ -4565,9 +4584,6 @@ function initRealtimeSubscriptions() {
   initPacking();
   await loadPackingData();
   initRealtimeSubscriptions();
-  document.getElementById('post-submit').addEventListener('click', submitPost);
-  document.getElementById('tacho-start').addEventListener('click', () => tachoState.watching ? stopTacho() : startTacho());
-  document.getElementById('tacho-reset').addEventListener('click', resetTacho);
 
   // Wenn User schon eingeloggt: Author-Dropdown vorbelegen
   if (currentUser) afterLoginInit();
