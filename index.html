@@ -1562,31 +1562,35 @@ async function loadData() {
 }
 
 async function loadPhotosInBatches() {
-  const BATCH_SIZE = 5;  // 5 Posts gleichzeitig laden
+  // Einzeln laden, nicht in Batches — lange URLs werden von Safari geblockt
   const postIds = posts.map(p => p.id);
-  for (let i = 0; i < postIds.length; i += BATCH_SIZE) {
-    const batch = postIds.slice(i, i + BATCH_SIZE);
+  let renderCounter = 0;
+  for (const postId of postIds) {
     try {
       const { data, error } = await sb
         .from('posts')
-        .select('id, photos')
-        .in('id', batch);
+        .select('photos')
+        .eq('id', postId)
+        .single();
       if (error) {
-        console.warn('Batch-Foto-Lade-Fehler:', error);
+        console.warn('Foto-Lade-Fehler für ' + postId + ':', error);
         continue;
       }
-      // Fotos in posts-Array einsortieren
-      (data || []).forEach(row => {
-        const post = posts.find(p => p.id === row.id);
-        if (post) post.photos = row.photos || [];
-      });
-      // Render aktualisieren mit den neu geladenen Fotos
-      renderFeed();
-      renderGallery();
+      const post = posts.find(p => p.id === postId);
+      if (post) post.photos = data.photos || [];
+      // Render alle 3 Posts neu (nicht nach jedem - wäre zu viel)
+      renderCounter++;
+      if (renderCounter % 3 === 0) {
+        renderFeed();
+        renderGallery();
+      }
     } catch (e) {
-      console.warn('Batch-Lade-Ausnahme:', e);
+      console.warn('Foto-Lade-Ausnahme:', e);
     }
   }
+  // Final render mit allen Fotos
+  renderFeed();
+  renderGallery();
 }
 async function savePosts() {
   // No-op: individual posts are saved via savePostToDb / deletePostFromDb
