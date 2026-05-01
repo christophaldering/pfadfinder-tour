@@ -1230,6 +1230,7 @@ body.hero-collapsed .hero-compact { display: flex; }
   <div class="share-bar">
     <button class="share-btn" onclick="copyLink()">Link kopieren</button>
     <button class="share-btn" onclick="exportData()">Backup exportieren</button>
+    <button class="share-btn" onclick="migratePhotosToStorage()" style="background:rgba(217,119,87,0.15);border-color:#d97757;color:#d97757;">📤 Fotos in Storage migrieren</button>
   </div>
 </footer>
 
@@ -1499,22 +1500,22 @@ function getEtappeStatus(num) {
 
 async function loadData() {
   try {
-    // Load posts
+    // SCHRITT 1: Posts laden OHNE Fotos (klein, schnell, kein Timeout)
     const { data: postsData, error: postsErr } = await sb
       .from('posts')
-      .select('*')
+      .select('id, author, etappe, km, km_auto, text, photo_gps, timestamp')
       .order('timestamp', { ascending: false });
     if (postsErr) throw postsErr;
     posts = (postsData || []).map(p => ({
       id: p.id, author: p.author, etappe: p.etappe,
       km: p.km, kmAuto: p.km_auto,
       text: p.text || '',
-      photos: p.photos || [],
+      photos: [],  // Fotos werden in Schritt 3 nachgeladen
       photoGps: p.photo_gps || [],
       timestamp: parseInt(p.timestamp)
     }));
 
-    // Load comments (grouped by post_id)
+    // SCHRITT 2: Comments + Etappe Stats laden
     const { data: commentsData, error: commErr } = await sb
       .from('comments')
       .select('*')
@@ -1529,7 +1530,6 @@ async function loadData() {
       });
     });
 
-    // Load etappe stats
     const { data: statsData, error: statsErr } = await sb
       .from('etappe_stats')
       .select('*');
@@ -1542,7 +1542,6 @@ async function loadData() {
         weatherIcon: s.weather_icon, notes: s.notes,
         stravaId: s.strava_id
       };
-      // GPX-Track-Daten zurück-mappen falls vorhanden
       if (s.gpx_data && typeof s.gpx_data === 'object') {
         entry.gpxCoords = s.gpx_data.coords || null;
         entry.gpxAvgSpeed = s.gpx_data.avgSpeed || null;
@@ -1551,9 +1550,42 @@ async function loadData() {
       }
       etappeStats[s.etappe_num] = entry;
     });
+
+    // SCHRITT 3: Fotos in kleinen Batches nachladen (im Hintergrund, async)
+    // App rendert sich schon mal mit leeren Foto-Arrays, Fotos kommen nach und nach
+    loadPhotosInBatches();
+
   } catch (e) {
     console.error('loadData error:', e);
     toast('Daten laden fehlgeschlagen', true);
+  }
+}
+
+async function loadPhotosInBatches() {
+  const BATCH_SIZE = 5;  // 5 Posts gleichzeitig laden
+  const postIds = posts.map(p => p.id);
+  for (let i = 0; i < postIds.length; i += BATCH_SIZE) {
+    const batch = postIds.slice(i, i + BATCH_SIZE);
+    try {
+      const { data, error } = await sb
+        .from('posts')
+        .select('id, photos')
+        .in('id', batch);
+      if (error) {
+        console.warn('Batch-Foto-Lade-Fehler:', error);
+        continue;
+      }
+      // Fotos in posts-Array einsortieren
+      (data || []).forEach(row => {
+        const post = posts.find(p => p.id === row.id);
+        if (post) post.photos = row.photos || [];
+      });
+      // Render aktualisieren mit den neu geladenen Fotos
+      renderFeed();
+      renderGallery();
+    } catch (e) {
+      console.warn('Batch-Lade-Ausnahme:', e);
+    }
   }
 }
 async function savePosts() {
@@ -1664,6 +1696,61 @@ function compressImage(file, maxSize = 1200, quality = 0.78) {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+// Variante die einen Blob zurückgibt (für Storage-Upload)
+function compressImageToBlob(file, maxSize = 1600, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxSize || height > maxSize) {
+          const ratio = Math.min(maxSize/width, maxSize/height);
+          width = Math.round(width * ratio); height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        canvas.toBlob(blob => {
+          if (blob) resolve(blob);
+          else reject(new Error('Blob-Erstellung fehlgeschlagen'));
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Wandelt Data-URL (base64) in Blob um (für Migration)
+function dataUrlToBlob(dataUrl) {
+  const [header, base64] = dataUrl.split(',');
+  const mimeMatch = header.match(/data:([^;]+)/);
+  const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+  const binary = atob(base64);
+  const arr = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
+// Lädt einen Foto-Blob in den Storage-Bucket 'post-photos' hoch
+// Gibt die public URL zurück
+async function uploadPhotoToStorage(blob, postId, idx) {
+  const filename = `${postId}_${idx}_${Date.now()}.jpg`;
+  const { error } = await sb.storage
+    .from('post-photos')
+    .upload(filename, blob, {
+      contentType: 'image/jpeg',
+      cacheControl: '31536000',
+      upsert: false
+    });
+  if (error) throw error;
+  const { data: urlData } = sb.storage.from('post-photos').getPublicUrl(filename);
+  return urlData.publicUrl;
 }
 
 function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
@@ -1868,7 +1955,7 @@ function renderPost(p) {
   else if (p.etappe === 6) etappeTag = '<span class="post-etappe-tag">🚗 Rückreise</span>';
   else if (p.etappe) etappeTag = `<span class="post-etappe-tag">Etappe ${p.etappe}</span>`;
   const kmTag = p.km ? `<span class="post-km-tag">${p.kmAuto ? '📍' : ''} km ${p.km}</span>` : '';
-  const photos = (p.photos || []).map((src, i) => `<img class="post-photo" src="${src}" alt="" onclick="openLightbox('${p.id}', ${i})">`).join('');
+  const photos = (p.photos || []).map((src, i) => `<img class="post-photo" src="${src}" alt="" loading="lazy" decoding="async" onclick="openLightbox('${p.id}', ${i})">`).join('');
   const postComments = comments[p.id] || [];
   const commentsHtml = postComments.map(c => `
     <div class="comment">
@@ -1911,7 +1998,7 @@ function renderGallery() {
   if (allPhotos.length === 0) { grid.style.display = 'none'; empty.style.display = 'block'; return; }
   grid.style.display = 'grid'; empty.style.display = 'none';
   allPhotos.sort((a, b) => b.ts - a.ts);
-  grid.innerHTML = allPhotos.map(p => `<img src="${p.src}" alt="" onclick="openLightbox('${p.postId}', ${p.idx}, 'gallery')">`).join('');
+  grid.innerHTML = allPhotos.map(p => `<img src="${p.src}" alt="" loading="lazy" decoding="async" onclick="openLightbox('${p.postId}', ${p.idx}, 'gallery')">`).join('');
 }
 
 function renderStatsPage() {
@@ -2238,23 +2325,30 @@ async function submitPost() {
     const photos = [];
     const photoGps = [];
     let autoKm = null;
+    // Post-ID schon hier generieren, damit Foto-Dateinamen sie nutzen können
+    const postId = 'p' + Date.now() + Math.random().toString(36).slice(2, 7);
+    let idx = 0;
     for (const f of fileInput.files) {
       // Extract GPS BEFORE compressing (compression strips EXIF)
       const gps = await extractGpsFromFile(f);
       photoGps.push(gps);
-      photos.push(await compressImage(f));
+      // Komprimieren als Blob → Storage-Upload → URL in DB
+      const blob = await compressImageToBlob(f);
+      const url = await uploadPhotoToStorage(blob, postId, idx);
+      photos.push(url);
       // Auto-calculate km from first photo with GPS, if etappe is set
       if (autoKm === null && gps && etappe) {
         autoKm = calculateKmFromGps(parseInt(etappe), gps.lat, gps.lon);
       }
+      idx++;
     }
     const km = document.getElementById('post-km').value;
     const finalKm = km ? parseFloat(km) : autoKm;
     const post = {
-      id: 'p' + Date.now() + Math.random().toString(36).slice(2, 7),
+      id: postId,
       author, etappe: etappe ? parseInt(etappe) : null,
       km: finalKm,
-      kmAuto: !km && autoKm !== null,  // mark auto-calculated km
+      kmAuto: !km && autoKm !== null,
       text, photos, photoGps,
       timestamp: Date.now()
     };
@@ -2481,6 +2575,106 @@ function copyLink() {
   navigator.clipboard.writeText(window.location.href)
     .then(() => toast('Link kopiert ✓')).catch(() => toast('Kopieren fehlgeschlagen', true));
 }
+
+// === STORAGE-MIGRATION ===
+// Wandelt alle base64-Fotos in den Posts in Storage-URLs um.
+// Läuft im Browser, kann jederzeit unterbrochen und wiederaufgenommen werden.
+async function migratePhotosToStorage() {
+  if (!confirm('Foto-Migration starten?\n\nAlle base64-Fotos in der Datenbank werden in Storage hochgeladen und durch URLs ersetzt.\n\nDas kann je nach Foto-Anzahl mehrere Minuten dauern.\n\nDie App ist während der Migration weiter benutzbar.')) return;
+
+  // Migrations-Status-Toast erstellen
+  let statusEl = document.getElementById('migration-status');
+  if (!statusEl) {
+    statusEl = document.createElement('div');
+    statusEl.id = 'migration-status';
+    statusEl.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1410;color:#f5e9d4;border:2px solid #d97757;border-radius:8px;padding:1rem 1.5rem;font-family:JetBrains Mono,monospace;font-size:0.85rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.5);min-width:280px;text-align:center;';
+    document.body.appendChild(statusEl);
+  }
+  const setStatus = (msg) => { statusEl.innerHTML = msg; };
+
+  setStatus('🔍 Posts werden geprüft...');
+
+  try {
+    // Alle Posts laden (frische Kopie aus DB)
+    const { data: postsData, error: loadErr } = await sb
+      .from('posts')
+      .select('id, photos')
+      .order('timestamp', { ascending: true });
+    if (loadErr) throw loadErr;
+
+    // Posts identifizieren mit base64-Fotos
+    const todo = [];
+    for (const p of postsData) {
+      const photos = p.photos || [];
+      const hasBase64 = photos.some(ph => typeof ph === 'string' && ph.startsWith('data:'));
+      if (hasBase64) todo.push({ id: p.id, photos });
+    }
+
+    if (todo.length === 0) {
+      setStatus('✅ Nichts zu migrieren — alle Fotos sind bereits in Storage.');
+      setTimeout(() => statusEl.remove(), 4000);
+      return;
+    }
+
+    setStatus(`🔄 Starte Migration für ${todo.length} Posts...`);
+    let done = 0;
+    let totalPhotos = 0;
+    let migratedPhotos = 0;
+    todo.forEach(p => totalPhotos += p.photos.filter(ph => typeof ph === 'string' && ph.startsWith('data:')).length);
+
+    for (const p of todo) {
+      done++;
+      const newPhotos = [];
+      let idx = 0;
+      for (const photo of p.photos) {
+        if (typeof photo === 'string' && photo.startsWith('data:')) {
+          // base64 → Blob → Storage → URL
+          try {
+            const blob = dataUrlToBlob(photo);
+            const url = await uploadPhotoToStorage(blob, p.id, idx);
+            newPhotos.push(url);
+            migratedPhotos++;
+            setStatus(`📤 Post ${done}/${todo.length}<br>Foto ${migratedPhotos}/${totalPhotos} hochgeladen`);
+          } catch (e) {
+            console.error('Upload fehler bei Post ' + p.id + ' Foto ' + idx + ':', e);
+            // Bei Fehler base64 behalten (App zeigt es weiter an)
+            newPhotos.push(photo);
+          }
+        } else {
+          // Schon URL oder anderes Format → unverändert übernehmen
+          newPhotos.push(photo);
+        }
+        idx++;
+      }
+
+      // Post in DB updaten mit den neuen URLs
+      const { error: updErr } = await sb
+        .from('posts')
+        .update({ photos: newPhotos })
+        .eq('id', p.id);
+      if (updErr) {
+        console.error('Update-Fehler bei Post ' + p.id + ':', updErr);
+        setStatus(`⚠️ Fehler bei Post ${done}/${todo.length}: ${updErr.message}<br>Migration läuft trotzdem weiter...`);
+      }
+    }
+
+    setStatus(`✅ Migration abgeschlossen!<br>${migratedPhotos} Fotos in Storage<br><br>Bitte Seite neu laden.`);
+    // Reload erst nach manueller Bestätigung
+    setTimeout(() => {
+      if (confirm('Migration fertig. Seite jetzt neu laden?')) {
+        location.reload();
+      }
+    }, 1500);
+
+  } catch (e) {
+    console.error('Migrations-Fehler:', e);
+    setStatus('❌ Fehler: ' + (e.message || e));
+    setTimeout(() => statusEl.remove(), 8000);
+  }
+}
+
+// Macht die Funktion in der Console verfügbar (für manuellen Aufruf)
+window.migratePhotosToStorage = migratePhotosToStorage;
 
 function exportData() {
   const data = { posts, comments, etappeStats, exported: new Date().toISOString() };
@@ -3080,8 +3274,10 @@ function initPacking() {
       renderPacking();
     });
   });
-  document.getElementById('packing-custom-add-btn').addEventListener('click', addCustomPackingItem);
-  document.getElementById('packing-custom-input').addEventListener('keydown', e => {
+  const customAddBtn = document.getElementById('packing-custom-add-btn');
+  if (customAddBtn) customAddBtn.addEventListener('click', addCustomPackingItem);
+  const customInput = document.getElementById('packing-custom-input');
+  if (customInput) customInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') addCustomPackingItem();
   });
 }
