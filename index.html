@@ -1583,6 +1583,8 @@ async function loadPhotosInBatches() {
       if (renderCounter % 3 === 0) {
         renderFeed();
         renderGallery();
+        renderStats();
+        renderStatsPage();
       }
     } catch (e) {
       console.warn('Foto-Lade-Ausnahme:', e);
@@ -1591,6 +1593,8 @@ async function loadPhotosInBatches() {
   // Final render mit allen Fotos
   renderFeed();
   renderGallery();
+  renderStats();
+  renderStatsPage();
 }
 async function savePosts() {
   // No-op: individual posts are saved via savePostToDb / deletePostFromDb
