@@ -1666,70 +1666,20 @@ function compressImage(file, maxSize = 1200, quality = 0.78) {
   });
 }
 
-// Variante die einen Blob zurückgibt (für Storage-Upload statt base64-DB)
-function compressImageToBlob(file, maxSize = 1600, quality = 0.82) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxSize || height > maxSize) {
-          const ratio = Math.min(maxSize/width, maxSize/height);
-          width = Math.round(width * ratio); height = Math.round(height * ratio);
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width; canvas.height = height;
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        canvas.toBlob(blob => {
-          if (blob) resolve(blob);
-          else reject(new Error('Blob-Erstellung fehlgeschlagen'));
-        }, 'image/jpeg', quality);
-      };
-      img.onerror = reject;
-      img.src = e.target.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-// Lädt einen Foto-Blob in den Storage-Bucket 'post-photos' hoch
-// Gibt die public URL zurück
-async function uploadPhotoToStorage(blob, postId, idx) {
-  const ext = 'jpg';
-  const filename = `${postId}_${idx}_${Date.now()}.${ext}`;
-  const { data, error } = await sb.storage
-    .from('post-photos')
-    .upload(filename, blob, {
-      contentType: 'image/jpeg',
-      cacheControl: '31536000', // 1 Jahr Cache - Fotos ändern sich nie
-      upsert: false
-    });
-  if (error) throw error;
-  const { data: urlData } = sb.storage.from('post-photos').getPublicUrl(filename);
-  return urlData.publicUrl;
-}
-
 function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
 
 function getKmGefahren() {
-  // Strategie: Wenn für eine Etappe actualKm in etappeStats erfasst ist,
-  // diese verwenden (egal ob done oder current).
+  // Wenn für eine Etappe actualKm in etappeStats erfasst ist, diese verwenden.
   // Sonst: bei abgeschlossenen Etappen Plan-Distanz, bei laufenden 0.
   let km = 0;
   ETAPPEN.forEach(e => {
     const s = getEtappeStatus(e.num);
     const stats = etappeStats[e.num];
     if (stats && stats.actualKm) {
-      // Tatsächlich gefahrene km erfasst → immer verwenden
       km += parseFloat(stats.actualKm);
     } else if (s === 'done') {
-      // Abgeschlossen aber ohne actualKm → Plan-Distanz als Fallback
       km += (e.distance || 0);
     }
-    // current ohne actualKm → 0 (noch nicht erfasst)
-    // future → 0
   });
   return km;
 }
@@ -1918,7 +1868,7 @@ function renderPost(p) {
   else if (p.etappe === 6) etappeTag = '<span class="post-etappe-tag">🚗 Rückreise</span>';
   else if (p.etappe) etappeTag = `<span class="post-etappe-tag">Etappe ${p.etappe}</span>`;
   const kmTag = p.km ? `<span class="post-km-tag">${p.kmAuto ? '📍' : ''} km ${p.km}</span>` : '';
-  const photos = (p.photos || []).map((src, i) => `<img class="post-photo" src="${src}" alt="" loading="lazy" decoding="async" onclick="openLightbox('${p.id}', ${i})">`).join('');
+  const photos = (p.photos || []).map((src, i) => `<img class="post-photo" src="${src}" alt="" onclick="openLightbox('${p.id}', ${i})">`).join('');
   const postComments = comments[p.id] || [];
   const commentsHtml = postComments.map(c => `
     <div class="comment">
@@ -1961,7 +1911,7 @@ function renderGallery() {
   if (allPhotos.length === 0) { grid.style.display = 'none'; empty.style.display = 'block'; return; }
   grid.style.display = 'grid'; empty.style.display = 'none';
   allPhotos.sort((a, b) => b.ts - a.ts);
-  grid.innerHTML = allPhotos.map(p => `<img src="${p.src}" alt="" loading="lazy" decoding="async" onclick="openLightbox('${p.postId}', ${p.idx}, 'gallery')">`).join('');
+  grid.innerHTML = allPhotos.map(p => `<img src="${p.src}" alt="" onclick="openLightbox('${p.postId}', ${p.idx}, 'gallery')">`).join('');
 }
 
 function renderStatsPage() {
@@ -2288,27 +2238,20 @@ async function submitPost() {
     const photos = [];
     const photoGps = [];
     let autoKm = null;
-    // Post-ID schon hier generieren, damit die Foto-Dateinamen sie nutzen können
-    const postId = 'p' + Date.now() + Math.random().toString(36).slice(2, 7);
-    let idx = 0;
     for (const f of fileInput.files) {
       // Extract GPS BEFORE compressing (compression strips EXIF)
       const gps = await extractGpsFromFile(f);
       photoGps.push(gps);
-      // Komprimieren als Blob → Storage-Upload → URL in DB
-      const blob = await compressImageToBlob(f);
-      const url = await uploadPhotoToStorage(blob, postId, idx);
-      photos.push(url);
+      photos.push(await compressImage(f));
       // Auto-calculate km from first photo with GPS, if etappe is set
       if (autoKm === null && gps && etappe) {
         autoKm = calculateKmFromGps(parseInt(etappe), gps.lat, gps.lon);
       }
-      idx++;
     }
     const km = document.getElementById('post-km').value;
     const finalKm = km ? parseFloat(km) : autoKm;
     const post = {
-      id: postId,
+      id: 'p' + Date.now() + Math.random().toString(36).slice(2, 7),
       author, etappe: etappe ? parseInt(etappe) : null,
       km: finalKm,
       kmAuto: !km && autoKm !== null,  // mark auto-calculated km
@@ -3383,14 +3326,12 @@ async function loadExpenses() {
       const sizeKB = (file.size / 1024).toFixed(0);
       const fileLabel = escapeHtml(file.name) + ' · ' + sizeKB + ' KB';
       if (file.type && file.type.startsWith('image/')) {
-        // Bild-Vorschau
         const reader = new FileReader();
         reader.onload = ev => {
           preview.innerHTML = '<div style="position: relative; display:inline-block; margin-top: 0.3rem;"><img src="' + ev.target.result + '" style="max-width: 200px; max-height: 200px; border-radius: 4px; border: 1px solid var(--line-strong);"><span style="position:absolute; top:-8px; right:-8px; background: var(--moss); color: white; border-radius: 50%; width: 24px; height: 24px; display:flex; align-items:center; justify-content:center; font-size: 0.85rem;">✓</span></div><div style="font-size: 0.7rem; color: var(--paper-dim); margin-top: 0.3rem; font-family: \'JetBrains Mono\', monospace;">' + fileLabel + '</div>';
         };
         reader.readAsDataURL(file);
       } else {
-        // Nicht-Bild (PDF, Word, etc.) - nur Datei-Symbol + Name
         const icon = (file.type === 'application/pdf') ? '📄' : '📎';
         preview.innerHTML = '<div style="display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.9rem; background: rgba(255,255,255,0.04); border: 1px solid var(--line-strong); border-radius: 4px; margin-top: 0.3rem;"><span style="font-size: 1.4rem;">' + icon + '</span><div><div style="color: var(--paper); font-size: 0.85rem; font-family: \'Fraunces\', serif;">' + escapeHtml(file.name) + '</div><div style="color: var(--paper-dim); font-size: 0.7rem; font-family: \'JetBrains Mono\', monospace;">' + sizeKB + ' KB · bereit zum Hochladen</div></div><span style="background: var(--moss); color: white; border-radius: 50%; width: 22px; height: 22px; display:flex; align-items:center; justify-content:center; font-size: 0.8rem;">✓</span></div>';
       }
@@ -3857,9 +3798,8 @@ function renderKasseOverview() {
     html += '</div>';
     html += '</div>';
     if (e.receipt_url) {
-      // Erkennen ob Bild (über URL-Endung) oder andere Datei
       const url = e.receipt_url;
-      const lower = url.toLowerCase().split('?')[0]; // ohne Query-String
+      const lower = url.toLowerCase().split('?')[0];
       const isImage = /\.(jpe?g|png|gif|webp|heic|heif|bmp)$/i.test(lower);
       if (isImage) {
         html += '<a href="' + url + '" target="_blank" rel="noopener" style="display: inline-block; margin-top: 0.5rem;"><img src="' + url + '" alt="Quittung" style="max-width: 120px; max-height: 120px; border-radius: 4px; border: 1px solid var(--line-strong); cursor: zoom-in;"></a>';
@@ -4643,8 +4583,7 @@ function initRealtimeSubscriptions() {
     applyGuestRestrictions();
   }
 
-  // WICHTIG: Click-Listener SOFORT registrieren, damit Buttons auch funktionieren,
-  // wenn die awaits unten hängen (z.B. wackeliges Netz beim Realtime-Subscribe)
+  // WICHTIG: Click-Listener SOFORT registrieren
   const postSubmitBtn = document.getElementById('post-submit');
   if (postSubmitBtn) postSubmitBtn.addEventListener('click', submitPost);
   const tachoStartBtn = document.getElementById('tacho-start');
