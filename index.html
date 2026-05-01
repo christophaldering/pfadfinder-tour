@@ -1230,7 +1230,6 @@ body.hero-collapsed .hero-compact { display: flex; }
   <div class="share-bar">
     <button class="share-btn" onclick="copyLink()">Link kopieren</button>
     <button class="share-btn" onclick="exportData()">Backup exportieren</button>
-    <button class="share-btn" onclick="migratePhotosToStorage()" style="background:rgba(217,119,87,0.15);border-color:#d97757;color:#d97757;">📤 Fotos in Storage migrieren</button>
   </div>
 </footer>
 
@@ -1500,22 +1499,22 @@ function getEtappeStatus(num) {
 
 async function loadData() {
   try {
-    // SCHRITT 1: Posts laden OHNE Fotos (klein, schnell, kein Timeout)
+    // Posts laden (Fotos sind jetzt URLs, also klein und schnell)
     const { data: postsData, error: postsErr } = await sb
       .from('posts')
-      .select('id, author, etappe, km, km_auto, text, photo_gps, timestamp')
+      .select('*')
       .order('timestamp', { ascending: false });
     if (postsErr) throw postsErr;
     posts = (postsData || []).map(p => ({
       id: p.id, author: p.author, etappe: p.etappe,
       km: p.km, kmAuto: p.km_auto,
       text: p.text || '',
-      photos: [],  // Fotos werden in Schritt 3 nachgeladen
+      photos: p.photos || [],
       photoGps: p.photo_gps || [],
       timestamp: parseInt(p.timestamp)
     }));
 
-    // SCHRITT 2: Comments + Etappe Stats laden
+    // Comments laden
     const { data: commentsData, error: commErr } = await sb
       .from('comments')
       .select('*')
@@ -1530,6 +1529,7 @@ async function loadData() {
       });
     });
 
+    // Etappe Stats laden
     const { data: statsData, error: statsErr } = await sb
       .from('etappe_stats')
       .select('*');
@@ -1550,51 +1550,10 @@ async function loadData() {
       }
       etappeStats[s.etappe_num] = entry;
     });
-
-    // SCHRITT 3: Fotos in kleinen Batches nachladen (im Hintergrund, async)
-    // App rendert sich schon mal mit leeren Foto-Arrays, Fotos kommen nach und nach
-    loadPhotosInBatches();
-
   } catch (e) {
     console.error('loadData error:', e);
     toast('Daten laden fehlgeschlagen', true);
   }
-}
-
-async function loadPhotosInBatches() {
-  // Einzeln laden, nicht in Batches — lange URLs werden von Safari geblockt
-  const postIds = posts.map(p => p.id);
-  let renderCounter = 0;
-  for (const postId of postIds) {
-    try {
-      const { data, error } = await sb
-        .from('posts')
-        .select('photos')
-        .eq('id', postId)
-        .single();
-      if (error) {
-        console.warn('Foto-Lade-Fehler für ' + postId + ':', error);
-        continue;
-      }
-      const post = posts.find(p => p.id === postId);
-      if (post) post.photos = data.photos || [];
-      // Render alle 3 Posts neu (nicht nach jedem - wäre zu viel)
-      renderCounter++;
-      if (renderCounter % 3 === 0) {
-        renderFeed();
-        renderGallery();
-        renderStats();
-        renderStatsPage();
-      }
-    } catch (e) {
-      console.warn('Foto-Lade-Ausnahme:', e);
-    }
-  }
-  // Final render mit allen Fotos
-  renderFeed();
-  renderGallery();
-  renderStats();
-  renderStatsPage();
 }
 async function savePosts() {
   // No-op: individual posts are saved via savePostToDb / deletePostFromDb
