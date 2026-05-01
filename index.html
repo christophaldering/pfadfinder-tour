@@ -1873,7 +1873,7 @@ function renderPost(p) {
   else if (p.etappe === 6) etappeTag = '<span class="post-etappe-tag">🚗 Rückreise</span>';
   else if (p.etappe) etappeTag = `<span class="post-etappe-tag">Etappe ${p.etappe}</span>`;
   const kmTag = p.km ? `<span class="post-km-tag">${p.kmAuto ? '📍' : ''} km ${p.km}</span>` : '';
-  const photos = (p.photos || []).map((src, i) => `<img class="post-photo" src="${src}" alt="" onclick="openLightbox('${p.id}', ${i})">`).join('');
+  const photos = (p.photos || []).map((src, i) => `<img class="post-photo" src="${src}" alt="" loading="lazy" decoding="async" onclick="openLightbox('${p.id}', ${i})">`).join('');
   const postComments = comments[p.id] || [];
   const commentsHtml = postComments.map(c => `
     <div class="comment">
@@ -1916,7 +1916,7 @@ function renderGallery() {
   if (allPhotos.length === 0) { grid.style.display = 'none'; empty.style.display = 'block'; return; }
   grid.style.display = 'grid'; empty.style.display = 'none';
   allPhotos.sort((a, b) => b.ts - a.ts);
-  grid.innerHTML = allPhotos.map(p => `<img src="${p.src}" alt="" onclick="openLightbox('${p.postId}', ${p.idx}, 'gallery')">`).join('');
+  grid.innerHTML = allPhotos.map(p => `<img src="${p.src}" alt="" loading="lazy" decoding="async" onclick="openLightbox('${p.postId}', ${p.idx}, 'gallery')">`).join('');
 }
 
 function renderStatsPage() {
