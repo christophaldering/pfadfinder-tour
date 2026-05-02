@@ -335,6 +335,16 @@ footer .quote { font-style: italic; margin-top: 1rem; font-size: 0.85rem; color:
 .share-bar { display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; justify-content: center; }
 .share-btn { background: var(--bg-card); border: 1px solid var(--line-strong); color: var(--paper-dim); padding: 0.5rem 0.9rem; border-radius: 3px; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
 .share-btn:hover { color: var(--rust); border-color: var(--rust); }
+.story-dropdown { position: relative; }
+.story-menu { position: absolute; bottom: calc(100% + 0.5rem); left: 50%; transform: translateX(-50%); background: var(--bg-card); border: 1px solid var(--line-strong); border-radius: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); min-width: 280px; max-width: 340px; z-index: 1000; padding: 0.5rem 0; }
+.story-menu-header { padding: 0.5rem 1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--paper-dim); opacity: 0.6; border-bottom: 1px solid var(--line-strong); margin-bottom: 0.3rem; }
+.story-menu-item { display: flex; align-items: center; gap: 0.8rem; width: 100%; padding: 0.7rem 1rem; background: transparent; border: none; color: var(--paper); cursor: pointer; text-align: left; transition: background 0.15s; font-family: inherit; }
+.story-menu-item:hover { background: rgba(184,84,42,0.15); }
+.story-menu-item .story-icon { font-size: 1.4rem; flex-shrink: 0; }
+.story-menu-item strong { display: block; font-size: 0.85rem; color: var(--paper); font-weight: 500; }
+.story-menu-item small { display: block; font-size: 0.7rem; color: var(--paper-dim); opacity: 0.7; margin-top: 0.1rem; }
+.story-menu-footer { padding: 0.7rem 1rem; font-size: 0.65rem; color: var(--paper-dim); opacity: 0.7; line-height: 1.4; border-top: 1px solid var(--line-strong); margin-top: 0.3rem; font-style: italic; }
+@media (max-width: 600px) { .story-menu { left: auto; right: 0; transform: none; min-width: 260px; } }
 .loading { text-align: center; padding: 2rem; color: var(--paper-dark); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; }
 
 /* === FILTER BAR === */
@@ -1230,7 +1240,31 @@ body.hero-collapsed .hero-compact { display: flex; }
   <div class="share-bar">
     <button class="share-btn" onclick="copyLink()">Link kopieren</button>
     <button class="share-btn" onclick="exportData()">Backup exportieren</button>
-    <button class="share-btn" onclick="generateStoryHtml()" style="background:rgba(184,84,42,0.15);border-color:#b8542a;color:#b8542a;">📖 Reportage generieren</button>
+    <div class="story-dropdown" id="storyDropdown">
+      <button class="share-btn story-btn" onclick="toggleStoryMenu(event)" style="background:rgba(184,84,42,0.15);border-color:#b8542a;color:#b8542a;">📖 Story erstellen ▾</button>
+      <div class="story-menu" id="storyMenu" style="display:none;">
+        <div class="story-menu-header">Format wählen:</div>
+        <button class="story-menu-item" onclick="openStory('reportage'); closeStoryMenu()">
+          <span class="story-icon">📖</span>
+          <div><strong>Reportage</strong><small>Magazin-Stil mit Etappen-Erzählung</small></div>
+        </button>
+        <button class="story-menu-item" onclick="openStory('zeitung'); closeStoryMenu()">
+          <span class="story-icon">📰</span>
+          <div><strong>Pfadfinder Press</strong><small>Tour-Tageszeitung im Boulevard-Stil</small></div>
+        </button>
+        <button class="story-menu-item" onclick="openStory('tagebuch'); closeStoryMenu()">
+          <span class="story-icon">📓</span>
+          <div><strong>Reisetagebuch</strong><small>Im Stil des 19. Jahrhunderts</small></div>
+        </button>
+        <button class="story-menu-item" onclick="openStory('comic'); closeStoryMenu()">
+          <span class="story-icon">💬</span>
+          <div><strong>Picture Stories</strong><small>Foto-Comic mit Sprechblasen</small></div>
+        </button>
+        <div class="story-menu-footer">
+          Story öffnet im neuen Tab. Dort: Datei → Drucken → "Als PDF sichern" für PDF-Export.
+        </div>
+      </div>
+    </div>
   </div>
 </footer>
 
@@ -3146,24 +3180,852 @@ ${tourDayKeys.map(buildDaySection).join('\n')}
 </footer>
 </body></html>`;
 
-  // ---- Download ----
+  // ---- Return: HTML als String ----
+  return html;
+}
+window.generateStoryHtml = generateStoryHtml;
+
+// === GEMEINSAME HELPER FÜR ALLE STORY-FORMATE ===
+function _storyHelpers() {
+  function esc(s) {
+    return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function timeShort(ts) {
+    return new Date(ts).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+  }
+  function getDayKey(timestamp) {
+    return new Date(timestamp).toLocaleDateString('de-DE', {year:'numeric', month:'2-digit', day:'2-digit'});
+  }
+  function dateLong(dateKey) {
+    const [d, m, y] = dateKey.split('.');
+    return new Date(`${y}-${m}-${d}`).toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long', year: 'numeric'});
+  }
+  function dateShort(dateKey) {
+    const [d, m, y] = dateKey.split('.');
+    const monate = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+    return `${parseInt(d)}. ${monate[parseInt(m)-1]}`;
+  }
+  function dateRomanish(dateKey) {
+    const [d, m, y] = dateKey.split('.');
+    const date = new Date(`${y}-${m}-${d}`);
+    const wd = date.toLocaleDateString('de-DE', {weekday:'long'});
+    const monate = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+    return `${wd}, den ${parseInt(d)}ten ${monate[parseInt(m)-1]} Anno ${y}`;
+  }
+  function dateWeekday(dateKey) {
+    const [d, m, y] = dateKey.split('.');
+    return new Date(`${y}-${m}-${d}`).toLocaleDateString('de-DE', {weekday:'long'}).toUpperCase();
+  }
+  function photoTag(url) {
+    if (typeof url !== 'string' || !url.startsWith('http')) {
+      return '<div class="photo-placeholder"><span>📷</span></div>';
+    }
+    return `<img src="${esc(url)}" alt="" loading="lazy" decoding="async">`;
+  }
+  return { esc, timeShort, getDayKey, dateLong, dateShort, dateRomanish, dateWeekday, photoTag };
+}
+
+// === DATEN-AUFBEREITUNG (aus posts/etappeStats/ETAPPEN) ===
+function _storyData() {
+  const H = _storyHelpers();
+  const sorted = [...posts].sort((a,b) => a.timestamp - b.timestamp);
+  const dayGroups = {};
+  sorted.forEach(p => {
+    const key = H.getDayKey(p.timestamp);
+    if (!dayGroups[key]) dayGroups[key] = [];
+    const photoUrls = (p.photos||[]).filter(ph => typeof ph === 'string' && ph.startsWith('http'));
+    dayGroups[key].push({ ...p, photos: photoUrls, text: p.text || '' });
+  });
+  const dayKeysForEtappen = {};
+  ETAPPEN.forEach(e => {
+    if (e.dateISO) {
+      const key = new Date(e.dateISO).toLocaleDateString('de-DE', {year:'numeric', month:'2-digit', day:'2-digit'});
+      dayKeysForEtappen[key] = e;
+    }
+  });
+  const tourDayKeys = Object.keys(dayKeysForEtappen).sort((a, b) => {
+    const [da,ma,ya] = a.split('.').map(Number); const [db,mb,yb] = b.split('.').map(Number);
+    return new Date(ya, ma-1, da) - new Date(yb, mb-1, db);
+  });
+  let totalKm = 0, totalHm = 0;
+  Object.values(etappeStats).forEach(s => {
+    totalKm += parseFloat(s.actualKm) || 0;
+    totalHm += parseFloat(s.actualHm) || 0;
+  });
+  const totalPhotos = Object.values(dayGroups).reduce((s, ps) => s + ps.reduce((a,p) => a + p.photos.length, 0), 0);
+  return { dayGroups, dayKeysForEtappen, tourDayKeys, totalKm, totalHm, totalPhotos, totalPosts: posts.length };
+}
+
+// === STORY-MENU TOGGLE ===
+function toggleStoryMenu(ev) {
+  ev.stopPropagation();
+  const menu = document.getElementById('storyMenu');
+  if (!menu) return;
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  if (menu.style.display === 'block') {
+    setTimeout(() => {
+      document.addEventListener('click', _storyMenuOutsideClick);
+    }, 10);
+  }
+}
+function closeStoryMenu() {
+  const menu = document.getElementById('storyMenu');
+  if (menu) menu.style.display = 'none';
+  document.removeEventListener('click', _storyMenuOutsideClick);
+}
+function _storyMenuOutsideClick(ev) {
+  const dd = document.getElementById('storyDropdown');
+  if (dd && !dd.contains(ev.target)) closeStoryMenu();
+}
+window.toggleStoryMenu = toggleStoryMenu;
+window.closeStoryMenu = closeStoryMenu;
+
+// === STORY-DISPATCH ===
+function openStory(format) {
+  let html;
+  try {
+    if (format === 'reportage') html = generateStoryHtml();
+    else if (format === 'zeitung') html = generateZeitungHtml();
+    else if (format === 'tagebuch') html = generateTagebuchHtml();
+    else if (format === 'comic') html = generateComicHtml();
+    else { toast('Unbekanntes Format', true); return; }
+  } catch (e) {
+    console.error('Story-Generator-Fehler:', e);
+    toast('Fehler beim Erstellen der Story: ' + (e.message || e), true);
+    return;
+  }
+  // Im neuen Tab öffnen via Blob-URL
   try {
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `pfadfinder-tour-reportage-${new Date().toISOString().slice(0,10)}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast('Reportage heruntergeladen ✓');
+    const win = window.open(url, '_blank');
+    if (!win) {
+      // Popup blocked — Fallback: Download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pfadfinder-${format}-${new Date().toISOString().slice(0,10)}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      toast('Pop-up blockiert — als Download heruntergeladen ✓');
+    } else {
+      toast('Story öffnet im neuen Tab ✓');
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   } catch (e) {
-    console.error('Story-Generator-Fehler:', e);
-    toast('Fehler beim Erstellen der Reportage', true);
+    console.error('Story-Open-Fehler:', e);
+    toast('Fehler beim Öffnen', true);
   }
 }
-window.generateStoryHtml = generateStoryHtml;
+window.openStory = openStory;
+// === GENERATOR: PFADFINDER PRESS (TAGESZEITUNG) ===
+function generateZeitungHtml() {
+  const H = _storyHelpers();
+  const D = _storyData();
+  const { esc, timeShort, dateShort, dateWeekday, photoTag } = H;
+
+  const dayHeadlines = {
+    1: { edition: 'Erstausgabe', pageTitle: 'EIN NEUES KAPITEL',
+         leadKicker: 'GROSSE FAHRT BEGINNT', leadHeadline: 'Sechs Männer, sechs Räder — Sauerland erbebt',
+         leadSub: 'Pfadfinder-Truppe startet historische Ruhrtour ab Winterberg / Quelle als bescheidenes Rinnsal entdeckt',
+         weatherIcon: '🌤️', weatherText: 'Wechselhaft, dafür motiviert. Sauerstoff-Überschuss am Abend.',
+         sportText: 'Erste Etappe von 50 km ohne Verluste absolviert. Augenlid-Schwergewicht beim Abendessen festgestellt.',
+         classifieds: [
+           { title: 'Suche', text: 'Druckwiderstandsarme Klingel für mein Damenrad. Bisheriges Modell zu schrill für Bergabfahrten.' },
+           { title: 'Tausche', text: 'Original-Termin beim Steuerberater Mittwoch 14 Uhr gegen weiteres Bier auf der Hütterterrasse.' }
+         ] },
+    2: { edition: 'Tag 2', pageTitle: 'AUF NACH MENDEN',
+         leadKicker: 'KULINARISCHER REKORD', leadHeadline: 'Schnitzel XXL beendet Walpurgisnacht-Hunger',
+         leadSub: 'Mendener Wirt überlebt Pfadfinder-Heimsuchung knapp / Tanzfläche bricht später nicht zusammen',
+         weatherIcon: '☀️', weatherText: 'Frühlingshaft mild. Beine-zur-Last-Faktor: 4 von 10. Tendenz fallend nach drei Bier.',
+         sportText: 'Etwa 60 km bewältigt, davon 12 km im Stadtgebiet Arnsberg verbummelt. Glockenturm besichtigt, Zustand: barock.',
+         classifieds: [
+           { title: 'Suche', text: 'Zweiten Magen für die zweite Hälfte des Schnitzels XXL. Belohnung: nicht-zertifizierter Pfadfinder-Knoten.' },
+           { title: 'Verkaufe', text: 'Restbestand Walpurgisnacht-Energie zum Schnäppchenpreis. Funktioniert nur bis 23:00.' }
+         ] },
+    3: { edition: 'Festtagsausgabe', pageTitle: 'KAISERWETTER & RENTNERSTAND',
+         leadKicker: 'TAG-3-PHILOSOPHIE', leadHeadline: '„Im Himmel kann es nicht schöner sein"',
+         leadSub: 'Pfadfinder erleben Erleuchtung im Ruhrtal / Eine Trinkanordnung erreicht die Truppe',
+         weatherIcon: '☀️', weatherText: 'Kaiserwetter im Wortsinn. Sonne knallt herab. Eis-Abkühlung dringend empfohlen.',
+         sportText: 'Etappe Menden → Wetter zügig absolviert. Leistungsoptimum: Pause an der Ruhr im Schatten alter Bäume.',
+         classifieds: [
+           { title: 'Glückwunsch', text: 'Auf den neuen Rentner! Mögen die Tage immer so sonnig bleiben wie heute.' },
+           { title: 'Frage', text: 'Wer hat in Menden den frühen Vogel gesehen? Frühstück angeblich im Baumarkt. Bitte um Aufklärung.' }
+         ] },
+    4: { edition: 'Industrieausgabe', pageTitle: 'KOHLE, FÄHRE, KULTUR',
+         leadKicker: 'INDUSTRIEKULTUR-GIPFEL', leadHeadline: 'Pause nach anstrengendem Museumsbesuch',
+         leadSub: 'Truppe erkundet Wiege des Ruhrbergbaus / Helmpflicht im Stollen, Bierpflicht danach',
+         weatherIcon: '🌤️', weatherText: 'Mild und freundlich. Optimaler Tag für Museumsbesuche und anschließende Erholung.',
+         sportText: 'Wetter → Essen via Witten-Bommern. Museumsbesuch bewältigt, anschließende Schonpause prophylaktisch eingelegt.',
+         classifieds: [
+           { title: 'Hinweis', text: 'Die Singvögel namens „Nachtigall" sind im Ruhrtal selten geworden. Letzte Sichtung: vermutlich nicht heute.' },
+           { title: 'Suche', text: 'Engagierte Person zum Tragen meines Bergmannshelmes. Bin müde. Belohnung verhandelbar.' }
+         ] },
+    5: { edition: 'Schlussausgabe', pageTitle: 'AM GROSSEN STROM',
+         leadKicker: 'DAS ZIEL', leadHeadline: 'Tour erreicht Mündung — Rheinorange in Sicht',
+         leadSub: 'Sechs Pfadfinder vollenden 240-km-Reise / Sauerland endgültig im Rückspiegel',
+         weatherIcon: '☀️', weatherText: 'Letzter Tag, schönes Wetter. Stimmung: leicht wehmütig.',
+         sportText: 'Letzte Etappe Essen → Duisburg. Baldeneysee passiert, Mülheim umkurvt, Ziel erreicht.',
+         classifieds: [
+           { title: 'Bilanz', text: 'Sechs Räder, fünf Tage, eine ganze Tour. Wiederholung wird angedacht.' }
+         ] }
+  };
+
+  function getDayPosts(dateKey) {
+    return (D.dayGroups[dateKey] || []).filter(p => p.text || p.photos.length > 0);
+  }
+  function getStatsForEtappe(num) {
+    return etappeStats[num] || {};
+  }
+  function getEtappeForDay(dateKey) {
+    return D.dayKeysForEtappen[dateKey];
+  }
+
+  function buildNewspaperPage(dateKey, pageNum) {
+    const etappe = getEtappeForDay(dateKey);
+    if (!etappe) return '';
+    const head = dayHeadlines[etappe.num];
+    if (!head) return '';
+    const dayPosts = getDayPosts(dateKey);
+    const dayStats = getStatsForEtappe(etappe.num);
+    const totalPhotos = dayPosts.reduce((s,p) => s + p.photos.length, 0);
+
+    const photoUrls = [];
+    let heroPhoto = null;
+    dayPosts.forEach(p => {
+      p.photos.forEach(u => {
+        if (typeof u === 'string' && u.startsWith('http')) {
+          if (!heroPhoto) heroPhoto = { url: u, caption: p.text, ts: p.timestamp, author: p.author };
+          else if (photoUrls.length < 4) photoUrls.push({ url: u, caption: p.text, author: p.author, ts: p.timestamp });
+        }
+      });
+    });
+    const dayQuotes = dayPosts.filter(p => p.text && p.text.length > 5);
+    const storyQuotes = dayQuotes.slice(0, 4);
+
+    return `
+<article class="page" id="page-${pageNum}">
+  <header class="masthead">
+    <div class="masthead-top">
+      <div class="masthead-edition"><strong>${esc(head.edition.toUpperCase())}</strong> · Nr. ${pageNum}</div>
+      <div class="masthead-price">Einzelpreis · 0,00 € · Pfadfinderehre</div>
+    </div>
+    <h1 class="masthead-title">Pfadfinder <em>Press</em></h1>
+    <div class="masthead-bottom">
+      <span>${dateWeekday(dateKey)}</span>
+      <span class="masthead-tagline">Unabhängiges Tagesblatt der Tour</span>
+      <span>${dateShort(dateKey)}</span>
+    </div>
+  </header>
+  <div class="page-title-banner">
+    <span class="page-title-page">— Seite ${pageNum} —</span>
+    <h2 class="page-title">${esc(head.pageTitle)}</h2>
+    <span class="page-title-folio">Pfadfinder Press · ${dateShort(dateKey)}</span>
+  </div>
+  <div class="headline-block">
+    <div class="kicker">${esc(head.leadKicker)}</div>
+    <h1 class="lead-headline">${esc(head.leadHeadline)}</h1>
+    <p class="lead-subhead">${esc(head.leadSub)}</p>
+  </div>
+  <div class="main-grid">
+    <section class="main-story">
+      ${heroPhoto ? `<figure class="hero-photo">${photoTag(heroPhoto.url)}<figcaption><strong>${esc(head.pageTitle)}</strong> — ${esc(heroPhoto.caption || 'Eindruck vom Tag')}.<span class="caption-meta">Foto: ${esc(heroPhoto.author)}, ${timeShort(heroPhoto.ts)} Uhr</span></figcaption></figure>` : ''}
+      <div class="story-body">
+        ${storyQuotes.map((q, i) => {
+          let txt = esc(q.text);
+          if (i === 0 && txt.length > 0) {
+            return `<p class="story-para"><span class="dropcap">${txt[0]}</span>${txt.slice(1)} <span class="story-time">— ${esc(q.author)}, ${timeShort(q.timestamp)} Uhr</span></p>`;
+          }
+          return `<p class="story-para">${txt} <span class="story-time">— ${esc(q.author)}, ${timeShort(q.timestamp)} Uhr</span></p>`;
+        }).join('')}
+        <p class="story-para story-summary">An diesem Tag wurden ${dayPosts.length} Logbucheinträge erstellt und ${totalPhotos} Lichtbilder erbeutet. Die Pfadfinder-Truppe legte ${dayStats.actualKm || '—'} Kilometer zurück${dayStats.actualHm ? ` mit ${dayStats.actualHm} Höhenmetern` : ''}. Die Stimmung wird von der Redaktion als <em>ausnehmend gut</em> eingestuft.</p>
+      </div>
+    </section>
+    <aside class="side-column">
+      <div class="sidebox weather-box">
+        <h3 class="sidebox-title">Das Wetter</h3>
+        <div class="weather-icon">${head.weatherIcon}</div>
+        <p class="weather-text">${esc(head.weatherText)}</p>
+      </div>
+      <div class="sidebox">
+        <h3 class="sidebox-title">Aus dem Sport</h3>
+        <p class="sidebox-text">${esc(head.sportText)}</p>
+        <div class="sport-stats">
+          <div><span>Strecke</span><strong>${dayStats.actualKm || '—'} km</strong></div>
+          ${dayStats.actualHm ? `<div><span>Höhenmeter</span><strong>${dayStats.actualHm} hm</strong></div>` : ''}
+          <div><span>Bilder</span><strong>${totalPhotos}</strong></div>
+          <div><span>Einträge</span><strong>${dayPosts.length}</strong></div>
+        </div>
+      </div>
+      <div class="sidebox classifieds-box">
+        <h3 class="sidebox-title">Kleinanzeigen</h3>
+        ${head.classifieds.map(c => `<div class="classified"><strong>${esc(c.title)}.</strong> ${esc(c.text)}</div>`).join('')}
+      </div>
+    </aside>
+  </div>
+  ${photoUrls.length > 0 ? `<section class="photo-strip"><h3 class="strip-title">Bildbericht des Tages</h3><div class="strip-grid">${photoUrls.map(p => `<figure class="strip-photo">${photoTag(p.url)}${p.caption ? `<figcaption>${esc(p.caption)} <span>(${timeShort(p.ts)})</span></figcaption>` : ''}</figure>`).join('')}</div></section>` : ''}
+  <footer class="page-footer">
+    <span>Pfadfinder Press · Tour-Tageszeitung</span>
+    <span>Seite ${pageNum} · Druckauflage: 6 Exemplare</span>
+    <span>Herausgeber: Die Truppe selbst</span>
+  </footer>
+</article>`;
+  }
+
+  function buildBackPage() {
+    const bestQuotes = [
+      { text: 'Keine Termine und leicht einen sitzen.', context: 'Definition von Glück' },
+      { text: 'Schnitzel XXL.', context: 'Aus dem Logbuch der zweiten Etappe' },
+      { text: 'Im Himmel kann es nicht schöner sein.', context: 'Tag-3-Erkenntnis' },
+      { text: 'Wir trinken auf den neuen Rentner.', context: 'Zwischenruf vom Festtag' },
+      { text: 'Irgendwas habe ich bestimmt vergessen.', context: 'Pfadfinder-Weisheit, allzeit gültig' }
+    ];
+    return `
+<article class="page" id="page-back">
+  <header class="masthead">
+    <div class="masthead-top">
+      <div class="masthead-edition"><strong>SCHLUSSAUSGABE</strong> · Bilanz</div>
+      <div class="masthead-price">Einzelpreis · 0,00 € · Pfadfinderehre</div>
+    </div>
+    <h1 class="masthead-title">Pfadfinder <em>Press</em></h1>
+    <div class="masthead-bottom">
+      <span>BILANZ</span>
+      <span class="masthead-tagline">Unabhängiges Tagesblatt der Tour</span>
+      <span>Mai ${new Date().getFullYear()}</span>
+    </div>
+  </header>
+  <div class="page-title-banner">
+    <span class="page-title-page">— Schlussseite —</span>
+    <h2 class="page-title">DIE TOUR IN ZAHLEN UND ZITATEN</h2>
+    <span class="page-title-folio">Pfadfinder Press · Bilanz</span>
+  </div>
+  <section class="bilanz-block">
+    <div class="bilanz-stat"><div class="bilanz-num">${D.totalKm.toFixed(1)}</div><div class="bilanz-label">Kilometer</div></div>
+    <div class="bilanz-stat"><div class="bilanz-num">${Math.round(D.totalHm)}</div><div class="bilanz-label">Höhenmeter</div></div>
+    <div class="bilanz-stat"><div class="bilanz-num">${D.totalPhotos}</div><div class="bilanz-label">Lichtbilder</div></div>
+    <div class="bilanz-stat"><div class="bilanz-num">${D.totalPosts}</div><div class="bilanz-label">Logbucheinträge</div></div>
+    <div class="bilanz-stat"><div class="bilanz-num">${D.tourDayKeys.length}</div><div class="bilanz-label">Tage</div></div>
+    <div class="bilanz-stat"><div class="bilanz-num">6</div><div class="bilanz-label">Pfadfinder</div></div>
+  </section>
+  <section class="quotes-wall">
+    <h3 class="quotes-wall-title">Aus dem Logbuch — die schönsten Sätze</h3>
+    <div class="quotes-grid">
+      ${bestQuotes.map(q => `<blockquote class="wall-quote"><p>„${esc(q.text)}"</p><cite>— ${esc(q.context)}</cite></blockquote>`).join('')}
+    </div>
+  </section>
+  <section class="impressum">
+    <h3>Impressum</h3>
+    <p><strong>Pfadfinder Press</strong> — Unabhängiges Tagesblatt der Pfadfinder-Tour.<br>
+    Erscheint unregelmäßig, ausschließlich anlassbezogen.<br>
+    <strong>Redaktion:</strong> Die Tour selbst.<br>
+    <strong>Mitarbeiter:</strong> Christoph (Chefreporter), Willi, Charly, Stefan, Burkhard, Friedhelm.<br>
+    <strong>Druck:</strong> Privater Tintenstrahl.<br>
+    <strong>Streckenanteil:</strong> ${D.totalKm.toFixed(1)} km Ruhrtalradweg.<br>
+    <strong>Editorische Notiz:</strong> Sämtliche Zitate sind authentisch, sämtliche Schlagzeilen erfunden, sämtliche Begeisterung echt.</p>
+  </section>
+  <footer class="page-footer">
+    <span>Pfadfinder Press · Schlussausgabe</span>
+    <span>Auflage: 6 Exemplare · Stets ausverkauft</span>
+    <span>Verlag: Pfadfindergemeinschaft</span>
+  </footer>
+</article>`;
+  }
+
+  const navLinks = D.tourDayKeys.map((d, i) => `<a href="#page-${i+1}">${i+1}</a>`).join('') + '<a href="#page-back">⌂</a>';
+
+  return `<!DOCTYPE html>
+<html lang="de"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pfadfinder Press — Tour</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#f4f0e6;--paper-aged:#ebe4d2;--paper-stain:#ddd2bb;--ink:#14110d;--ink-fade:#4d4538;--ink-light:#7a6e5b;--rule-thin:rgba(20,17,13,.25);--rule-thick:#14110d;--accent:#8a3a1a}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{background:#2a2520;color:var(--ink);font-family:'PT Serif',Georgia,serif;font-size:16px;line-height:1.6;padding:2rem 1rem;min-height:100vh}
+img{max-width:100%;height:auto;display:block}
+.page{background:var(--paper);max-width:56rem;margin:0 auto 3rem;padding:3.5rem 3rem 2.5rem;box-shadow:0 1px 0 rgba(255,255,255,.05),0 8px 30px rgba(0,0,0,.5),0 30px 80px rgba(0,0,0,.3);position:relative;overflow:hidden}
+.page::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:1;background-image:radial-gradient(ellipse at top left,transparent 60%,rgba(120,90,50,.04) 100%),radial-gradient(ellipse at bottom right,transparent 60%,rgba(120,90,50,.06) 100%),radial-gradient(circle at 30% 70%,rgba(140,100,60,.03),transparent 50%),repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.008) 4px);mix-blend-mode:multiply}
+.page>*{position:relative;z-index:2}
+.masthead{border-top:4px double var(--rule-thick);border-bottom:1px solid var(--rule-thick);padding:.4rem 0 1.2rem;margin-bottom:1rem}
+.masthead-top{display:flex;justify-content:space-between;font-family:'Old Standard TT',serif;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-fade);padding-bottom:.5rem;border-bottom:1px solid var(--rule-thin);margin-bottom:.5rem}
+.masthead-title{font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(3rem,9vw,5.5rem);line-height:.9;text-align:center;letter-spacing:-.02em;margin:.3rem 0;color:var(--ink)}
+.masthead-title em{font-style:italic;font-weight:400}
+.masthead-bottom{display:flex;justify-content:space-between;align-items:center;font-family:'Old Standard TT',serif;font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-fade);padding-top:.5rem;border-top:1px solid var(--rule-thin)}
+.masthead-tagline{font-style:italic;text-transform:none;letter-spacing:.05em}
+.page-title-banner{display:flex;align-items:baseline;justify-content:space-between;gap:1.5rem;margin:1.5rem 0 2rem;padding:.6rem 0;border-top:1px solid var(--rule-thin);border-bottom:1px solid var(--rule-thin)}
+.page-title{font-family:'Playfair Display',serif;font-weight:900;font-size:1.4rem;letter-spacing:.1em;flex:1;text-align:center}
+.page-title-page,.page-title-folio{font-family:'Old Standard TT',serif;font-style:italic;font-size:.7rem;color:var(--ink-light);white-space:nowrap}
+.headline-block{margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:3px solid var(--rule-thick)}
+.kicker{font-family:'Old Standard TT',serif;font-size:.85rem;letter-spacing:.25em;text-transform:uppercase;font-weight:700;color:var(--accent);margin-bottom:.4rem;display:inline-block;padding-bottom:.2rem;border-bottom:2px solid var(--accent)}
+.lead-headline{font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(2rem,5vw,3.4rem);line-height:1.05;letter-spacing:-.015em;margin-bottom:.7rem}
+.lead-subhead{font-family:'PT Serif',serif;font-style:italic;font-size:1.15rem;color:var(--ink-fade);line-height:1.4;font-weight:400;max-width:50rem}
+.main-grid{display:grid;grid-template-columns:1fr;gap:2.5rem;margin-bottom:2.5rem}
+@media(min-width:700px){.main-grid{grid-template-columns:2fr 1fr;gap:2.5rem}}
+.hero-photo{margin-bottom:1.2rem;background:var(--paper-aged);padding:.4rem;border:1px solid var(--rule-thin)}
+.hero-photo img{width:100%;aspect-ratio:5/3;object-fit:cover;filter:contrast(1.05) saturate(.92) sepia(.04)}
+.hero-photo figcaption{font-family:'PT Serif',serif;font-size:.85rem;font-style:italic;padding:.7rem .5rem .4rem;line-height:1.4;color:var(--ink-fade)}
+.caption-meta{display:block;font-family:'Old Standard TT',serif;font-size:.7rem;font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-light);margin-top:.3rem}
+.story-para{font-family:'PT Serif',serif;font-size:1rem;line-height:1.65;margin-bottom:1rem;text-align:justify;hyphens:auto;text-indent:1.5em}
+.story-para:first-child{text-indent:0}
+.dropcap{float:left;font-family:'Playfair Display',serif;font-weight:900;font-size:4em;line-height:.85;margin:.05em .1em 0 -.05em;color:var(--accent)}
+.story-time{font-family:'Old Standard TT',serif;font-style:italic;color:var(--ink-light);font-size:.85rem;white-space:nowrap}
+.story-summary{font-style:italic;border-top:1px solid var(--rule-thin);margin-top:1.5rem;padding-top:1rem;text-indent:0;color:var(--ink-fade)}
+.story-summary em{color:var(--accent);font-weight:700;font-style:italic}
+.side-column{display:flex;flex-direction:column;gap:1.5rem}
+.sidebox{border:1px solid var(--rule-thick);background:var(--paper-aged);padding:1rem 1.2rem}
+.sidebox-title{font-family:'Playfair Display',serif;font-weight:900;font-size:1.1rem;margin-bottom:.6rem;padding-bottom:.4rem;border-bottom:2px solid var(--rule-thick);text-align:center;letter-spacing:.05em;text-transform:uppercase}
+.weather-box{text-align:center}
+.weather-icon{font-size:2.5rem;margin:.5rem 0 .3rem}
+.weather-text{font-family:'PT Serif',serif;font-style:italic;font-size:.9rem;line-height:1.5;color:var(--ink-fade)}
+.sidebox-text{font-family:'PT Serif',serif;font-size:.9rem;line-height:1.55;color:var(--ink-fade);margin-bottom:.8rem}
+.sport-stats{display:grid;grid-template-columns:1fr 1fr;gap:.5rem 1rem;font-family:'Old Standard TT',serif;border-top:1px solid var(--rule-thin);padding-top:.6rem;margin-top:.6rem}
+.sport-stats div{display:flex;justify-content:space-between;align-items:baseline;font-size:.85rem;border-bottom:1px dotted var(--rule-thin);padding-bottom:.2rem}
+.sport-stats span{color:var(--ink-light);font-style:italic;font-size:.75rem}
+.sport-stats strong{font-weight:700;color:var(--ink)}
+.classifieds-box .classified{font-family:'PT Serif',serif;font-size:.85rem;line-height:1.45;padding:.6rem 0;border-bottom:1px dotted var(--rule-thin);color:var(--ink-fade)}
+.classifieds-box .classified:last-child{border-bottom:none}
+.classifieds-box .classified strong{color:var(--accent);font-weight:700}
+.photo-strip{margin-top:2rem;padding-top:1.5rem;border-top:3px double var(--rule-thick)}
+.strip-title{font-family:'Playfair Display',serif;font-weight:900;font-size:1.3rem;text-align:center;letter-spacing:.1em;text-transform:uppercase;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--rule-thin)}
+.strip-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));gap:1rem}
+.strip-photo{background:var(--paper-aged);padding:.3rem;border:1px solid var(--rule-thin)}
+.strip-photo img{width:100%;aspect-ratio:4/3;object-fit:cover;filter:contrast(1.05) saturate(.92) sepia(.04)}
+.strip-photo figcaption{font-family:'PT Serif',serif;font-style:italic;font-size:.75rem;padding:.4rem .3rem;line-height:1.35;color:var(--ink-fade)}
+.strip-photo figcaption span{color:var(--ink-light);white-space:nowrap}
+.page-footer{margin-top:2rem;padding-top:1rem;border-top:4px double var(--rule-thick);display:flex;justify-content:space-between;font-family:'Old Standard TT',serif;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-light);flex-wrap:wrap;gap:.5rem}
+.bilanz-block{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule-thick);border:2px solid var(--rule-thick);margin:0 0 2.5rem}
+@media(max-width:600px){.bilanz-block{grid-template-columns:repeat(2,1fr)}}
+.bilanz-stat{background:var(--paper);padding:1.2rem .6rem;text-align:center}
+.bilanz-num{font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(1.8rem,4vw,2.6rem);line-height:1;color:var(--accent)}
+.bilanz-label{font-family:'Old Standard TT',serif;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-fade);margin-top:.4rem}
+.quotes-wall{margin:2.5rem 0}
+.quotes-wall-title{font-family:'Playfair Display',serif;font-weight:900;font-size:1.4rem;text-align:center;letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.5rem;padding-bottom:.5rem;border-bottom:3px double var(--rule-thick)}
+.quotes-grid{display:grid;grid-template-columns:1fr;gap:1.5rem}
+@media(min-width:600px){.quotes-grid{grid-template-columns:1fr 1fr}}
+.wall-quote{background:var(--paper-aged);border-left:4px solid var(--accent);padding:1.2rem 1.5rem;font-family:'Playfair Display',serif}
+.wall-quote p{font-style:italic;font-weight:400;font-size:1.15rem;line-height:1.4;color:var(--ink);margin-bottom:.5rem}
+.wall-quote cite{font-family:'Old Standard TT',serif;font-style:italic;font-size:.8rem;color:var(--ink-light)}
+.impressum{margin-top:2.5rem;padding:1.5rem;border-top:3px double var(--rule-thick);border-bottom:3px double var(--rule-thick);text-align:center}
+.impressum h3{font-family:'Playfair Display',serif;font-weight:900;font-size:1.2rem;letter-spacing:.15em;text-transform:uppercase;margin-bottom:.8rem}
+.impressum p{font-family:'PT Serif',serif;font-size:.85rem;line-height:1.7;color:var(--ink-fade);text-align:left;max-width:40rem;margin:0 auto}
+.impressum strong{color:var(--ink);font-weight:700}
+.photo-placeholder{aspect-ratio:4/3;background:var(--paper-stain);display:flex;align-items:center;justify-content:center;color:var(--ink-light);font-size:2rem;opacity:.5}
+nav.page-nav{position:fixed;top:1rem;right:1rem;display:flex;gap:.5rem;z-index:50;background:rgba(20,17,13,.85);padding:.5rem .7rem;border-radius:4px;font-family:'Old Standard TT',serif;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase}
+nav.page-nav a{color:var(--paper);text-decoration:none;padding:.2rem .5rem;border-radius:2px;transition:background .2s}
+nav.page-nav a:hover{background:rgba(255,255,255,.15)}
+::selection{background:var(--accent);color:var(--paper)}
+@media print{body{background:white;padding:0}.page{box-shadow:none;margin:0;page-break-after:always;max-width:100%}nav.page-nav{display:none}.page::before{display:none}}
+</style></head><body>
+<nav class="page-nav">${navLinks}</nav>
+${D.tourDayKeys.map((d, i) => buildNewspaperPage(d, i+1)).join('\n')}
+${buildBackPage()}
+</body></html>`;
+}
+window.generateZeitungHtml = generateZeitungHtml;
+// === GENERATOR: REISETAGEBUCH (19.-Jh.-LOOK) ===
+function generateTagebuchHtml() {
+  const H = _storyHelpers();
+  const D = _storyData();
+  const { esc, timeShort, dateRomanish, photoTag } = H;
+
+  const diaryEntries = {
+    1: { title: 'Erster Eintrag · Aufbruch in die Höhe', place: 'Geschrieben zu Winterberg in Westfalen, am Abend',
+         weather: '☁ Wolkenverhangen, kühle Höhenluft. Barometer fallend.', motto: '„Wer reisen will, der schweige fein..."',
+         intro: `<p>So sind wir denn heute morgen mit der Eisenbahn in Winterberg eingetroffen. Ein eigentümlicher Ort, gelegen auf siebenhundert Schritten über dem Meere, was ihm den nicht ganz unverdienten Ruf einbringt, die <em>höchste Stadt</em> der ganzen Provinz Nordrhein-Westfalen zu sein.</p><p>Drei Werst gegen Nordosten, am nördlichen Hang des sogenannten Ruhrkopfes, entspringt jener bescheidene Fluß, dem zu folgen wir uns vorgenommen haben. Sechshundertsechsundneunzig Schritte hoch, ein Rinnsal nur, dem niemand etwas zutraut — und doch wird er nach zweihundertneunzehn Kilometern in Duisburg den Rhein erreichen.</p><p>Wir sind unser sechs an der Zahl: ehemalige Pfadfinder, die heute wohl alle wenig Adoleszenz, dafür aber umso mehr ehrwürdiges Alter und gepflegtes Bauchwerk vorweisen. Mein Mitreisender Christoph notiert um die Mittagsstunde mit philosophischer Heiterkeit: <em>"Unsere Definition von Glück: keine Termine und leicht einen sitzen."</em></p>`,
+         afternoon: `<p>Am späten Nachmittag erreichen wir Meschede, wo das <em>Landhotel Hütter</em> uns ein gediegenes Quartier bietet. Die Beine ermatten von ungewohnter Anstrengung, doch der Geist ist frisch. Beim Abendmahl ergibt sich, daß der eine oder andere unserer Truppe die Augen schon zu schließen geneigt ist, ehe der letzte Bissen verzehrt.</p><p>Sauerstoff war im Überfluß vorhanden heute. Auch das Bier am Abend.</p>`,
+         closing: 'Es ist spät geworden. Gute Nacht.', margin: 'Heute ist die Ruhr noch ein Bach, in dem ein jedes Kind die Füße kühlen könnte.' },
+    2: { title: 'Zweiter Eintrag · Walpurgisnacht in Menden', place: 'Geschrieben zu Menden im Sauerland, gegen Mitternacht',
+         weather: '☼ Heiter, milde Frühlingsluft. Stimmungsbarometer steigend.', motto: '„Eine Reise ist ein Trunk aus der Quelle des Lebens."',
+         intro: `<p>Welch ein vortrefflicher Tag! Frühstück nahmen wir in Olpe ein, einem freundlichen Stadtteil von Meschede, ehe wir unsere Wanderung gen Westen fortsetzten. Die Ruhr zeigt sich uns nun in fortgeschrittenem Alter: keine zaghafte Schöpfung mehr, sondern bereits ein Fluß von ansprechender Breite.</p><p>Mittags rollten unsere Räder in <em>Arnsberg</em> ein — und wahrhaftig, dies muß als der heimliche Glanzpunkt unserer heutigen Etappe gelten. Die Stadt, deren Existenz urkundlich seit dem Jahre Siebenhundertneunundachtzig nachgewiesen ist, schmiegt sich auf einem Bergrücken in eine dramatische Schleife der Ruhr. Ein lokaler Spruch aus dem Mittelalter lautet: <em>"Wir gehen auf Arnsberg!"</em> — was sinngemäß bedeutete, einen Streit dem dortigen Tribunal zur Schlichtung anheimzustellen.</p>`,
+         afternoon: `<p>Den Abend verbringen wir in <em>Menden</em>, wo zufällig die Walpurgisnacht zelebriert wird. Wir tanzen in den Mai und nehmen dazu ein Schnitzel ein, das den schlichten, aber treffenden Vermerk verdient: <em>XXL.</em></p><p>Die Größe dieses Schnitzels überschreitet mein Vorstellungsvermögen für gebratenes Fleisch. Die Bedienung versichert uns lächelnd, daß dies das normale Maß sei. Ich glaube es nicht recht.</p>`,
+         closing: 'Die Beine sind müde, aber das Herz ist froh.', margin: 'Arnsberg sollte dringend wieder besucht werden — ein heimliches Juwel.' },
+    3: { title: 'Dritter Eintrag · Das Kaiserwetter', place: 'Geschrieben zu Wetter an der Ruhr, am Abend',
+         weather: '☼☼ Sonnig und mild. Vollkommenes Maienwetter.', motto: '„Im Himmel kann es nicht schöner sein."',
+         intro: `<p>Heute haben wir den Mai begrüßt, wie es sich gebührt — mit der Sonne als treue Begleiterin. Schon zur zehnten Morgenstunde notiert mein Mitreisender Christoph mit jener schlichten Einfachheit, die nur das wirkliche Erleben hervorbringt: <em>"Im Himmel kann es nicht schöner sein."</em> Dem ist nichts hinzuzufügen.</p><p>Das Sauerland hat sich uns nun fast endgültig verabschiedet. Das Tal der Ruhr wird breiter, die Steigungen geringer. Es liegt eine fast italienische Sanftmut über der Landschaft.</p>`,
+         afternoon: `<p>Am Abend erreichen wir <em>Wetter an der Ruhr</em>, eine Stadt, deren Name wie ein Wetterbericht klingt. Hier baute der Industriepionier Friedrich Harkort in den Eintausendachthundertzwanziger Jahren die Dampfmaschinen, die das ganze Ruhrgebiet zur Industrieregion verwandeln sollten. Eine seiner Maschinen ging später an die Zeche Nachtigall, jenen Schauplatz, dem wir uns morgen widmen werden.</p>`,
+         closing: 'Die Sonne hat gewärmt, das Bier hat gekühlt — was will man mehr?', margin: 'Heute keinen Tropfen Regen. Ungewöhnlich für eine deutsche Tour.' },
+    4: { title: 'Vierter Eintrag · Bei den Bergleuten von Witten', place: 'Geschrieben zu Essen-Horst, am späten Nachmittag',
+         weather: '☼ Mild und freundlich.', motto: '„Wer ins Loch hinabsteigt, kommt mit erweitertem Geist hervor."',
+         intro: `<p>Ein opulentes Frühstück in Wetter, geziemend dem Anlaß eines erwarteten Höhepunktes — denn heute steht unserer Truppe der Besuch des <em>Museums Zeche Nachtigall</em> bevor.</p><p>Die Zeche Nachtigall, gelegen in Witten-Bommern, hat eine Geschichte von gut dreihundert Jahren vorzuweisen. Bauern gründeten sie im Jahre Siebzehnhundertvierzehn für den Eigenbedarf. Im Jahre Achtzehnhundertzweiunddreißig wurde hier der erste Tiefbauschacht des gesamten Ruhrgebietes abgeteuft, betrieben mit einer Dampfmaschine aus jener bereits gestern gewürdigten Werkstatt zu Wetter.</p>`,
+         afternoon: `<p>Nach dem Museumsbesuch — mit obligatorischer Helmpflicht im Stollen — lassen wir uns eine ausgiebige Pause angedeihen. Mein Mitreisender notiert dazu trocken: <em>"Pause nach anstrengendem Museumsbesuch."</em> Diese Lakonie ehrt ihn.</p>`,
+         closing: 'Bald ist die Tour vollendet. Eine leise Wehmut mischt sich in die Vorfreude auf das Bett.', margin: 'Bergmannshelme drücken nach einer Stunde unangenehm.' },
+    5: { title: 'Fünfter Eintrag · An die Mündung', place: 'Geschrieben zu Duisburg-Ruhrort',
+         weather: '☼ Klar und freundlich. Frühlingstag.', motto: '„Was beginnt, das endet auch — sei es im Sauerland, sei es am Rhein."',
+         intro: `<p>Der letzte Tag. Das Ruhrgebiet umgibt uns nun gänzlich. Wir folgen dem Ruhrtalradwege durch die Städte Mülheim und Oberhausen, an der Ruhr vorbei, die hier nicht mehr Wildfluß ist, sondern Kulturlandschaft.</p><p>Am Ende erwartet uns das <em>Rheinorange</em> — eine fünfundzwanzig Meter hohe Stahlsäule, welche im Jahre 1992 die Mündung der Ruhr in den Rhein zu markieren bestimmt wurde. Symbolischer Schlußpunkt eines zweihundertvierzig Kilometer langen Weges.</p>`,
+         afternoon: `<p>Hier endet die Ruhr. Hier endet die Tour.</p><p>Sechs Pfadfinder stehen am Wasser, Schweigen herrscht für einen Moment. Dann: ein Wort, ein Schmunzeln, ein Klopfen auf die Schulter. Es war eine Reise wert.</p>`,
+         closing: 'Die Räder ruhen. Die Erinnerung beginnt.', margin: 'Der Hafen Duisburg ist der größte Binnenhafen Europas — wußten Sie?' }
+  };
+
+  function buildEntry(dateKey, idx) {
+    const etappe = D.dayKeysForEtappen[dateKey];
+    if (!etappe) return '';
+    const entry = diaryEntries[etappe.num];
+    if (!entry) return '';
+    const dayPosts = (D.dayGroups[dateKey] || []).filter(p => p.text || p.photos.length > 0);
+    const dayStats = etappeStats[etappe.num] || {};
+    const photos = [];
+    dayPosts.forEach(p => p.photos.forEach(u => { if (typeof u === 'string' && u.startsWith('http') && photos.length < 5) photos.push({ url: u, caption: p.text, ts: p.timestamp, author: p.author }); }));
+    const heroPhoto = photos[0];
+    const sidePhotos = photos.slice(1);
+    const handwrittenQuotes = dayPosts.filter(p => p.text && p.text.length > 5 && p.text.length < 80).slice(0, 3);
+    const romanNum = ['I','II','III','IV','V','VI'][idx];
+
+    return `
+<section class="diary-entry" id="entry-${idx + 1}">
+  <div class="entry-date-band">
+    <div class="entry-roman-num">${romanNum}</div>
+    <div class="entry-date-text">
+      <div class="entry-romanish-date">${esc(dateRomanish(dateKey))}</div>
+      <div class="entry-place">${esc(entry.place)}</div>
+    </div>
+    <div class="entry-flourish">⚜</div>
+  </div>
+  <h2 class="entry-title">${esc(entry.title)}</h2>
+  <p class="entry-motto">${esc(entry.motto)}</p>
+  <div class="entry-meta-bar">
+    <div><span>Witterung</span> ${esc(entry.weather)}</div>
+    ${dayStats.actualKm ? `<div><span>Wegmaß</span> ${dayStats.actualKm} km</div>` : ''}
+    ${dayStats.actualHm ? `<div><span>Höhensteigung</span> ${dayStats.actualHm} m</div>` : ''}
+  </div>
+  ${heroPhoto ? `<figure class="diary-photo diary-photo-large"><div class="photo-frame">${photoTag(heroPhoto.url)}<div class="photo-corner photo-corner-tl"></div><div class="photo-corner photo-corner-tr"></div><div class="photo-corner photo-corner-bl"></div><div class="photo-corner photo-corner-br"></div></div><figcaption><em>Lichtbild:</em> ${esc(heroPhoto.caption || 'Eindruck vom heutigen Tage')}<span class="figcaption-meta">— aufgenommen von ${esc(heroPhoto.author)}, ${timeShort(heroPhoto.ts)} Uhr</span></figcaption></figure>` : ''}
+  <div class="entry-prose">${entry.intro}</div>
+  ${handwrittenQuotes.length > 0 ? `<aside class="handwritten-quotes"><div class="hw-label">Aus dem Logbuch:</div>${handwrittenQuotes.map(q => `<p class="hw-quote">„${esc(q.text)}"<span class="hw-attribution">— ${esc(q.author)}, ${timeShort(q.timestamp)}</span></p>`).join('')}</aside>` : ''}
+  <div class="entry-prose">${entry.afternoon}</div>
+  ${sidePhotos.length > 0 ? `<div class="diary-photo-strip">${sidePhotos.map(p => `<figure class="diary-photo diary-photo-small"><div class="photo-frame">${photoTag(p.url)}<div class="photo-corner photo-corner-tl"></div><div class="photo-corner photo-corner-tr"></div><div class="photo-corner photo-corner-bl"></div><div class="photo-corner photo-corner-br"></div></div>${p.caption ? `<figcaption><em>${esc(p.caption)}</em></figcaption>` : ''}</figure>`).join('')}</div>` : ''}
+  <div class="entry-closing-row">
+    <div class="entry-closing">${esc(entry.closing)}</div>
+    <div class="entry-margin-note"><span class="margin-label">Notabene:</span>${esc(entry.margin)}</div>
+  </div>
+  <div class="entry-vignette">❦   ⚜   ❦</div>
+</section>`;
+  }
+
+  function buildFront() {
+    return `<section class="frontispiece"><div class="frontispiece-frame">
+  <div class="ornament-top">❦ ⚜ ❦</div>
+  <div class="frontispiece-eyebrow">Reisetagebuch</div>
+  <h1 class="frontispiece-title">Von der Quelle der Ruhr<br><em>bis an den Rhein</em></h1>
+  <div class="frontispiece-subtitle">Eine Beschreibung der Reise<br>von sechs ehemaligen Pfadfindern<br>auf zweirädrigen Fahrgestellen<br>im Maien des Jahres ${new Date().getFullYear()}</div>
+  <div class="frontispiece-divider">⚜</div>
+  <div class="frontispiece-meta">
+    <div>${D.totalKm.toFixed(1)} Kilometer Wegstrecke</div>
+    <div>${Math.round(D.totalHm)} Meter Höhensteigung</div>
+    <div>${D.tourDayKeys.length} Tagesetappen</div>
+    <div>Sechs Reisende</div>
+  </div>
+  <div class="frontispiece-publisher">Aufgezeichnet zu Tour-Zeiten ·<br>Pfadfinder-Selbstverlag</div>
+  <div class="ornament-bottom">❦ ⚜ ❦</div>
+</div></section>
+<section class="preface">
+  <h2 class="preface-title">Vorwort des Verfassers</h2>
+  <p class="preface-text"><span class="preface-initial">D</span>er geneigte Leser möge nachsichtig sein mit den folgenden Aufzeichnungen, welche von einem Reisenden stammen, der weder Reiseschriftsteller von Beruf noch Geograph von Ausbildung ist. Was er bietet, sind schlichte Eindrücke einer Wanderung mit dem Fahrrade, vorgenommen im Frühling des Jahres ${new Date().getFullYear()}.</p>
+  <p class="preface-text">Sechs ehemalige Pfadfinder, die zwar an Jahren gewonnen, doch dem Geiste des Aufbruchs nicht ungetreu geworden sind, haben sich auf diese Reise gemacht. Die kursiv gesetzten Sätze sind authentische Zitate aus dem Original-Logbuche, die übrige Erzählung ist nachträglich verfaßt im Stile, der dem Anlasse angemessen schien.</p>
+  <p class="preface-signature">— Die Verfasserschaft</p>
+</section>`;
+  }
+
+  function buildAfter() {
+    return `<section class="afterword">
+  <div class="afterword-vignette">❦   ⚜   ❦</div>
+  <h2 class="afterword-title">Nachwort</h2>
+  <p class="preface-text"><span class="preface-initial">M</span>it diesen Tagesetappen, die uns vom Sauerländer Höhenrücken hinab in die Rheinniederung geführt haben, schließen wir unser Tagebuch. Was bleibt, sind die Bilder, die Erinnerungen, die kleinen Geschichten — und die Gewißheit, daß eine Tour zu Sechst, im Frühling, mit hinreichend Bier und nicht zu vielen Terminen, zu jenen Erlebnissen zählt, von denen man noch im Alter zehrt.</p>
+  <p class="preface-text">Möge der geneigte Leser hieraus die Anregung gewinnen, selbst einmal aufzubrechen — gleich wohin und mit gleich welchem Fortbewegungsmittel. Wichtig ist nur, daß man sich auf den Weg macht, in der rechten Gesellschaft.</p>
+  <div class="finis"><span>F I N I S</span></div>
+</section>`;
+  }
+
+  return `<!DOCTYPE html>
+<html lang="de"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reisetagebuch — Tour</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Cinzel:wght@400;500;700&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--paper-base:#f0e5cc;--paper-aged:#e6d8b8;--paper-fade:#ddc99e;--paper-edge:#c8b289;--ink-deep:#2b1d10;--ink-soft:#5a4530;--ink-faded:#8a7253;--ink-script:#4a2818;--rule:rgba(43,29,16,.25);--gold:#8b6f1f}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{background:#1a1410;color:var(--ink-deep);font-family:'EB Garamond',Georgia,serif;font-size:18px;line-height:1.65;padding:2rem 1rem 4rem;min-height:100vh}
+img{max-width:100%;height:auto;display:block}
+main{max-width:50rem;margin:0 auto;background:var(--paper-base);background-image:radial-gradient(ellipse at 25% 20%,rgba(180,120,60,.08) 0%,transparent 50%),radial-gradient(ellipse at 75% 80%,rgba(160,100,50,.1) 0%,transparent 60%),radial-gradient(ellipse at 50% 50%,rgba(180,130,60,.04) 0%,transparent 70%);box-shadow:0 1px 0 rgba(255,255,255,.05),0 5px 30px rgba(0,0,0,.4),0 30px 80px rgba(0,0,0,.6),inset 0 0 100px rgba(139,110,70,.15);padding:3.5rem 3rem;position:relative}
+main::before{content:'';position:absolute;inset:0;pointer-events:none;background-image:repeating-linear-gradient(0deg,transparent,transparent 4px,rgba(43,29,16,.012) 5px),repeating-linear-gradient(90deg,transparent,transparent 4px,rgba(43,29,16,.008) 5px)}
+main>*{position:relative}
+.frontispiece{text-align:center;padding:3rem 1rem 4rem;border-bottom:1px solid var(--rule);margin-bottom:3rem}
+.frontispiece-frame{border:2px solid var(--ink-deep);border-radius:2px;padding:3rem 2rem;position:relative;background:linear-gradient(to bottom,transparent,rgba(180,130,60,.04),transparent)}
+.frontispiece-frame::before{content:'';position:absolute;inset:.4rem;border:1px solid var(--ink-soft);pointer-events:none;border-radius:1px}
+.ornament-top,.ornament-bottom{font-family:'EB Garamond',serif;font-size:1.5rem;color:var(--gold);letter-spacing:.5em;padding:.5rem 0;opacity:.7}
+.frontispiece-eyebrow{font-family:'Cinzel',serif;font-size:.85rem;font-weight:500;letter-spacing:.4em;text-transform:uppercase;color:var(--ink-faded);margin:1.5rem 0 1rem}
+.frontispiece-title{font-family:'EB Garamond',serif;font-weight:500;font-size:clamp(2rem,5vw,3.2rem);line-height:1.15;color:var(--ink-deep);margin-bottom:1.5rem}
+.frontispiece-title em{font-style:italic;font-weight:400;color:var(--ink-script)}
+.frontispiece-subtitle{font-family:'EB Garamond',serif;font-style:italic;font-size:1.1rem;line-height:1.6;color:var(--ink-soft);margin-bottom:2rem}
+.frontispiece-divider{font-size:1.5rem;color:var(--gold);margin:1rem 0;opacity:.7}
+.frontispiece-meta{font-family:'EB Garamond',serif;font-style:italic;font-size:.95rem;color:var(--ink-soft);line-height:1.8;margin-bottom:2rem}
+.frontispiece-publisher{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faded);line-height:1.7;margin-top:1.5rem}
+.preface{margin-bottom:4rem;padding-bottom:3rem;border-bottom:1px solid var(--rule)}
+.preface-title,.afterword-title{font-family:'EB Garamond',serif;font-weight:500;font-size:2rem;font-style:italic;text-align:center;margin-bottom:2rem;color:var(--ink-deep)}
+.preface-title::after,.afterword-title::after{content:'';display:block;width:4rem;height:1px;background:var(--ink-soft);margin:1rem auto 0}
+.preface-text{font-family:'EB Garamond',serif;font-size:1.05rem;line-height:1.85;text-align:justify;hyphens:auto;margin-bottom:1.2rem;text-indent:1.5em;color:var(--ink-deep)}
+.preface-text:first-of-type{text-indent:0}
+.preface-initial{font-family:'EB Garamond',serif;font-weight:700;font-size:4em;float:left;line-height:.85;margin:.05em .1em 0 -.05em;color:var(--ink-script);font-style:normal}
+.preface-signature{font-family:'Caveat',cursive;font-size:1.5rem;text-align:right;color:var(--ink-script);margin-top:1.5rem;font-style:normal!important}
+.diary-entry{margin-bottom:4rem;padding-bottom:3rem}
+.entry-date-band{display:flex;align-items:center;gap:1.5rem;border-top:2px solid var(--ink-deep);border-bottom:1px solid var(--ink-soft);padding:.8rem 0;margin-bottom:2rem}
+.entry-roman-num{font-family:'Cinzel',serif;font-weight:700;font-size:2.5rem;color:var(--ink-script);line-height:1;min-width:4rem;text-align:center}
+.entry-date-text{flex:1}
+.entry-romanish-date{font-family:'EB Garamond',serif;font-style:italic;font-size:1.1rem;color:var(--ink-deep);font-weight:500}
+.entry-place{font-family:'EB Garamond',serif;font-style:italic;font-size:.85rem;color:var(--ink-faded);margin-top:.2rem}
+.entry-flourish{font-size:1.5rem;color:var(--gold);opacity:.7}
+.entry-title{font-family:'EB Garamond',serif;font-weight:500;font-size:clamp(1.6rem,3vw,2.2rem);font-style:italic;line-height:1.2;text-align:center;margin-bottom:.5rem;color:var(--ink-deep)}
+.entry-motto{font-family:'EB Garamond',serif;font-style:italic;font-size:1.1rem;text-align:center;color:var(--ink-soft);margin-bottom:1.5rem}
+.entry-meta-bar{display:flex;justify-content:space-around;flex-wrap:wrap;gap:1rem;font-family:'EB Garamond',serif;font-size:.9rem;font-style:italic;color:var(--ink-soft);padding:.7rem 1rem;background:rgba(180,130,60,.08);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin-bottom:2rem;text-align:center}
+.entry-meta-bar div{white-space:nowrap}
+.entry-meta-bar span{font-family:'Cinzel',serif;font-style:normal;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-faded);display:block;margin-bottom:.2rem}
+.diary-photo{margin:2rem auto;max-width:90%}
+.diary-photo-large{max-width:100%}
+.photo-frame{position:relative;background:rgba(255,248,230,.6);padding:.8rem;border:1px solid var(--paper-edge);box-shadow:0 1px 2px rgba(0,0,0,.1),0 4px 8px rgba(0,0,0,.06)}
+.photo-frame img{width:100%;filter:contrast(.95) saturate(.75) sepia(.18) brightness(.96);display:block}
+.diary-photo-large .photo-frame img{aspect-ratio:4/3;object-fit:cover}
+.photo-corner{position:absolute;width:1.5rem;height:1.5rem;background:rgba(70,50,30,.4);border-radius:1px}
+.photo-corner-tl{top:0;left:0;clip-path:polygon(0 0,100% 0,0 100%)}
+.photo-corner-tr{top:0;right:0;clip-path:polygon(0 0,100% 0,100% 100%)}
+.photo-corner-bl{bottom:0;left:0;clip-path:polygon(0 0,0 100%,100% 100%)}
+.photo-corner-br{bottom:0;right:0;clip-path:polygon(100% 0,100% 100%,0 100%)}
+.diary-photo figcaption{font-family:'Caveat',cursive;font-size:1.1rem;text-align:center;color:var(--ink-script);padding:.6rem .5rem .2rem;line-height:1.3;font-weight:500}
+.diary-photo figcaption em{font-family:'EB Garamond',serif;font-style:italic;font-size:.95rem;color:var(--ink-soft);display:inline}
+.figcaption-meta{display:block;font-family:'EB Garamond',serif;font-style:italic;font-size:.8rem;color:var(--ink-faded);margin-top:.3rem;font-weight:400}
+.diary-photo-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:1.5rem;margin:2rem 0}
+.diary-photo-small .photo-frame img{aspect-ratio:4/3;object-fit:cover}
+.diary-photo-small figcaption{font-size:1rem}
+.entry-prose{margin:2rem 0}
+.entry-prose p{font-family:'EB Garamond',serif;font-size:1.05rem;line-height:1.85;text-align:justify;hyphens:auto;margin-bottom:1.2rem;text-indent:1.5em;color:var(--ink-deep)}
+.entry-prose p:first-child{text-indent:0}
+.entry-prose em{font-style:italic;color:var(--ink-script);font-weight:500}
+.handwritten-quotes{margin:2.5rem -1rem;padding:1.5rem 2rem;border-top:1px dashed var(--ink-faded);border-bottom:1px dashed var(--ink-faded);background:rgba(180,130,60,.06)}
+.hw-label{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faded);margin-bottom:1rem;text-align:center}
+.hw-quote{font-family:'Caveat',cursive;font-size:1.4rem;line-height:1.4;color:var(--ink-script);margin-bottom:.8rem;text-align:center;font-weight:500}
+.hw-quote:last-child{margin-bottom:0}
+.hw-attribution{display:block;font-family:'EB Garamond',serif;font-style:italic;font-size:.85rem;color:var(--ink-faded);margin-top:.2rem}
+.entry-closing-row{margin:3rem 0 1rem;display:grid;grid-template-columns:1fr;gap:1.5rem}
+@media(min-width:700px){.entry-closing-row{grid-template-columns:1fr 1fr}}
+.entry-closing{font-family:'Caveat',cursive;font-size:1.6rem;text-align:center;color:var(--ink-script);font-weight:500;border-top:1px solid var(--rule);padding-top:1rem}
+.entry-margin-note{font-family:'EB Garamond',serif;font-style:italic;font-size:.9rem;color:var(--ink-soft);border-left:3px solid var(--ink-faded);padding:.6rem 1rem;background:rgba(180,130,60,.05)}
+.margin-label{font-family:'Cinzel',serif;font-style:normal;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faded);margin-right:.5rem;font-weight:500}
+.entry-vignette{text-align:center;font-family:'EB Garamond',serif;font-size:1.3rem;color:var(--gold);letter-spacing:1em;margin:3rem 0 0;opacity:.7}
+.afterword{margin-top:4rem;padding-top:2rem;text-align:center}
+.afterword-vignette{font-size:1.3rem;color:var(--gold);letter-spacing:1em;margin-bottom:2rem;opacity:.7}
+.afterword .preface-text{text-align:justify}
+.finis{margin-top:3rem;padding-top:2rem;border-top:1px solid var(--ink-faded);font-family:'Cinzel',serif;font-weight:500;letter-spacing:.5em;color:var(--ink-script);font-size:1.1rem}
+.photo-placeholder{aspect-ratio:4/3;background:rgba(160,130,80,.15);border:1px dashed var(--ink-faded);display:flex;align-items:center;justify-content:center;font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-faded);font-size:.9rem}
+nav.diary-nav{position:fixed;top:1rem;right:1rem;display:flex;gap:.4rem;z-index:50;background:rgba(43,29,16,.85);padding:.5rem .7rem;border-radius:4px;font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:.15em}
+nav.diary-nav a{color:var(--paper-base);text-decoration:none;padding:.2rem .5rem;border-radius:2px;transition:background .2s}
+nav.diary-nav a:hover{background:rgba(255,255,255,.15)}
+::selection{background:var(--ink-script);color:var(--paper-base)}
+@media print{body{background:white;padding:0}main{box-shadow:none;max-width:100%;padding:1.5cm}main::before{display:none}nav.diary-nav{display:none}.diary-entry{page-break-inside:avoid}.frontispiece,.preface{page-break-after:always}}
+</style></head><body>
+<nav class="diary-nav">${D.tourDayKeys.map((d, i) => `<a href="#entry-${i+1}">${['I','II','III','IV','V'][i]||(i+1)}</a>`).join('')}</nav>
+<main>
+${buildFront()}
+${D.tourDayKeys.map((d, i) => buildEntry(d, i)).join('\n')}
+${buildAfter()}
+</main>
+</body></html>`;
+}
+window.generateTagebuchHtml = generateTagebuchHtml;
+// === GENERATOR: PICTURE STORIES (FOTO-COMIC) ===
+function generateComicHtml() {
+  const H = _storyHelpers();
+  const D = _storyData();
+  const { esc, photoTag } = H;
+
+  // Hilfsfunktion: Fotos eines Tages einsammeln
+  function getDayPhotos(dateKey, count = 8) {
+    const dayPosts = D.dayGroups[dateKey] || [];
+    const photos = [];
+    dayPosts.forEach(p => p.photos.forEach(u => { if (typeof u === 'string' && u.startsWith('http') && photos.length < count) photos.push({ url: u, post: p }); }));
+    return photos;
+  }
+
+  // 4 Episoden für die Etappen 1-4 (5 falls noch Bilder da)
+  const episodeMeta = [
+    { num: 1, title: 'Folge 1: Der Aufbruch', subtitle: 'Winterberg → Meschede. Wo alles beginnt.', color: '#7a8d4c', accent: '#b8542a',
+      panels: [
+        { narration: 'Winterberg, früher Morgen. Sechs Männer, sechs Räder, ein Plan.',
+          bubbles: [{ who: 'Christoph', text: 'Angekommen!', type: 'speech', position: 'top-left' }, { who: 'Stefan', text: 'Warum ist hier nichts los?', type: 'thought', position: 'top-right' }] },
+        { narration: 'Erste Pause nach 10 km.', 
+          bubbles: [{ who: 'Charly', text: 'Schon Pause? Ich hab grad warmgefahren!', type: 'speech', position: 'top-left' }, { who: 'Burkhard', text: 'Eine Pause ist eine Pause.', type: 'speech', position: 'bottom-right' }] },
+        { narration: 'Mittagsstunde. Die Truppe entdeckt einen Kaffee.',
+          bubbles: [{ who: 'Willi', text: 'Erst mal nen Kaffee. Logisch.', type: 'speech', position: 'top-right' }] },
+        { narration: 'Nachmittag. Aussichtspunkt. Die Truppe philosophiert.',
+          bubbles: [{ who: 'Christoph', text: 'Unsere Definition von Glück:', type: 'speech', position: 'top-left' }, { who: 'alle', text: 'KEINE TERMINE!', type: 'shout', position: 'bottom-center' }] },
+        { narration: 'Meschede. Landhotel Hütter. Bier bestellt.',
+          bubbles: [{ who: 'Burkhard', text: 'Absacker auf\'m Zimmer? Is ja auch spät genug.', type: 'speech', position: 'top-right' }] },
+        { narration: '21:24 Uhr. Lichter aus.',
+          bubbles: [{ who: 'Christoph', text: 'Gute Nacht 🤘', type: 'speech', position: 'center' }] }
+      ] },
+    { num: 2, title: 'Folge 2: Schnitzel XXL', subtitle: 'Meschede → Menden. Walpurgisnacht und das große Fressen.', color: '#c89c4a', accent: '#8a3d1e',
+      panels: [
+        { narration: 'Frühstück in Olpe. Die Beine erinnern sich an gestern.',
+          bubbles: [{ who: 'Stefan', text: 'Mein Hintern hat Beine.', type: 'speech', position: 'top-left' }, { who: 'Charly', text: 'Noch ein Brötchen?', type: 'speech', position: 'top-right' }] },
+        { narration: 'Unterwegs nach Arnsberg. Die Sonne lacht.',
+          bubbles: [{ who: 'Willi', text: 'Schau, da! Eine Schleife!', type: 'speech', position: 'top-left' }] },
+        { narration: 'Arnsberg. 789 erstmals erwähnt. Heute besucht.',
+          bubbles: [{ who: 'Christoph', text: 'Die Preußen haben hier ab 1816 ein Klassizismusviertel gebaut!', type: 'speech', position: 'top-left' }, { who: 'alle', text: 'Wahnsinn.', type: 'shout', position: 'bottom-right' }] },
+        { narration: 'Mittags-Päusken. Eine Tradition.',
+          bubbles: [{ who: 'Charly', text: 'Päuschen ist heilig.', type: 'speech', position: 'top-right' }] },
+        { narration: 'Menden, Abend. Walpurgisnacht klopft an.',
+          bubbles: [{ who: 'Stefan', text: 'Wie groß?', type: 'speech', position: 'top-left' }, { who: 'Bedienung', text: 'XXL.', type: 'speech', position: 'bottom-right' }] },
+        { narration: '30 Minuten später.',
+          bubbles: [{ who: 'alle', text: 'Schnitzel. XXL.', type: 'thought', position: 'center' }] }
+      ] },
+    { num: 3, title: 'Folge 3: Im Himmel', subtitle: 'Menden → Wetter. Kaiserwetter im Wortsinn.', color: '#d97757', accent: '#3d4f28',
+      panels: [
+        { narration: 'Frühstück. In einem Baumarkt. Lange Geschichte.',
+          bubbles: [{ who: 'Christoph', text: 'Frühstück im Baumarkt. ☺️', type: 'speech', position: 'top-left' }, { who: 'Stefan', text: 'Frag besser nicht.', type: 'thought', position: 'top-right' }] },
+        { narration: 'Auf dem Radweg. Maifeiertag. Sonne knallt herab.',
+          bubbles: [{ who: 'Christoph', text: 'IM HIMMEL KANN ES NICHT SCHÖNER SEIN!', type: 'shout', position: 'top-center' }] },
+        { narration: 'Pause an der Ruhr.',
+          bubbles: [{ who: 'Burkhard', text: 'Endlich mal jemand, der\'s ausspricht.', type: 'speech', position: 'top-right' }] },
+        { narration: 'Mittagsstop. Auf einen neuen Rentner.',
+          bubbles: [{ who: 'Christoph', text: 'Wir trinken auf den neuen Rentner!', type: 'speech', position: 'top-center' }, { who: 'Charly', text: 'Wer ist eigentlich der neue Rentner?', type: 'thought', position: 'bottom-left' }] },
+        { narration: 'Die Gläser klingen.',
+          bubbles: [{ who: 'Willi', text: 'Auf das Leben!', type: 'speech', position: 'top-left' }, { who: 'Stefan', text: 'Auf die Knie!', type: 'speech', position: 'top-right' }] },
+        { narration: 'Wetter an der Ruhr. Tag perfekt.',
+          bubbles: [{ who: 'Christoph', text: 'Sooo schön war das.', type: 'speech', position: 'top-right' }] }
+      ] },
+    { num: 4, title: 'Folge 4: Bei den Bergleuten', subtitle: 'Wetter → Essen. Helmpflicht und Industriekultur.', color: '#5a6e3e', accent: '#b8542a',
+      panels: [
+        { narration: 'Opulentes Frühstück. Fast zu opulent.',
+          bubbles: [{ who: 'Charly', text: 'Noch ein Croissant?', type: 'speech', position: 'top-left' }, { who: 'Willi', text: 'Wir haben heute nur 35 km.', type: 'speech', position: 'bottom-right' }] },
+        { narration: 'Witten-Bommern. Zeche Nachtigall wartet.',
+          bubbles: [{ who: 'Christoph', text: 'Hier wurde 1832 der erste Tiefbauschacht abgeteuft!', type: 'speech', position: 'top-left' }, { who: 'Stefan', text: 'Und wo gibt\'s den Helm?', type: 'speech', position: 'bottom-right' }] },
+        { narration: 'Helmpflicht im Stollen.',
+          bubbles: [{ who: 'Burkhard', text: 'Glück auf!', type: 'shout', position: 'top-center' }, { who: 'Charly', text: 'Drückt der nicht?', type: 'thought', position: 'bottom-left' }] },
+        { narration: 'Im Stollen. Bergmannsleben.',
+          bubbles: [{ who: 'Christoph', text: 'Wiege des Ruhrbergbaus!', type: 'speech', position: 'top-left' }, { who: 'Friedhelm', text: 'Mir wird hier kalt.', type: 'speech', position: 'bottom-right' }] },
+        { narration: 'Wieder draußen. Sonne ein Geschenk.',
+          bubbles: [{ who: 'Stefan', text: 'Pause nach Museumsbesuch?', type: 'speech', position: 'top-left' }, { who: 'alle', text: 'JA!', type: 'shout', position: 'bottom-right' }] },
+        { narration: 'Die Fähre über die Ruhr.',
+          bubbles: [{ who: 'Friedhelm', text: 'Morgen Duisburg. Dann ist Schluss.', type: 'speech', position: 'top-right' }, { who: 'Charly', text: 'Schon?', type: 'thought', position: 'bottom-left' }] }
+      ] }
+  ];
+
+  // Tour-Tage 1-4 zuordnen
+  const sortedTourDays = D.tourDayKeys.slice(0, 4);
+
+  const charColors = { 'Christoph': '#b8542a', 'Willi': '#5a6e3e', 'Charly': '#c89c4a', 'Stefan': '#7a3d6e', 'Burkhard': '#3d6e8a', 'Friedhelm': '#d97757', 'alle': '#444', 'Bedienung': '#888' };
+
+  function bubbleStyleFor(type) { return type === 'thought' ? 'bubble-thought' : type === 'shout' ? 'bubble-shout' : 'bubble-speech'; }
+
+  function buildPanel(panel, photoUrl) {
+    if (!photoUrl) {
+      return `<div class="panel panel-no-photo">${panel.narration ? `<div class="panel-narration">${esc(panel.narration)}</div>` : ''}<div class="panel-missing">📷</div>${panel.bubbles.map(b => `<div class="bubble ${bubbleStyleFor(b.type)} panel-bubble-${b.position}" style="--bubble-color: ${charColors[b.who] || '#444'}"><div class="bubble-who">${esc(b.who)}</div><div class="bubble-text">${esc(b.text)}</div></div>`).join('')}</div>`;
+    }
+    return `<div class="panel">${panel.narration ? `<div class="panel-narration">${esc(panel.narration)}</div>` : ''}<div class="panel-image"><img src="${esc(photoUrl)}" alt="" loading="lazy">${panel.bubbles.map(b => `<div class="bubble ${bubbleStyleFor(b.type)} panel-bubble-${b.position}" style="--bubble-color: ${charColors[b.who] || '#444'}"><div class="bubble-who">${esc(b.who)}</div><div class="bubble-text">${esc(b.text)}</div></div>`).join('')}</div></div>`;
+  }
+
+  function buildEpisode(meta, dateKey) {
+    const photos = getDayPhotos(dateKey, meta.panels.length);
+    return `<section class="episode" id="episode-${meta.num}" style="--ep-color: ${meta.color}; --ep-accent: ${meta.accent};">
+  <header class="episode-header">
+    <div class="episode-num">Folge ${meta.num.toString().padStart(2,'0')}</div>
+    <h2 class="episode-title">${esc(meta.title)}</h2>
+    <p class="episode-subtitle">${esc(meta.subtitle)}</p>
+  </header>
+  <div class="panels-grid">
+    ${meta.panels.map((p, i) => buildPanel(p, photos[i]?.url)).join('')}
+  </div>
+</section>`;
+  }
+
+  return `<!DOCTYPE html>
+<html lang="de"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pfadfinder Picture Stories</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:ital,wght@0,400;0,700;1,400;1,700&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f5e9d4;--paper:#fefcf6;--ink:#1a1410}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{background:#2a2520;color:var(--ink);font-family:'Comic Neue','Comic Sans MS',cursive;font-size:16px;line-height:1.5;padding:2rem 1rem 4rem;min-height:100vh;background-image:radial-gradient(circle at 25% 25%,rgba(255,255,255,.03) 1px,transparent 2px),radial-gradient(circle at 75% 75%,rgba(255,255,255,.03) 1px,transparent 2px);background-size:8px 8px}
+img{max-width:100%;height:auto;display:block}
+.magazine-header{max-width:65rem;margin:0 auto 3rem;background:var(--bg);padding:2rem;border:4px solid var(--ink);position:relative;box-shadow:8px 8px 0 var(--ink);text-align:center}
+.magazine-header::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle at 15% 50%,rgba(184,84,42,.15) 1.5px,transparent 2px),radial-gradient(circle at 85% 50%,rgba(122,141,76,.15) 1.5px,transparent 2px);background-size:12px 12px;pointer-events:none}
+.magazine-header>*{position:relative;z-index:1}
+.mh-eyebrow{font-family:'Permanent Marker',cursive;font-size:1.1rem;color:#b8542a;letter-spacing:.05em;transform:rotate(-2deg);display:inline-block;margin-bottom:.5rem}
+.mh-title{font-family:'Bangers',cursive;font-size:clamp(2.5rem,8vw,5rem);line-height:.95;letter-spacing:.04em;color:var(--ink);text-shadow:4px 4px 0 #b8542a,-2px -2px 0 #5a6e3e;margin-bottom:1rem;transform:rotate(-1deg)}
+.mh-subtitle{font-family:'Comic Neue',cursive;font-style:italic;font-weight:700;font-size:1.1rem;color:var(--ink);margin-bottom:1.5rem}
+.mh-meta{display:flex;justify-content:space-around;flex-wrap:wrap;gap:1rem;font-family:'Bangers',cursive;font-size:1rem;letter-spacing:.1em;color:var(--ink);padding-top:1rem;border-top:2px dashed var(--ink)}
+.episode{max-width:65rem;margin:0 auto 4rem;background:var(--paper);border:4px solid var(--ink);padding:2rem;box-shadow:8px 8px 0 var(--ink)}
+.episode-header{text-align:center;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:3px dashed var(--ink)}
+.episode-num{font-family:'Permanent Marker',cursive;font-size:1rem;color:var(--ep-color);letter-spacing:.2em;text-transform:uppercase;margin-bottom:.5rem;transform:rotate(-2deg);display:inline-block}
+.episode-title{font-family:'Bangers',cursive;font-size:clamp(2rem,5vw,3rem);letter-spacing:.03em;color:var(--ink);margin-bottom:.4rem;text-shadow:3px 3px 0 var(--ep-color)}
+.episode-subtitle{font-family:'Comic Neue',cursive;font-style:italic;font-weight:700;font-size:1rem;color:var(--ink)}
+.panels-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem}
+@media(max-width:600px){.panels-grid{grid-template-columns:1fr}}
+.panel{background:white;border:3px solid var(--ink);position:relative;box-shadow:4px 4px 0 var(--ink);display:flex;flex-direction:column}
+.panel-narration{background:#fbf3d8;padding:.7rem 1rem;font-family:'Comic Neue',cursive;font-style:italic;font-weight:700;font-size:.95rem;line-height:1.3;color:var(--ink);border-bottom:3px solid var(--ink)}
+.panel-image{position:relative;background:#ddd;aspect-ratio:4/3;overflow:hidden}
+.panel-image img{width:100%;height:100%;object-fit:cover;filter:contrast(1.15) saturate(1.1) brightness(1.02)}
+.panel-no-photo{aspect-ratio:4/3;background:#f0e0c0;display:flex;align-items:center;justify-content:center;font-size:4rem;opacity:.5}
+.bubble{position:absolute;background:white;border:2.5px solid var(--ink);padding:.5rem .8rem;border-radius:1.2rem;font-family:'Comic Neue',cursive;font-weight:700;font-size:.85rem;line-height:1.2;max-width:60%;box-shadow:2px 2px 0 var(--ink);z-index:10}
+.bubble-who{font-family:'Permanent Marker',cursive;font-size:.65rem;letter-spacing:.05em;text-transform:uppercase;color:var(--bubble-color,var(--ink));margin-bottom:.1rem}
+.bubble-text{font-size:.9rem;color:var(--ink)}
+.bubble-speech::before{content:'';position:absolute;width:1rem;height:1rem;background:white;border:2.5px solid var(--ink);border-top:none;border-left:none;transform:rotate(45deg);bottom:-.65rem;left:1.5rem;z-index:-1}
+.bubble-thought{border-radius:2rem}
+.bubble-thought::before,.bubble-thought::after{content:'';position:absolute;background:white;border:2.5px solid var(--ink);border-radius:50%}
+.bubble-thought::before{width:.6rem;height:.6rem;bottom:-.6rem;left:1.5rem}
+.bubble-thought::after{width:.35rem;height:.35rem;bottom:-1.2rem;left:1rem}
+.bubble-shout{background:#fff200;border:3px solid var(--ink);font-family:'Bangers',cursive;letter-spacing:.04em;text-transform:uppercase;padding:.6rem 1rem;border-radius:0;clip-path:polygon(0% 15%,5% 10%,12% 0%,20% 8%,30% 2%,38% 10%,50% 0%,62% 10%,70% 2%,80% 8%,88% 0%,95% 10%,100% 15%,95% 25%,100% 35%,95% 45%,100% 55%,95% 65%,100% 75%,100% 85%,95% 90%,88% 100%,80% 92%,70% 98%,62% 90%,50% 100%,38% 90%,30% 98%,20% 92%,12% 100%,5% 90%,0% 85%,5% 75%,0% 65%,5% 55%,0% 45%,5% 35%,0% 25%);max-width:70%}
+.bubble-shout .bubble-text{font-family:'Bangers',cursive;font-size:1.1rem}
+.bubble-shout::before{display:none}
+.panel-bubble-top-left{top:5%;left:5%}.panel-bubble-top-right{top:5%;right:5%;max-width:50%}.panel-bubble-top-center{top:5%;left:50%;transform:translateX(-50%)}.panel-bubble-bottom-left{bottom:8%;left:5%}.panel-bubble-bottom-right{bottom:8%;right:5%;max-width:50%}.panel-bubble-bottom-center{bottom:8%;left:50%;transform:translateX(-50%)}.panel-bubble-center{top:50%;left:50%;transform:translate(-50%,-50%)}
+.comic-footer{max-width:65rem;margin:0 auto;background:var(--bg);border:4px solid var(--ink);padding:2rem;box-shadow:8px 8px 0 var(--ink);text-align:center}
+.cf-title{font-family:'Bangers',cursive;font-size:2rem;margin-bottom:1rem;color:var(--ink);letter-spacing:.05em}
+.cf-text{font-family:'Comic Neue',cursive;font-weight:700;font-size:1rem;line-height:1.5;margin-bottom:1rem;color:var(--ink)}
+.cf-cast{display:grid;grid-template-columns:repeat(auto-fit,minmax(8rem,1fr));gap:.8rem;margin:1.5rem 0;padding:1rem;background:white;border:2px solid var(--ink)}
+.cast-member{font-family:'Permanent Marker',cursive;font-size:.9rem;letter-spacing:.05em;padding:.3rem;border-bottom:2px dashed var(--ink)}
+.cast-name{display:block;font-size:1.1rem;text-transform:uppercase}
+.cast-role{display:block;font-family:'Comic Neue',cursive;font-style:italic;font-size:.75rem;color:var(--ink);margin-top:.2rem}
+.cf-meta{font-family:'Comic Neue',cursive;font-size:.75rem;font-style:italic;color:var(--ink);margin-top:1rem;padding-top:1rem;border-top:2px dashed var(--ink)}
+nav.comic-nav{position:fixed;top:1rem;right:1rem;display:flex;gap:.4rem;z-index:50;background:white;border:3px solid var(--ink);padding:.4rem .6rem;box-shadow:3px 3px 0 var(--ink);font-family:'Bangers',cursive;font-size:.95rem;letter-spacing:.05em}
+nav.comic-nav a{color:var(--ink);text-decoration:none;padding:.1rem .4rem;transition:all .15s}
+nav.comic-nav a:hover{background:#fff200;transform:rotate(-3deg);display:inline-block}
+::selection{background:#fff200;color:var(--ink)}
+@media print{body{background:white;padding:0;background-image:none}.magazine-header,.episode,.comic-footer{box-shadow:none;page-break-inside:avoid;page-break-after:always}nav.comic-nav{display:none}}
+</style></head><body>
+<nav class="comic-nav">${episodeMeta.map(e => `<a href="#episode-${e.num}">${e.num}</a>`).join('')}</nav>
+<header class="magazine-header">
+  <div class="mh-eyebrow">Pfadfinder Picture Stories</div>
+  <h1 class="mh-title">DIE TOUR!</h1>
+  <p class="mh-subtitle">Eine Foto-Story in ${Math.min(episodeMeta.length, sortedTourDays.length)} Episoden — Frei nach den Original-Logbucheinträgen</p>
+  <div class="mh-meta">
+    <div>★ 6 Helden</div>
+    <div>★ ${D.tourDayKeys.length} Tage</div>
+    <div>★ 1 Fluss</div>
+    <div>★ Schnitzel XXL</div>
+  </div>
+</header>
+${episodeMeta.slice(0, sortedTourDays.length).map((meta, i) => buildEpisode(meta, sortedTourDays[i])).join('\n')}
+<footer class="comic-footer">
+  <div class="cf-title">Die Mannschaft</div>
+  <p class="cf-text">Sechs ehemalige Pfadfinder, eine Tour, ein Logbuch. Die Charakterzeichnungen sind <em>liebevoll überspitzt</em>.</p>
+  <div class="cf-cast">
+    <div class="cast-member" style="border-bottom-color:#b8542a;"><span class="cast-name" style="color:#b8542a;">Christoph</span><span class="cast-role">Der Chronist</span></div>
+    <div class="cast-member" style="border-bottom-color:#5a6e3e;"><span class="cast-name" style="color:#5a6e3e;">Willi</span><span class="cast-role">Der Pragmatiker</span></div>
+    <div class="cast-member" style="border-bottom-color:#c89c4a;"><span class="cast-name" style="color:#c89c4a;">Charly</span><span class="cast-role">Der Genießer</span></div>
+    <div class="cast-member" style="border-bottom-color:#7a3d6e;"><span class="cast-name" style="color:#7a3d6e;">Stefan</span><span class="cast-role">Der Skeptiker</span></div>
+    <div class="cast-member" style="border-bottom-color:#3d6e8a;"><span class="cast-name" style="color:#3d6e8a;">Burkhard</span><span class="cast-role">Der Optimist</span></div>
+    <div class="cast-member" style="border-bottom-color:#d97757;"><span class="cast-name" style="color:#d97757;">Friedhelm</span><span class="cast-role">Der Gelassene</span></div>
+  </div>
+  <div class="cf-meta">Pfadfinder Picture Stories · Sprechblasen frei erfunden, Stimmung und Geist authentisch.</div>
+</footer>
+</body></html>`;
+}
+window.generateComicHtml = generateComicHtml;
+
+
 
 function exportData() {
   const data = { posts, comments, etappeStats, exported: new Date().toISOString() };
