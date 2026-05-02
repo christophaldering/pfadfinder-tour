@@ -2544,6 +2544,98 @@ function copyLink() {
     .then(() => toast('Link kopiert ✓')).catch(() => toast('Kopieren fehlgeschlagen', true));
 }
 
+// === AUTO-MIGRATION (still, im Hintergrund) ===
+// Prüft beim Datenladen, ob noch base64-Fotos in der DB sind, und migriert sie still nach Storage.
+// Diese Funktion läuft ohne UI-Bestätigung, ohne Toast, im Hintergrund.
+// Falls etwas schiefgeht, wird das in der Console geloggt aber sonst stillschweigend ignoriert.
+async function autoMigratePhotosIfNeeded() {
+  try {
+    // Prüfen, ob es überhaupt was zu tun gibt
+    const { data: postsData, error: loadErr } = await sb
+      .from('posts')
+      .select('id, photos');
+    if (loadErr) {
+      console.warn('AutoMigration: Konnte Posts nicht laden:', loadErr);
+      return;
+    }
+
+    // Posts mit base64-Fotos finden
+    const todo = [];
+    for (const p of postsData) {
+      const photos = p.photos || [];
+      const hasBase64 = photos.some(ph => typeof ph === 'string' && ph.startsWith('data:'));
+      if (hasBase64) todo.push({ id: p.id, photos });
+    }
+
+    if (todo.length === 0) {
+      // Nichts zu tun, alles in Storage
+      return;
+    }
+
+    console.log(`AutoMigration: ${todo.length} Post(s) mit base64-Fotos gefunden, starte stille Migration...`);
+
+    let migrated = 0;
+    let failed = 0;
+    for (const p of todo) {
+      const newPhotos = [];
+      let idx = 0;
+      let postChanged = false;
+      for (const photo of p.photos) {
+        if (typeof photo === 'string' && photo.startsWith('data:')) {
+          try {
+            const blob = dataUrlToBlob(photo);
+            const url = await uploadPhotoToStorage(blob, p.id, idx);
+            newPhotos.push(url);
+            postChanged = true;
+            migrated++;
+          } catch (e) {
+            console.warn('AutoMigration: Upload-Fehler bei Post', p.id, 'Foto', idx, ':', e);
+            newPhotos.push(photo);
+            failed++;
+          }
+        } else {
+          newPhotos.push(photo);
+        }
+        idx++;
+      }
+
+      // Nur updaten, wenn sich was geändert hat
+      if (postChanged) {
+        try {
+          const { error: updErr } = await sb
+            .from('posts')
+            .update({ photos: newPhotos })
+            .eq('id', p.id);
+          if (updErr) {
+            console.warn('AutoMigration: Update-Fehler bei Post', p.id, ':', updErr);
+          } else {
+            // Local posts-Array aktualisieren, damit die Anzeige umschwenkt
+            const localPost = posts.find(lp => lp.id === p.id);
+            if (localPost) localPost.photos = newPhotos;
+          }
+        } catch (e) {
+          console.warn('AutoMigration: Update-Ausnahme:', e);
+        }
+      }
+    }
+
+    console.log(`AutoMigration: ${migrated} Foto(s) migriert, ${failed} fehlgeschlagen.`);
+
+    // Wenn was migriert wurde, Anzeige aktualisieren
+    if (migrated > 0) {
+      try {
+        renderFeed();
+        renderGallery();
+        renderStats();
+      } catch (e) {
+        console.warn('AutoMigration: Render-Fehler:', e);
+      }
+    }
+  } catch (e) {
+    console.warn('AutoMigration: Allgemeiner Fehler:', e);
+  }
+}
+
 // === STORAGE-MIGRATION ===
 // Wandelt alle base64-Fotos in den Posts in Storage-URLs um.
 // Läuft im Browser, kann jederzeit unterbrochen und wiederaufgenommen werden.
@@ -5200,6 +5292,10 @@ function initRealtimeSubscriptions() {
 
   // Wenn User schon eingeloggt: Author-Dropdown vorbelegen
   if (currentUser) afterLoginInit();
+
+  // Stille Auto-Migration im Hintergrund: prüft, ob noch base64-Fotos in der DB sind
+  // und migriert sie nach Storage. Verzögert um 3 Sekunden, damit die App zuerst rendert.
+  setTimeout(() => { autoMigratePhotosIfNeeded(); }, 3000);
 })();
 </script>
 </body>
