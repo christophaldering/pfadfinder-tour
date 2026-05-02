@@ -153,6 +153,61 @@ nav button.active { color: var(--rust); border-bottom-color: var(--rust); }
 section { padding: 1.5rem 1.25rem; display: none; }
 section.active { display: block; animation: fadeIn 0.4s ease-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* STORY-MODUS */
+.story-loading { text-align: center; padding: 3rem 1rem; color: var(--paper-dim); font-style: italic; }
+.story-progress-bar { background: var(--bg-card); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.story-progress-text { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--paper-dim); }
+.story-progress-bar-track { flex: 1; min-width: 100px; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.story-progress-bar-fill { height: 100%; background: linear-gradient(to right, var(--rust), #d97757); border-radius: 3px; transition: width 0.3s; }
+.story-filter-toggle { padding: 0.4rem 0.8rem; background: var(--bg-card); border: 1px solid var(--line-strong); color: var(--paper-dim); font-size: 0.7rem; border-radius: 4px; cursor: pointer; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; }
+.story-filter-toggle.active { background: var(--rust); color: white; border-color: var(--rust); }
+
+.story-card { background: var(--bg-card); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+.story-card-header { padding: 1rem 1.2rem; background: rgba(184,84,42,0.08); border-bottom: 1px solid var(--line-strong); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+.story-card-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--paper-dim); letter-spacing: 0.1em; text-transform: uppercase; }
+.story-card-counter { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--rust); font-weight: 600; }
+.story-original-text { padding: 1rem 1.2rem; background: rgba(255,255,255,0.03); font-style: italic; color: var(--paper-dim); font-size: 0.95rem; line-height: 1.5; border-bottom: 1px solid var(--line-strong); }
+.story-original-text-label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--paper-dark); margin-bottom: 0.4rem; opacity: 0.7; font-style: normal; }
+
+.story-photo-wrapper { position: relative; background: #000; max-height: 60vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.story-photo-wrapper img { max-width: 100%; max-height: 60vh; height: auto; display: block; object-fit: contain; }
+
+.story-caption-section { padding: 1.2rem; }
+.story-caption-label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 0.5rem; }
+.story-caption-textarea { width: 100%; min-height: 100px; background: rgba(255,255,255,0.04); border: 1px solid var(--line-strong); border-radius: 6px; padding: 0.8rem; color: var(--paper); font-family: inherit; font-size: 1rem; line-height: 1.5; resize: vertical; transition: border-color 0.2s; }
+.story-caption-textarea:focus { outline: none; border-color: var(--rust); background: rgba(255,255,255,0.06); }
+.story-caption-hint { font-size: 0.7rem; color: var(--paper-dark); margin-top: 0.4rem; font-style: italic; line-height: 1.4; }
+.story-caption-saved { color: #6b9d4a; font-weight: 600; font-style: normal; }
+.story-caption-author { font-size: 0.7rem; color: var(--paper-dim); margin-top: 0.4rem; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; }
+
+.story-rating { padding: 1rem 1.2rem; background: rgba(255,255,255,0.02); border-top: 1px solid var(--line-strong); }
+.story-rating-label { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 0.6rem; display: block; }
+.story-rating-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem; }
+.story-rating-btn { padding: 0.7rem 0.4rem; background: rgba(255,255,255,0.04); border: 1px solid var(--line-strong); border-radius: 6px; color: var(--paper-dim); font-size: 0.75rem; cursor: pointer; transition: all 0.15s; text-align: center; line-height: 1.2; font-family: inherit; }
+.story-rating-btn:hover { background: rgba(255,255,255,0.08); color: var(--paper); }
+.story-rating-btn.active { background: var(--rust); color: white; border-color: var(--rust); font-weight: 600; }
+.story-rating-icon { display: block; font-size: 1.3rem; margin-bottom: 0.2rem; }
+
+.story-nav { padding: 1rem 1.2rem; background: rgba(0,0,0,0.2); border-top: 1px solid var(--line-strong); display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; }
+.story-nav button { padding: 0.8rem 0.5rem; background: rgba(255,255,255,0.04); border: 1px solid var(--line-strong); border-radius: 6px; color: var(--paper-dim); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.15s; }
+.story-nav button:hover:not(:disabled) { background: var(--rust); color: white; border-color: var(--rust); }
+.story-nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+.story-nav button.primary { background: var(--rust); color: white; border-color: var(--rust); font-weight: 600; }
+.story-nav button.primary:hover:not(:disabled) { background: #a84a26; }
+
+.story-thumbnails { margin-top: 1.5rem; }
+.story-thumbnails-title { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 0.7rem; display: flex; justify-content: space-between; align-items: center; }
+.story-thumbnails-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 0.4rem; }
+.story-thumb { aspect-ratio: 1/1; border-radius: 4px; overflow: hidden; cursor: pointer; position: relative; border: 2px solid transparent; background: var(--bg-card); transition: all 0.15s; }
+.story-thumb:hover { transform: scale(1.05); }
+.story-thumb.current { border-color: var(--rust); box-shadow: 0 0 0 2px rgba(184,84,42,0.3); }
+.story-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.story-thumb-status { position: absolute; bottom: 2px; right: 2px; font-size: 0.7rem; line-height: 1; padding: 1px 3px; border-radius: 2px; background: rgba(0,0,0,0.7); }
+.story-thumb-status.has-caption { background: rgba(107,157,74,0.85); color: white; }
+.story-thumb-status.highlight { background: rgba(184,84,42,0.85); color: white; }
+.story-thumb-status.skip { background: rgba(180,180,180,0.5); color: white; }
+
 .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.7rem; margin-bottom: 0.25rem; letter-spacing: 0.02em; display: flex; align-items: baseline; gap: 0.75rem; }
 .section-title::after { content: ''; flex: 1; height: 1px; background: var(--line-strong); }
 .section-subtitle { font-family: 'Caveat', cursive; font-size: 1.1rem; color: var(--gold); margin-bottom: 1.25rem; display: block; }
@@ -833,6 +888,7 @@ body.hero-collapsed .hero-compact { display: flex; }
   <button data-tab="fotos"><span class="tab-icon">📷</span><span class="tab-label">Fotos</span></button>
   <button data-tab="kasse"><span class="tab-icon">💰</span><span class="tab-label">Kasse</span></button>
   <button data-tab="book"><span class="tab-icon">📖</span><span class="tab-label">Buch</span></button>
+  <button data-tab="story"><span class="tab-icon">✍️</span><span class="tab-label">Story</span></button>
 </nav>
 
 <section id="tab-feed" class="active">
@@ -1232,6 +1288,16 @@ body.hero-collapsed .hero-compact { display: flex; }
   <div id="snapshots-empty" class="empty-state" style="display: none;">Noch keine Snapshots erstellt. Klick oben auf 📸, um einen anzulegen.</div>
 </section>
 
+<section id="tab-story">
+  <h2 class="section-title">Story-Modus</h2>
+  <span class="section-subtitle">Foto für Foto durchgehen, Erinnerungen festhalten</span>
+  
+  <div id="story-container">
+    <!-- Wird dynamisch gefüllt -->
+    <div class="story-loading">Wird geladen…</div>
+  </div>
+</section>
+
 <footer>
   <svg class="lily-big"><use href="#lily"/></svg>
   <div class="legacy">Allzeit b(e)reit</div>
@@ -1354,6 +1420,8 @@ let comments = {};
 let etappeStats = {};  // { etappeNum: { actualKm, actualHm, durationMin, weather, weatherIcon, notes } }
 let mapInstance = null;
 let modalState = null;
+let storyCaptions = {};  // { "postId|photoIdx": { caption, rating, author, updated_at } }
+let storyState = { currentIdx: 0, photos: [], filterUnedited: false };
 
 
 // === TOUR-BUCH PDF SPEC ===
@@ -1756,6 +1824,8 @@ async function uploadPhotoToStorage(blob, postId, idx) {
 }
 
 function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+// Globale Kurzform für esc (auch in Story-Modus genutzt)
+function esc(str) { return escapeHtml(str); }
 
 function getKmGefahren() {
   // Wenn für eine Etappe actualKm in etappeStats erfasst ist, diese verwenden.
@@ -2002,6 +2072,403 @@ function renderGallery() {
   allPhotos.sort((a, b) => b.ts - a.ts);
   grid.innerHTML = allPhotos.map(p => `<img src="${p.src}" alt="" loading="lazy" decoding="async" onclick="openLightbox('${p.postId}', ${p.idx}, 'gallery')">`).join('');
 }
+
+// ============================================================
+// === STORY-MODUS: Foto-für-Foto-Kuration ===
+// ============================================================
+
+async function loadStoryCaptions() {
+  try {
+    const { data, error } = await sb.from('story_captions').select('*');
+    if (error) {
+      console.warn('Story-Captions konnten nicht geladen werden:', error);
+      return;
+    }
+    storyCaptions = {};
+    (data || []).forEach(row => {
+      const key = `${row.post_id}|${row.photo_idx}`;
+      storyCaptions[key] = { caption: row.caption || '', rating: row.rating ?? 1, author: row.author, updated_at: row.updated_at };
+    });
+  } catch (e) {
+    console.warn('Story-Captions Load-Error:', e);
+  }
+}
+
+// Sammelt alle Fotos chronologisch in storyState.photos
+function buildStoryPhotosList() {
+  const list = [];
+  const sorted = [...posts].sort((a, b) => a.timestamp - b.timestamp);
+  sorted.forEach(p => {
+    (p.photos || []).forEach((src, idx) => {
+      if (typeof src === 'string' && src.startsWith('http')) {
+        list.push({ src, postId: p.id, photoIdx: idx, post: p });
+      }
+    });
+  });
+  storyState.photos = list;
+}
+
+function getCaptionForPhoto(postId, photoIdx) {
+  return storyCaptions[`${postId}|${photoIdx}`] || null;
+}
+
+function getStoryProgress() {
+  const total = storyState.photos.length;
+  let withCaption = 0, highlights = 0, skipped = 0;
+  storyState.photos.forEach(p => {
+    const c = getCaptionForPhoto(p.postId, p.photoIdx);
+    if (c && c.caption && c.caption.trim().length > 0) withCaption++;
+    if (c && c.rating === 3) highlights++;
+    if (c && c.rating === 0) skipped++;
+  });
+  return { total, withCaption, highlights, skipped };
+}
+
+function renderStoryMode() {
+  const container = document.getElementById('story-container');
+  if (!container) return;
+  
+  if (storyState.photos.length === 0) {
+    buildStoryPhotosList();
+  }
+  
+  if (storyState.photos.length === 0) {
+    container.innerHTML = '<div class="story-loading">Noch keine Fotos vorhanden. Sobald die Truppe Fotos postet, kannst du hier arbeiten.</div>';
+    return;
+  }
+  
+  const total = storyState.photos.length;
+  const progress = getStoryProgress();
+  const filtered = storyState.filterUnedited 
+    ? storyState.photos.filter(p => !getCaptionForPhoto(p.postId, p.photoIdx))
+    : storyState.photos;
+  
+  // Wenn gefiltert und leer: Filter zurücksetzen
+  if (filtered.length === 0 && storyState.filterUnedited) {
+    container.innerHTML = `
+      <div class="story-progress-bar">
+        <span class="story-progress-text">🎉 Alle Fotos beschrieben!</span>
+        <button class="story-filter-toggle active" onclick="storyToggleFilter()">Filter aus</button>
+      </div>
+      <div class="story-loading">Du hast alle Fotos durchgegangen. Wechsle den Filter, um nochmal durchzugehen.</div>`;
+    return;
+  }
+  
+  // Index in der gefilterten Liste
+  if (storyState.currentIdx >= filtered.length) storyState.currentIdx = 0;
+  if (storyState.currentIdx < 0) storyState.currentIdx = filtered.length - 1;
+  
+  const currentPhoto = filtered[storyState.currentIdx];
+  // Globaler Index in der vollen Liste (für die Anzeige "X von Y")
+  const globalIdx = storyState.photos.findIndex(p => p.postId === currentPhoto.postId && p.photoIdx === currentPhoto.photoIdx);
+  
+  const post = currentPhoto.post;
+  const caption = getCaptionForPhoto(currentPhoto.postId, currentPhoto.photoIdx);
+  const captionText = caption?.caption || '';
+  const captionRating = caption?.rating ?? 1;
+  const captionAuthor = caption?.author || '';
+  
+  const date = new Date(post.timestamp);
+  const dateStr = date.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
+  const timeStr = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  
+  // Etappe finden
+  const etappe = ETAPPEN.find(e => e.dateISO === date.toISOString().slice(0, 10));
+  const etappeStr = etappe ? `Etappe ${etappe.num}: ${etappe.from}→${etappe.to}` : '';
+  
+  const progressPct = (progress.withCaption / total) * 100;
+  
+  container.innerHTML = `
+    <div class="story-progress-bar">
+      <span class="story-progress-text">${progress.withCaption} / ${total} beschrieben${progress.highlights ? ` · ${progress.highlights} ⭐⭐⭐` : ''}${progress.skipped ? ` · ${progress.skipped} ✕` : ''}</span>
+      <div class="story-progress-bar-track"><div class="story-progress-bar-fill" style="width: ${progressPct}%"></div></div>
+      <button class="story-filter-toggle ${storyState.filterUnedited ? 'active' : ''}" onclick="storyToggleFilter()">${storyState.filterUnedited ? 'Nur Neue' : 'Alle'}</button>
+    </div>
+    
+    <div class="story-card">
+      <div class="story-card-header">
+        <div class="story-card-meta">
+          ${dateStr} · ${timeStr} Uhr · ${esc(post.author || '')}${etappeStr ? ' · ' + esc(etappeStr) : ''}
+        </div>
+        <div class="story-card-counter">${globalIdx + 1} / ${total}</div>
+      </div>
+      
+      ${post.text ? `
+      <div class="story-original-text">
+        <span class="story-original-text-label">Original-Logbuch-Eintrag:</span>
+        ${esc(post.text)}
+      </div>` : ''}
+      
+      <div class="story-photo-wrapper">
+        <img src="${esc(currentPhoto.src)}" alt="" decoding="async" loading="eager">
+      </div>
+      
+      <div class="story-caption-section">
+        <label class="story-caption-label" for="story-caption-input">Deine Erinnerung zu diesem Foto</label>
+        <textarea 
+          id="story-caption-input" 
+          class="story-caption-textarea" 
+          placeholder="Was war hier los? Wer ist auf dem Bild? Was ist passiert? Diktiere oder schreibe..."
+          oninput="storyCaptionChanged(this.value)"
+        >${esc(captionText)}</textarea>
+        <div class="story-caption-hint" id="story-caption-status">
+          💡 Tipp: Auf dem iPhone das Mikrofon-Symbol auf der Tastatur nutzen, am Mac Fn-Taste doppeltippen.
+          ${captionAuthor ? `<br><span class="story-caption-author">Zuletzt geändert von: ${esc(captionAuthor)}</span>` : ''}
+        </div>
+      </div>
+      
+      <div class="story-rating">
+        <span class="story-rating-label">Bedeutung dieses Fotos für die Story</span>
+        <div class="story-rating-options">
+          <button class="story-rating-btn ${captionRating === 0 ? 'active' : ''}" onclick="storyRate(0)">
+            <span class="story-rating-icon">✕</span>Skip
+          </button>
+          <button class="story-rating-btn ${captionRating === 1 ? 'active' : ''}" onclick="storyRate(1)">
+            <span class="story-rating-icon">○</span>OK
+          </button>
+          <button class="story-rating-btn ${captionRating === 2 ? 'active' : ''}" onclick="storyRate(2)">
+            <span class="story-rating-icon">⭐</span>Mit dabei
+          </button>
+          <button class="story-rating-btn ${captionRating === 3 ? 'active' : ''}" onclick="storyRate(3)">
+            <span class="story-rating-icon">⭐⭐⭐</span>Highlight
+          </button>
+        </div>
+      </div>
+      
+      <div class="story-nav">
+        <button onclick="storyPrev()" ${storyState.currentIdx === 0 ? 'disabled' : ''}>← Vorheriges</button>
+        <button class="primary" onclick="storySaveAndNext()">↓ Speichern & Weiter</button>
+        <button onclick="storyNext()" ${storyState.currentIdx >= filtered.length - 1 ? 'disabled' : ''}>Nächstes →</button>
+      </div>
+    </div>
+    
+    <div class="story-thumbnails">
+      <div class="story-thumbnails-title">
+        <span>Übersicht</span>
+        <span>${storyState.photos.length} Fotos</span>
+      </div>
+      <div class="story-thumbnails-grid">
+        ${storyState.photos.map((p, i) => {
+          const c = getCaptionForPhoto(p.postId, p.photoIdx);
+          let statusClass = '', statusIcon = '';
+          if (c && c.rating === 0) { statusClass = 'skip'; statusIcon = '✕'; }
+          else if (c && c.rating === 3) { statusClass = 'highlight'; statusIcon = '⭐'; }
+          else if (c && c.caption && c.caption.trim()) { statusClass = 'has-caption'; statusIcon = '✓'; }
+          const isCurrent = (p.postId === currentPhoto.postId && p.photoIdx === currentPhoto.photoIdx);
+          return `<div class="story-thumb ${isCurrent ? 'current' : ''}" onclick="storyJumpTo(${i})">
+            <img src="${esc(p.src)}" alt="" loading="lazy">
+            ${statusIcon ? `<span class="story-thumb-status ${statusClass}">${statusIcon}</span>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// Local-State für unverarbeitete Eingaben
+let _storyDraftCaption = null;
+let _storyDraftDirty = false;
+
+function storyCaptionChanged(value) {
+  _storyDraftCaption = value;
+  _storyDraftDirty = true;
+  const status = document.getElementById('story-caption-status');
+  if (status) {
+    status.innerHTML = '✏️ Ungespeicherte Änderung — auf "Speichern & Weiter" klicken';
+  }
+}
+
+async function saveCurrentStoryCaption(silent = false) {
+  const filtered = storyState.filterUnedited 
+    ? storyState.photos.filter(p => !getCaptionForPhoto(p.postId, p.photoIdx))
+    : storyState.photos;
+  if (storyState.currentIdx >= filtered.length || storyState.currentIdx < 0) return;
+  const currentPhoto = filtered[storyState.currentIdx];
+  const key = `${currentPhoto.postId}|${currentPhoto.photoIdx}`;
+  
+  // Aktuellen Caption-Wert ermitteln (entweder Draft oder bestehend)
+  const captionInput = document.getElementById('story-caption-input');
+  const captionValue = captionInput ? captionInput.value : (_storyDraftCaption ?? '');
+  const existing = storyCaptions[key];
+  
+  // Wenn nichts geändert wurde und kein Eintrag existiert: nichts tun
+  if (!existing && !captionValue.trim() && (existing?.rating ?? 1) === 1) {
+    _storyDraftDirty = false;
+    return;
+  }
+  
+  const author = currentUser?.name || existing?.author || 'Unbekannt';
+  const rating = existing?.rating ?? 1;
+  
+  try {
+    const { error } = await sb.from('story_captions').upsert({
+      post_id: currentPhoto.postId,
+      photo_idx: currentPhoto.photoIdx,
+      caption: captionValue,
+      rating: rating,
+      author: author,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'post_id,photo_idx' });
+    
+    if (error) {
+      console.error('Story-Caption Save-Error:', error);
+      if (!silent) toast('Speichern fehlgeschlagen: ' + error.message, true);
+      return;
+    }
+    
+    storyCaptions[key] = { caption: captionValue, rating: rating, author: author, updated_at: new Date().toISOString() };
+    _storyDraftDirty = false;
+    if (!silent) {
+      const status = document.getElementById('story-caption-status');
+      if (status) status.innerHTML = '<span class="story-caption-saved">✓ Gespeichert</span>';
+    }
+  } catch (e) {
+    console.error('Story-Caption Exception:', e);
+    if (!silent) toast('Speichern fehlgeschlagen', true);
+  }
+}
+
+async function storyRate(rating) {
+  // Erst aktuelle Caption sichern (falls geändert)
+  await saveCurrentStoryCaption(true);
+  
+  const filtered = storyState.filterUnedited 
+    ? storyState.photos.filter(p => !getCaptionForPhoto(p.postId, p.photoIdx))
+    : storyState.photos;
+  if (storyState.currentIdx >= filtered.length || storyState.currentIdx < 0) return;
+  const currentPhoto = filtered[storyState.currentIdx];
+  const key = `${currentPhoto.postId}|${currentPhoto.photoIdx}`;
+  
+  const captionInput = document.getElementById('story-caption-input');
+  const captionValue = captionInput ? captionInput.value : '';
+  const existing = storyCaptions[key];
+  const author = currentUser?.name || existing?.author || 'Unbekannt';
+  
+  try {
+    const { error } = await sb.from('story_captions').upsert({
+      post_id: currentPhoto.postId,
+      photo_idx: currentPhoto.photoIdx,
+      caption: captionValue,
+      rating: rating,
+      author: author,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'post_id,photo_idx' });
+    
+    if (error) {
+      toast('Speichern fehlgeschlagen: ' + error.message, true);
+      return;
+    }
+    
+    storyCaptions[key] = { caption: captionValue, rating: rating, author: author, updated_at: new Date().toISOString() };
+    renderStoryMode();
+  } catch (e) {
+    console.error(e);
+    toast('Fehler', true);
+  }
+}
+
+async function storyNext() {
+  await saveCurrentStoryCaption(true);
+  storyState.currentIdx++;
+  renderStoryMode();
+  scrollToStoryTop();
+}
+
+async function storyPrev() {
+  await saveCurrentStoryCaption(true);
+  storyState.currentIdx--;
+  renderStoryMode();
+  scrollToStoryTop();
+}
+
+async function storySaveAndNext() {
+  await saveCurrentStoryCaption(false);
+  // Kurze Pause für visuelles Feedback
+  setTimeout(() => {
+    const filtered = storyState.filterUnedited 
+      ? storyState.photos.filter(p => !getCaptionForPhoto(p.postId, p.photoIdx))
+      : storyState.photos;
+    if (storyState.currentIdx < filtered.length - 1) {
+      storyState.currentIdx++;
+    }
+    renderStoryMode();
+    scrollToStoryTop();
+  }, 300);
+}
+
+async function storyJumpTo(globalIdx) {
+  await saveCurrentStoryCaption(true);
+  // Wenn gefiltert: globalen Index auf gefilterten Index mappen
+  if (storyState.filterUnedited) {
+    const filtered = storyState.photos.filter(p => !getCaptionForPhoto(p.postId, p.photoIdx));
+    const targetPhoto = storyState.photos[globalIdx];
+    const filteredIdx = filtered.findIndex(p => p.postId === targetPhoto.postId && p.photoIdx === targetPhoto.photoIdx);
+    if (filteredIdx === -1) {
+      // Foto nicht in Filter — Filter aus
+      storyState.filterUnedited = false;
+      storyState.currentIdx = globalIdx;
+    } else {
+      storyState.currentIdx = filteredIdx;
+    }
+  } else {
+    storyState.currentIdx = globalIdx;
+  }
+  renderStoryMode();
+  scrollToStoryTop();
+}
+
+function storyToggleFilter() {
+  storyState.filterUnedited = !storyState.filterUnedited;
+  storyState.currentIdx = 0;
+  renderStoryMode();
+  scrollToStoryTop();
+}
+
+function scrollToStoryTop() {
+  const card = document.querySelector('#story-container .story-card');
+  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Tab-Switch-Handler erweitern: bei Wechsel zu Story-Tab → init
+function initStoryTabIfNeeded() {
+  buildStoryPhotosList();
+  renderStoryMode();
+}
+
+// Realtime: andere Pfadfinder-Beiträge live übernehmen
+function initStoryRealtimeSubscription() {
+  try {
+    sb.channel('story_captions_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'story_captions' }, (payload) => {
+        const row = payload.new || payload.old;
+        if (!row) return;
+        const key = `${row.post_id}|${row.photo_idx}`;
+        if (payload.eventType === 'DELETE') {
+          delete storyCaptions[key];
+        } else {
+          storyCaptions[key] = { caption: row.caption || '', rating: row.rating ?? 1, author: row.author, updated_at: row.updated_at };
+        }
+        // Nur re-rendern, wenn Story-Tab aktiv ist
+        if (document.getElementById('tab-story')?.classList.contains('active')) {
+          renderStoryMode();
+        }
+      })
+      .subscribe();
+  } catch (e) {
+    console.warn('Story-Realtime konnte nicht initialisiert werden:', e);
+  }
+}
+
+window.storyCaptionChanged = storyCaptionChanged;
+window.storyRate = storyRate;
+window.storyNext = storyNext;
+window.storyPrev = storyPrev;
+window.storySaveAndNext = storySaveAndNext;
+window.storyJumpTo = storyJumpTo;
+window.storyToggleFilter = storyToggleFilter;
+window.initStoryTabIfNeeded = initStoryTabIfNeeded;
+
+
 
 function renderStatsPage() {
   // Bilanz
@@ -5985,6 +6452,7 @@ function initNav() {
       }
       if (tab === 'kasse') loadExpenses();
       if (tab === 'book') loadSnapshots();
+      if (tab === 'story') initStoryTabIfNeeded();
     });
   });
 }
@@ -6150,7 +6618,9 @@ function initRealtimeSubscriptions() {
   initFilterBar();
   initPacking();
   await loadPackingData();
+  await loadStoryCaptions();
   initRealtimeSubscriptions();
+  initStoryRealtimeSubscription();
 
   // Wenn User schon eingeloggt: Author-Dropdown vorbelegen
   if (currentUser) afterLoginInit();
