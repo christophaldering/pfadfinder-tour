@@ -1230,6 +1230,7 @@ body.hero-collapsed .hero-compact { display: flex; }
   <div class="share-bar">
     <button class="share-btn" onclick="copyLink()">Link kopieren</button>
     <button class="share-btn" onclick="exportData()">Backup exportieren</button>
+    <button class="share-btn" onclick="generateStoryHtml()" style="background:rgba(184,84,42,0.15);border-color:#b8542a;color:#b8542a;">📖 Reportage generieren</button>
   </div>
 </footer>
 
@@ -2642,6 +2643,435 @@ async function migratePhotosToStorage() {
 
 // Macht die Funktion in der Console verfügbar (für manuellen Aufruf)
 window.migratePhotosToStorage = migratePhotosToStorage;
+
+// === STORY-GENERATOR ===
+// Erzeugt eine HTML-Reportage aus den aktuellen Daten und lädt sie als Datei runter
+function generateStoryHtml() {
+  // ---- Helper ----
+  function esc(s) {
+    return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function timeShort(ts) {
+    return new Date(ts).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+  }
+  function getDayKey(timestamp) {
+    return new Date(timestamp).toLocaleDateString('de-DE', {year:'numeric', month:'2-digit', day:'2-digit'});
+  }
+  function dateLong(dateKey) {
+    const [d, m, y] = dateKey.split('.');
+    return new Date(`${y}-${m}-${d}`).toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long', year: 'numeric'});
+  }
+  function photoTag(url) {
+    if (typeof url !== 'string' || !url.startsWith('http')) {
+      return '<div class="photo-placeholder"><span>📷</span><small>Foto noch nicht verfügbar</small></div>';
+    }
+    return `<img src="${esc(url)}" alt="" loading="lazy" decoding="async">`;
+  }
+
+  // ---- Daten gruppieren ----
+  const sorted = [...posts].sort((a,b) => a.timestamp - b.timestamp);
+  const dayGroups = {};
+  sorted.forEach(p => {
+    const key = getDayKey(p.timestamp);
+    if (!dayGroups[key]) dayGroups[key] = [];
+    const photoUrls = (p.photos||[]).filter(ph => typeof ph === 'string' && ph.startsWith('http'));
+    dayGroups[key].push({
+      ...p,
+      photos: photoUrls,
+      text: p.text || ''
+    });
+  });
+
+  // ---- Erzählmaterial: Etappen-Konfiguration ----
+  // Etappen werden anhand des Datums den ETAPPEN-Daten zugeordnet
+  const dayKeysForEtappen = {};
+  ETAPPEN.forEach(e => {
+    if (e.dateISO) {
+      const key = new Date(e.dateISO).toLocaleDateString('de-DE', {year:'numeric', month:'2-digit', day:'2-digit'});
+      dayKeysForEtappen[key] = e;
+    }
+  });
+
+  // Storytelling-Texte für jede Etappe (per Etappen-Nummer)
+  const etappenStory = {
+    1: {
+      title: 'Winterberg → Meschede',
+      subtitle: 'Vom Rothaargebirge ins Sauerland — der erste Tag im Sattel',
+      intro: `<p>Es ist ein eigenartiger Moment, wenn man morgens in Winterberg ankommt. Die Stadt liegt auf 670 Metern, sie ist die höchstgelegene Stadt Nordrhein-Westfalens, und sie weiß das. Skihütten ohne Schnee, Bobbahnen im Sommerschlaf, ein leeres Zentrum, das nach Wochenende riecht. Sechs Männer, sechs Räder, sechs Lebensgeschichten — und gemeinsam die leise Vorfreude darauf, dem Alltag für eine Woche den Rücken zuzukehren.</p>
+
+<p>Drei Kilometer nordöstlich der Stadt, am Nordhang des Ruhrkopfes auf 696 Metern, entspringt die Ruhr. Ein unscheinbares Rinnsal, das in der Niederung Mut fasst, sich verbreitert, durchatmet — und am Ende, 219 Kilometer weiter, in Duisburg den Rhein erreicht. Die Pfadfinder werden ihr folgen.</p>
+
+<p>Der <em>Ruhrtalradweg</em>, dem sie vertrauen, feiert in diesem Jahr Geburtstag. Vor 20 Jahren, am 30. April 2006, wurde er offiziell eröffnet — und zwar nicht hier oben, sondern weit unten im Tal, auf dem Gelände der Zeche Nachtigall in Witten. Eine kleine Ironie der Geographie: Der Anfang feiert sein Jubiläum am Ende.</p>`,
+      pullout: { text: 'Unsere Definition von Glück: keine Termine und leicht einen sitzen.', author: 'Aus dem Logbuch, Tag 1' },
+      context: {
+        title: 'Die Ruhrquelle',
+        subtitle: '696 Meter, Nordhang des Ruhrkopfes',
+        text: 'Drei Kilometer nordöstlich von Winterberg, am Nordhang des Ruhrkopfes (696 m ü. NN), entspringt die Ruhr — als bescheidenes Rinnsal, das niemandem etwas zutraut. Auf 219 Kilometern wird sie zum namensgebenden Fluss einer der einflussreichsten Industrieregionen Europas, gestaut zu sechs Seen, mehrfach kanalisiert und doch von ihren Ufern liebevoll begleitet.<br><br>Insgesamt überwindet der Ruhrtalradweg von der Quelle auf 654 m bis zur Mündung in Duisburg auf 17 m rund 650 Höhenmeter. Die ersten 35 Kilometer haben es in sich. Danach: meist flach, oft autofrei, immer in der Nähe des Wassers.'
+      }
+    },
+    2: {
+      title: 'Meschede → Menden',
+      subtitle: 'Arnsberg, Tanz in den Mai und ein Schnitzel der Größenklasse XXL',
+      intro: `<p>Frühstück, Beine erinnern sich an gestern, der Rücken auch. Aber der Kaffee ist gut, die Sonne lacht, und die Ruhr ist längst kein scheues Rinnsal mehr. Sie hat sich Verstärkung geholt: aus dem Hochsauerland, aus dem Rothaargebirge, aus dem Naturpark Arnsberger Wald, dem größten zusammenhängenden Waldgebiet Westfalens. Der Fluss ist erwachsen geworden.</p>
+
+<p>Mittags rollt die Truppe in <em>Arnsberg</em> ein, dem geheimen Höhepunkt dieser Etappe. Die Stadt — erstmals 789 urkundlich erwähnt, seit 1238 mit Stadtrechten — versteckt sich auf einem Bergrücken in einer dramatischen Ruhrschleife, fast zu schön, um wahr zu sein. Wer will, kann sich verlieren in den Gassen der mittelalterlichen Oberstadt mit ihren Fachwerkhäusern, kann den 44 Meter hohen Glockenturm anschauen (zweimal abgebrannt, 1600 und 1709, beim zweiten Wiederaufbau bekam er die heutige barocke Haube) oder das Klassizismusviertel besuchen, das die Preußen ab 1816 anlegten. <em>"Wir gehen auf Arnsberg!"</em> hieß im Mittelalter so viel wie: Wir lassen unseren Streit von der dortigen Gerichtsbarkeit klären.</p>
+
+<p>Am Abend dann Menden — der eine erst spät erreicht, der andere etwas früher, alle aber rechtzeitig genug für den <em>Tanz in den Mai</em> und ein Schnitzel, das ins Logbuch eingehen wird unter dem schlichten Vermerk: <em>XXL</em>.</p>`,
+      pullout: { text: 'Schnitzel XXL.', author: 'Logbuch-Eintrag, Tag 2' },
+      context: {
+        title: 'Arnsberg — Stadt der Grafen, Kurfürsten, Preußen',
+        subtitle: 'Erstmals 789 urkundlich erwähnt',
+        text: 'Die Altstadt von Arnsberg liegt auf einem Bergrücken, fast vollständig umflossen von einer dramatischen Ruhrschleife. Sie wurde ab 1100 gebaut, war seit 1368 unter Kölner Herrschaft Hauptstadt des Herzogtums Westfalen und fiel 1816 an Preußen. Die Preußen brachten den Klassizismus mit — das berühmte "Preußenviertel" mit seinen klaren Linien.<br><br>Im Mittelalter sagte man: <em>"Wir gehen auf Arnsberg!"</em> — wenn ein Streit nicht mehr zu schlichten war, sollte das Arnsberger Tribunal entscheiden. Heute kommen statt Streithähnen Radfahrer. Aber das Sauerland-Museum im Landsberger Hof — gebaut 1605 für die Mätresse eines Kurfürsten — erzählt die alten Geschichten weiter.'
+      }
+    },
+    3: {
+      title: 'Menden → Wetter',
+      subtitle: 'Kaiserwetter, Himmelsstimmung und ein neuer Rentner',
+      intro: `<p>Tag drei. Die Sonne knallt herunter wie bestellt, das Wetter-Logbuch der Etappe trägt den Vermerk <em>"SuperSonnenTag - herrliches Kaiserwetter"</em>. Der Radweg ist flach geworden, die Steigungen liegen hinter der Mannschaft, das Sauerland verabschiedet sich nach und nach, und das Ruhrtal wird breiter, weicher, fast italienisch.</p>
+
+<p>Heute kommt auch <em>Gabi</em> dazu. Mittags der erste Eintrag von ihr: <em>"Wir trinken auf den neuen Rentner"</em>. Ein Mensch hat seinen letzten Arbeitstag hinter sich, und was tut man da? Man fährt mit Freunden Rad, man hebt die Gläser, man gibt sich der Sonne hin. Die Tour wird zur Ruhestandsfeier, ohne dass jemand einen Plan dafür hatte. Manchmal organisiert sich das Leben selbst.</p>
+
+<p>Abends erreichen sie Wetter — eine Stadt mit einem Namen, der wie ein Wetterbericht klingt, aber mit ungewöhnlicher Geschichte. Hier baute Friedrich Harkort, ab den 1820er Jahren, in der <em>Mechanischen Werkstätte auf der Burg Wetter</em> die Dampfmaschinen, die das Ruhrgebiet zur Industrieregion machten. Eine dieser Maschinen ging später an die Zeche Nachtigall — Schauplatz des morgigen Tages.</p>`,
+      pullout: { text: 'Im Himmel kann es nicht schöner sein.', author: 'Aus dem Logbuch, Tag 3' },
+      context: {
+        title: 'Friedrich Harkort und die Burg Wetter',
+        subtitle: 'Wiege der Industrialisierung',
+        text: 'Wetter an der Ruhr ist nicht nur ein Übernachtungsort. Hier, in der "Mechanischen Werkstätte auf der Burg Wetter", baute der Pionier Friedrich Harkort ab den 1820er Jahren die Dampfmaschinen, die das Ruhrgebiet zur Industrieregion machten. Eine dieser Maschinen ermöglichte 1832 auf der Zeche Nachtigall den ersten Tiefbauschacht — die Geburtsstunde des modernen Ruhrbergbaus.<br><br>Harkort war Visionär, Industrieller, Liberaler — und einer derjenigen, die das Sauerland und das Ruhrgebiet zu einer Schicksalsgemeinschaft machten.'
+      }
+    },
+    4: {
+      title: 'Wetter → Essen',
+      subtitle: 'Zeche Nachtigall, Industriekultur und die Fähre über die Ruhr',
+      intro: `<p>Opulentes Frühstück. Das Wort <em>opulent</em> taucht im Logbuch nur einmal auf, und es passt: am Morgen des letzten echten Fahrtages. Heute geht es nicht nur weiter — heute geht es in eine andere Welt. Das Sauerland ist endgültig vorbei, das Ruhrgebiet beginnt.</p>
+
+<p>Erster Stopp: <em>Museum Zeche Nachtigall</em> in Witten-Bommern. Gegründet 1714 von Bauern, die für den Eigenbedarf nach Kohle gruben. Erweitert ab 1743 durch den Freiherrn von Elverfeldt, der für 140 Reichstaler die Anteile aufkaufte. 1832 erfolgte hier — mit einer Dampfmaschine aus Wetter — der erste Tiefbauschacht des Ruhrgebiets. <em>Wiege des Ruhrbergbaus</em>, sagen die Historiker. Mitte des 19. Jahrhunderts war Nachtigall mit etwa 500 Bergleuten in 450 Metern Tiefe eine der größten Zechen der Region. 1892 war Schluss — die Wittener Kohle taugte nicht zur Verkokung.</p>
+
+<p>Heute ist das Areal LWL-Industriemuseum, mit Helmpflicht im Stollen. Der Name übrigens: nach der Singvogelart, die im Ruhrtal aber heute eher selten geworden ist. <em>Nachtigall</em> war immer ein leiser Name für einen lauten Ort.</p>`,
+      pullout: { text: 'Pause nach anstrengendem Museumsbesuch.', author: 'Logbuch-Eintrag nach der Zeche Nachtigall' },
+      context: {
+        title: '20 Jahre Ruhrtalradweg',
+        subtitle: 'Eröffnet am 30. April 2006 — auf der Zeche Nachtigall',
+        text: 'Eine kleine Ironie: Die Pfadfinder beenden ihre Tour 2026 im Geburtsjahr des Radwegs, dem sie folgen. Vor genau 20 Jahren, am 30. April 2006, wurde der Ruhrtalradweg offiziell eröffnet — mit einem Fest auf dem Gelände der Zeche Nachtigall.<br><br>Der Weg ist mit vier Sternen als ADFC-Qualitätsradroute ausgezeichnet, 240 Kilometer lang, überquert die Ruhr 36 Mal und verbindet — wie kein anderer Flussradweg Deutschlands — Natur und Industriekultur auf engstem Raum.'
+      }
+    },
+    5: {
+      title: 'Essen → Duisburg',
+      subtitle: 'Die letzte Etappe — vom Baldeneysee zum Rheinorange',
+      intro: `<p>Der letzte Tag. Das Ruhrgebiet ist jetzt allgegenwärtig. Vorbei am Baldeneysee, einem der sechs Stauseen der Ruhr, weiter durch Mülheim und Oberhausen — Städte, die der Fluss im Vorbeifahren nur am Rand berührt. Die Ruhr ist hier nicht mehr Wildfluss, sondern Kulturlandschaft.</p>
+
+<p>Am Ende: das <em>Rheinorange</em>, eine 25 Meter hohe Stahlsäule am Mündungspunkt der Ruhr in den Rhein. Symbolischer Schlusspunkt eines 240 Kilometer langen Weges, einer ganzen Tour, einer Idee. Der Hafen von Duisburg ist der größte Binnenhafen Europas. Hier endet die Ruhr. Hier endet die Tour.</p>`,
+      pullout: { text: 'Wir haben das wirklich getan.', author: 'Geist des letzten Tages' },
+      context: {
+        title: 'Die Mündung — Rheinorange',
+        subtitle: 'Duisburg-Ruhrort, Rheinkilometer 780',
+        text: 'Das <em>Rheinorange</em> ist eine 25 Meter hohe Stahlsäule, die seit 1992 die Mündung der Ruhr in den Rhein markiert. Der Künstler Lutz Fritsch wählte den knalligen Orangeton bewusst: er ist die offizielle "Schifffahrtsfarbe" — sichtbar gegen Industriegrau und Wasserblau gleichermaßen.<br><br>Der Duisburger Binnenhafen, in den die Ruhr hier mündet, ist der größte Binnenhafen Europas und einer der wichtigsten Logistikknoten Deutschlands. Vom Rinnsal am Ruhrkopf bis zum Tor zur Welt: 219 Kilometer.'
+      }
+    }
+  };
+
+  // ---- Post-Block bauen ----
+  function buildPostBlock(post) {
+    if (post.photos.length === 0 && !post.text) return '';
+    const time = timeShort(post.timestamp);
+    const km = post.km ? `km ${post.km}` : '';
+    if (post.photos.length === 0) {
+      if (post.text) {
+        return `<div class="post post-text-only"><p class="post-text-prominent">${esc(post.text)}</p><div class="post-meta">${esc(post.author)} · ${time}${km ? ' · ' + km : ''}</div></div>`;
+      }
+      return '';
+    } else if (post.photos.length === 1) {
+      return `<article class="post post-single"><figure>${photoTag(post.photos[0])}${post.text ? `<figcaption>${esc(post.text)}</figcaption>` : ''}</figure><div class="post-meta">${esc(post.author)} · ${time}${km ? ' · ' + km : ''}</div></article>`;
+    } else if (post.photos.length === 2) {
+      return `<article class="post post-diptych"><div class="diptych">${post.photos.map(u => `<figure>${photoTag(u)}</figure>`).join('')}</div>${post.text ? `<figcaption class="diptych-caption">${esc(post.text)}</figcaption>` : ''}<div class="post-meta">${esc(post.author)} · ${time}${km ? ' · ' + km : ''}</div></article>`;
+    } else if (post.photos.length === 3) {
+      return `<article class="post post-trio"><figure class="trio-feature">${photoTag(post.photos[0])}</figure><div class="trio-side"><figure>${photoTag(post.photos[1])}</figure><figure>${photoTag(post.photos[2])}</figure></div>${post.text ? `<figcaption class="trio-caption">${esc(post.text)}</figcaption>` : ''}<div class="post-meta">${esc(post.author)} · ${time}${km ? ' · ' + km : ''}</div></article>`;
+    } else {
+      return `<article class="post post-grid"><div class="post-grid-photos">${post.photos.map(u => `<figure>${photoTag(u)}</figure>`).join('')}</div>${post.text ? `<figcaption class="grid-caption">${esc(post.text)}</figcaption>` : ''}<div class="post-meta">${esc(post.author)} · ${time}${km ? ' · ' + km : ''}</div></article>`;
+    }
+  }
+
+  // ---- Day-Sektion bauen (mit Etappen-Story) ----
+  function buildDaySection(dateKey) {
+    const dayPosts = dayGroups[dateKey] || [];
+    const etappe = dayKeysForEtappen[dateKey];
+    if (!etappe) return '';
+    const story = etappenStory[etappe.num];
+    if (!story) return '';
+    const dayStats = etappeStats[etappe.num];
+    const totalPhotos = dayPosts.reduce((s,p) => s + p.photos.length, 0);
+
+    let html = `<section class="day" id="tag-${etappe.num}">
+      <header class="day-header">
+        <div class="day-meta">
+          <span class="day-num">Etappe ${etappe.num.toString().padStart(2,'0')}</span>
+          <span class="day-date">${dateLong(dateKey)}</span>
+        </div>
+        <h2 class="day-title">${esc(story.title)}</h2>
+        <p class="day-subtitle">${esc(story.subtitle)}</p>
+        ${dayStats ? `<dl class="day-stats">
+          <div><dt>Strecke</dt><dd>${dayStats.actualKm || '—'} <span>km</span></dd></div>
+          <div><dt>Höhenmeter</dt><dd>${dayStats.actualHm || '—'} <span>hm</span></dd></div>
+          <div><dt>Fotos</dt><dd>${totalPhotos} <span>Stück</span></dd></div>
+          <div><dt>Logbuch-Einträge</dt><dd>${dayPosts.length} <span></span></dd></div>
+        </dl>` : ''}
+      </header>
+      <div class="day-intro">${story.intro}</div>
+      <div class="day-content">`;
+
+    const halfMark = Math.ceil(dayPosts.length / 2);
+    dayPosts.slice(0, halfMark).forEach(p => { html += buildPostBlock(p); });
+
+    if (story.pullout) {
+      html += `<aside class="pullout"><p class="pullout-text">„${esc(story.pullout.text)}"</p><cite class="pullout-author">— ${esc(story.pullout.author)}</cite></aside>`;
+    }
+
+    dayPosts.slice(halfMark).forEach(p => { html += buildPostBlock(p); });
+
+    if (story.context) {
+      html += `<aside class="context-box"><div class="context-meta">Hintergrund</div><h3 class="context-title">${esc(story.context.title)}</h3><p class="context-subtitle">${esc(story.context.subtitle)}</p><div class="context-text">${story.context.text}</div></aside>`;
+    }
+
+    html += `</div></section>`;
+    return html;
+  }
+
+  // ---- Pre-Tour-Sektion (Posts ohne Etappe oder Etappe -1) ----
+  function buildPreSection() {
+    const preDayKeys = Object.keys(dayGroups).filter(dk => !dayKeysForEtappen[dk]).sort();
+    if (preDayKeys.length === 0) return '';
+    const allPre = [];
+    preDayKeys.forEach(dk => { dayGroups[dk].forEach(p => { if (p.photos.length > 0 || p.text) allPre.push(p); }); });
+    if (allPre.length === 0) return '';
+    return `<section class="pre-tour" id="vorgeschichte">
+      <header class="day-header">
+        <div class="day-meta">
+          <span class="day-num">Vorspiel</span>
+          <span class="day-date">Vorbereitung & Anreise</span>
+        </div>
+        <h2 class="day-title">Vor der Tour ist nach der Vorbereitung</h2>
+        <p class="day-subtitle">Probe-Aufbau, Vorfreude, kleine Zweifel</p>
+      </header>
+      <div class="day-intro">
+        <p>Eine gute Tour beginnt nicht am Bahnhof. Sie beginnt Tage früher, beim Probe-Aufbau, beim Packen, bei dem leisen Gedanken: <em>Irgendwas habe ich bestimmt vergessen.</em> Diese 48 Stunden zwischen Beschluss und Abfahrt gehören eigentlich nicht zur Tour. Aber sie gehören zur Geschichte — denn ohne sie wäre niemand gefahren.</p>
+      </div>
+      <div class="day-content pre-grid">
+        ${allPre.filter(p => p.photos.length > 0).map(p => `<article class="post post-single"><figure>${photoTag(p.photos[0])}${p.text ? `<figcaption>${esc(p.text)}</figcaption>` : ''}</figure><div class="post-meta">${esc(p.author)} · ${timeShort(p.timestamp)}</div></article>`).join('')}
+      </div>
+    </section>`;
+  }
+
+  // ---- Übersicht / Hero-Stats ----
+  let totalKm = 0, totalHm = 0;
+  Object.values(etappeStats).forEach(s => {
+    totalKm += parseFloat(s.actualKm) || 0;
+    totalHm += parseFloat(s.actualHm) || 0;
+  });
+  const totalPhotos = Object.values(dayGroups).reduce((s, ps) => s + ps.reduce((a,p) => a + p.photos.length, 0), 0);
+  const totalPosts = posts.length;
+
+  // Etappen-Tage aus ETAPPEN, sortiert
+  const tourDayKeys = Object.keys(dayKeysForEtappen).sort((a, b) => {
+    const [da,ma,ya] = a.split('.').map(Number); const [db,mb,yb] = b.split('.').map(Number);
+    return new Date(ya, ma-1, da) - new Date(yb, mb-1, db);
+  });
+
+  const tourTitle = TOUR_TITLE || 'Pfadfinder auf Tour';
+  const tourSubtitle = TOUR_SUBTITLE || 'Eine Reise mit dem Rad';
+  const startName = ETAPPEN[0]?.from || 'Start';
+  const endName = ETAPPEN[ETAPPEN.length-1]?.to || 'Ziel';
+
+  // Routen-Stationen für Hero (eindeutig: alle Start- und Endpunkte)
+  const routePoints = [];
+  if (ETAPPEN[0]) routePoints.push(ETAPPEN[0].from);
+  ETAPPEN.forEach(e => { if (e.to && !routePoints.includes(e.to)) routePoints.push(e.to); });
+
+  // Chapter-Nav
+  const navLinks = ['<a href="#vorgeschichte"><span>Vorspiel</span></a>'];
+  ETAPPEN.forEach(e => {
+    navLinks.push(`<a href="#tag-${e.num}"><span>Etappe ${e.num.toString().padStart(2,'0')}</span></a>`);
+  });
+
+  // ---- HTML zusammenbauen ----
+  const html = `<!DOCTYPE html>
+<html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${esc(tourTitle)} — Eine Reportage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#f4ede1;--paper-tinted:#ebe0cd;--paper-deep:#e0d3ba;--ink:#1a1410;--ink-soft:#4a3f33;--ink-fade:#7a6e5f;--moss:#5a6e3e;--moss-deep:#3d4f28;--rust:#b8542a;--rust-deep:#8a3d1e;--gold:#c89c4a;--rule:rgba(26,20,16,.15);--rule-strong:rgba(26,20,16,.4);--shadow:0 1px 2px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.06)}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:'Fraunces',Georgia,serif;font-size:18px;line-height:1.7;font-feature-settings:'kern','liga','onum';-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:100;background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.005) 3px,transparent 4px),radial-gradient(circle at 20% 30%,rgba(184,84,42,.03) 0,transparent 40%),radial-gradient(circle at 80% 70%,rgba(90,110,62,.03) 0,transparent 40%);mix-blend-mode:multiply}
+img{max-width:100%;height:auto;display:block}
+.hero{min-height:100vh;padding:clamp(2rem,6vh,4rem) clamp(1.5rem,4vw,3rem);display:flex;flex-direction:column;border-bottom:1px solid var(--rule-strong)}
+.hero-masthead{display:flex;justify-content:space-between;align-items:baseline;font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-fade);padding-bottom:1rem;border-bottom:1px solid var(--rule);margin-bottom:clamp(3rem,10vh,6rem)}
+.hero-masthead .vol{display:flex;gap:1.5rem}
+.hero-content{flex:1;display:grid;grid-template-columns:1fr;gap:3rem;align-items:center}
+@media(min-width:900px){.hero-content{grid-template-columns:1.2fr 1fr;gap:5rem}}
+.hero-text{max-width:60ch}
+.hero-eyebrow{font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.25em;text-transform:uppercase;color:var(--rust);margin-bottom:1.5rem;display:flex;align-items:center;gap:.7rem}
+.hero-eyebrow::before{content:'';width:2.5rem;height:1px;background:var(--rust)}
+.hero-title{font-family:'Fraunces',serif;font-weight:300;font-size:clamp(3.5rem,9vw,7.5rem);line-height:.95;letter-spacing:-.03em;margin-bottom:2rem}
+.hero-title em{font-style:italic;color:var(--rust)}
+.hero-tagline{font-family:'Fraunces',serif;font-style:italic;font-size:clamp(1.1rem,2.2vw,1.5rem);color:var(--ink-soft);margin-bottom:3rem;max-width:40ch;line-height:1.4}
+.hero-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:2rem 3rem;font-family:'JetBrains Mono',monospace;border-top:1px solid var(--rule);padding-top:2rem;max-width:35rem}
+.hero-stats div{display:flex;flex-direction:column;gap:.4rem}
+.hero-stats dt{font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-fade)}
+.hero-stats dd{font-family:'Fraunces',serif;font-size:2.5rem;font-weight:300;line-height:1}
+.hero-stats dd span{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--ink-fade);margin-left:.4rem;letter-spacing:.05em}
+.hero-coords{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.15em;color:var(--ink-fade);margin-top:2rem;display:flex;flex-direction:column;gap:.4rem}
+.hero-visual{display:flex;align-items:center;justify-content:center}
+.hero-route{font-family:'Fraunces',serif;font-style:italic;font-weight:300;color:var(--moss-deep);position:relative;padding:2rem;max-width:30ch}
+.hero-route::before,.hero-route::after{content:'';position:absolute;width:4rem;height:1px;background:var(--moss)}
+.hero-route::before{top:0;left:0}.hero-route::after{bottom:0;right:0}
+.hero-route ol{list-style:none;display:flex;flex-direction:column;gap:.4rem;counter-reset:stop}
+.hero-route li{counter-increment:stop;position:relative;padding-left:3.5rem;font-style:normal;font-size:1.15rem}
+.hero-route li::before{content:counter(stop,decimal-leading-zero);font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:500;color:var(--rust);position:absolute;left:0;top:.4em;letter-spacing:.1em}
+.hero-route li::after{content:'';position:absolute;left:1.6rem;top:.7em;width:1.5rem;height:1px;background:var(--rust);opacity:.5}
+.editorial-opener{max-width:60rem;margin:0 auto;padding:clamp(4rem,10vh,8rem) clamp(1.5rem,4vw,3rem);border-bottom:1px solid var(--rule)}
+.editorial-opener .lead-paragraph{font-family:'Fraunces',serif;font-weight:300;font-size:clamp(1.4rem,2.5vw,1.8rem);line-height:1.5;text-align:justify;hyphens:auto;max-width:50ch;margin:0 auto}
+.editorial-opener .lead-paragraph::first-letter{font-size:5em;font-weight:300;font-style:italic;float:left;line-height:.85;margin:.05em .08em 0 0;color:var(--rust)}
+.editorial-opener .lead-paragraph em{font-style:italic;color:var(--rust-deep)}
+.editorial-byline{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-fade);text-align:center;margin-top:4rem;padding-top:2rem;border-top:1px solid var(--rule)}
+section{max-width:75rem;margin:0 auto;padding:clamp(4rem,10vh,8rem) clamp(1.5rem,4vw,3rem)}
+.day{position:relative;border-top:1px solid var(--rule);padding-top:clamp(4rem,10vh,8rem)}
+.day:first-of-type{border-top:none}
+.day-header{margin-bottom:clamp(3rem,6vh,5rem)}
+.day-meta{display:flex;align-items:baseline;gap:1.5rem;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-fade);padding-bottom:1rem;border-bottom:1px solid var(--rule);margin-bottom:1.5rem}
+.day-meta .day-num{color:var(--rust);font-weight:600}
+.day-title{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(2.5rem,6vw,4.5rem);line-height:1;letter-spacing:-.02em;margin-bottom:.5rem}
+.day-subtitle{font-family:'Fraunces',serif;font-style:italic;font-weight:300;font-size:clamp(1.1rem,2vw,1.4rem);color:var(--ink-soft);margin-bottom:2rem}
+.day-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(8rem,1fr));gap:1.5rem;font-family:'JetBrains Mono',monospace;padding:1.5rem 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin-top:2rem}
+.day-stats div{display:flex;flex-direction:column;gap:.3rem}
+.day-stats dt{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-fade)}
+.day-stats dd{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:300;line-height:1}
+.day-stats dd span{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--ink-fade);margin-left:.3rem}
+.day-intro{max-width:38rem;margin:0 auto clamp(3rem,6vh,5rem);padding:0 1rem}
+.day-intro p{font-size:1.15rem;line-height:1.75;color:var(--ink-soft);margin-bottom:1.5rem;text-align:justify;hyphens:auto}
+.day-intro p:first-child::first-letter{font-size:4em;font-weight:400;font-style:italic;float:left;line-height:.85;margin:.1em .1em 0 0;color:var(--rust);font-family:'Fraunces',serif}
+.day-intro em{font-style:italic;color:var(--moss-deep);font-weight:500}
+.day-content{display:flex;flex-direction:column;gap:clamp(3rem,5vh,4.5rem)}
+.post{position:relative}
+.post-meta{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-fade);margin-top:.7rem;padding-top:.5rem;border-top:1px solid var(--rule);display:inline-block;padding-right:2rem}
+figure{margin:0;background:var(--paper-tinted);overflow:hidden;border-radius:1px}
+figure img{width:100%;height:100%;object-fit:cover;transition:transform .6s ease}
+figure:hover img{transform:scale(1.02)}
+figcaption{font-family:'Fraunces',serif;font-style:italic;font-size:1.05rem;color:var(--ink-soft);padding:.8rem 0 0;line-height:1.5;max-width:45ch}
+.photo-placeholder{aspect-ratio:4/3;background:var(--paper-deep);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-fade);font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;gap:.5rem}
+.photo-placeholder span{font-size:2.5rem;opacity:.4}
+.post-single figure{aspect-ratio:4/3;max-width:56rem;margin:0 auto}
+.post-text-only{max-width:50ch;margin:1rem auto;padding:2rem 2.5rem;border-left:3px solid var(--gold);background:linear-gradient(to right,rgba(200,156,74,.06),transparent 60%)}
+.post-text-prominent{font-family:'Fraunces',serif;font-style:italic;font-size:1.4rem;font-weight:300;line-height:1.5;color:var(--ink-soft);margin-bottom:.8rem}
+.post-diptych .diptych{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
+.post-diptych figure{aspect-ratio:3/4}
+.diptych-caption{font-family:'Fraunces',serif;font-style:italic;font-size:1.05rem;color:var(--ink-soft);padding:.8rem 0 0;line-height:1.5;max-width:45ch}
+.post-trio{display:grid;grid-template-columns:1fr;gap:.4rem}
+@media(min-width:700px){.post-trio{grid-template-columns:2fr 1fr}}
+.post-trio .trio-feature{aspect-ratio:4/3}
+.post-trio .trio-side{display:grid;grid-template-rows:1fr 1fr;gap:.4rem}
+.post-trio .trio-side figure{aspect-ratio:4/3}
+.post-trio .trio-caption,.post-grid .grid-caption{grid-column:1/-1;font-family:'Fraunces',serif;font-style:italic;font-size:1.05rem;color:var(--ink-soft);padding:.8rem 0 0;line-height:1.5;max-width:45ch}
+.post-trio .post-meta,.post-grid .post-meta{grid-column:1/-1}
+.post-grid .post-grid-photos{display:grid;grid-template-columns:repeat(2,1fr);gap:.4rem}
+@media(min-width:700px){.post-grid .post-grid-photos{grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))}}
+.post-grid figure{aspect-ratio:1/1}
+.pullout{margin:clamp(2rem,4vh,3rem) auto;padding:clamp(2rem,5vh,4rem) clamp(1.5rem,4vw,3rem);max-width:50rem;text-align:center;position:relative;border-top:2px solid var(--rust);border-bottom:2px solid var(--rust)}
+.pullout::before{content:'';position:absolute;top:-.5em;left:50%;transform:translateX(-50%);width:3em;height:1em;background:var(--paper)}
+.pullout::after{content:'"';position:absolute;top:-.7em;left:50%;transform:translateX(-50%);font-family:'Fraunces',serif;font-size:4rem;font-style:italic;color:var(--rust);line-height:1}
+.pullout-text{font-family:'Fraunces',serif;font-weight:300;font-style:italic;font-size:clamp(1.6rem,4vw,2.6rem);line-height:1.25;letter-spacing:-.01em;margin-bottom:1.5rem}
+.pullout-author{font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:var(--rust);font-style:normal}
+.context-box{background:var(--paper-deep);border-left:4px solid var(--moss);padding:clamp(2rem,4vh,3rem) clamp(2rem,4vw,3rem);margin:clamp(2rem,4vh,3rem) auto;max-width:45rem}
+.context-meta{font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.25em;text-transform:uppercase;color:var(--moss-deep);margin-bottom:.8rem;font-weight:500}
+.context-title{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(1.5rem,2.5vw,2rem);line-height:1.2;letter-spacing:-.01em;margin-bottom:.4rem}
+.context-subtitle{font-family:'Fraunces',serif;font-style:italic;font-weight:300;font-size:1rem;color:var(--moss-deep);margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid rgba(61,79,40,.2)}
+.context-text{font-size:1rem;line-height:1.7;color:var(--ink-soft)}
+.context-text em{font-style:italic;color:var(--ink)}
+.pre-grid{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:1.5rem!important}
+.pre-grid .post-single figure{aspect-ratio:4/5;max-width:none}
+.pre-grid figcaption{font-size:.9rem;padding:.5rem 0 0}
+.pre-grid .post-meta{font-size:.65rem;margin-top:.4rem;padding-top:.3rem}
+.colophon{margin-top:clamp(4rem,10vh,8rem);padding:clamp(3rem,6vh,5rem) clamp(1.5rem,4vw,3rem);background:var(--ink);color:var(--paper)}
+.colophon-inner{max-width:50rem;margin:0 auto;text-align:center}
+.colophon h3{font-family:'Fraunces',serif;font-weight:300;font-size:clamp(1.5rem,3vw,2.2rem);font-style:italic;margin-bottom:1rem}
+.colophon p{max-width:50ch;margin:0 auto 1.5rem;line-height:1.7;color:var(--paper-tinted);opacity:.85}
+.colophon-meta{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-fade);margin-top:2rem;padding-top:2rem;border-top:1px solid rgba(244,237,225,.1)}
+nav.chapters{position:fixed;right:clamp(.5rem,2vw,1.5rem);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:.6rem;z-index:50;font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase}
+nav.chapters a{display:flex;align-items:center;gap:.7rem;color:var(--ink-fade);text-decoration:none;padding:.3rem 0;transition:color .2s}
+nav.chapters a::before{content:'';width:1.2rem;height:1px;background:var(--ink-fade);transition:all .2s}
+nav.chapters a:hover{color:var(--rust)}
+nav.chapters a:hover::before{width:2rem;background:var(--rust)}
+nav.chapters span{display:none}
+@media(min-width:1100px){nav.chapters span{display:inline}}
+@media(max-width:1099px){nav.chapters{flex-direction:row;bottom:1rem;top:auto;right:50%;transform:translateX(50%);background:var(--paper-tinted);padding:.6rem 1rem;border-radius:999px;box-shadow:var(--shadow)}nav.chapters a::before{display:none}nav.chapters a{padding:.2rem .5rem}}
+::selection{background:var(--rust);color:var(--paper)}
+@media print{body{font-size:11pt}.hero{page-break-after:always;min-height:95vh}.day{page-break-before:always}nav.chapters{display:none}.pullout,.post,.context-box{page-break-inside:avoid}}
+</style></head><body>
+<nav class="chapters" aria-label="Kapitel">${navLinks.join('')}</nav>
+<article>
+<header class="hero">
+  <div class="hero-masthead">
+    <div class="vol"><span>Pfadfinder Press</span><span>Ausgabe ${new Date().getFullYear()}</span></div>
+    <span>Eine Reportage</span>
+  </div>
+  <div class="hero-content">
+    <div class="hero-text">
+      <div class="hero-eyebrow">Reise-Feature</div>
+      <h1 class="hero-title">${esc(tourTitle.split(' ')[0])}<br><em>${esc(tourTitle.split(' ').slice(1).join(' ') || 'auf Tour')}</em></h1>
+      <p class="hero-tagline">${esc(tourSubtitle)}</p>
+      <dl class="hero-stats">
+        <div><dt>Strecke</dt><dd>${totalKm.toFixed(1)}<span>km</span></dd></div>
+        <div><dt>Höhenmeter</dt><dd>${Math.round(totalHm)}<span>hm</span></dd></div>
+        <div><dt>Fotos</dt><dd>${totalPhotos}<span>Stück</span></dd></div>
+        <div><dt>Logbuch</dt><dd>${totalPosts}<span>Einträge</span></dd></div>
+      </dl>
+      <div class="hero-coords">
+        <span>↗ ${esc(startName)} — Start</span>
+        <span>↘ ${esc(endName)} — Ziel</span>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-route">
+        <ol>${routePoints.map(p => `<li>${esc(p)}</li>`).join('')}</ol>
+      </div>
+    </div>
+  </div>
+</header>
+<section class="editorial-opener">
+  <p class="lead-paragraph">Die Ruhr ist ein bescheidener Fluss. Sie entspringt drei Kilometer nordöstlich von Winterberg, am Nordhang des Ruhrkopfes, auf 696 Metern Höhe — als Rinnsal, dem nichts zuzutrauen ist. 219 Kilometer später, wenn sie in Duisburg den Rhein erreicht, hat sie eine ganze Industrieregion benannt, gestaut, gespeist, gewaschen, beschiffbar gemacht und wieder freigegeben. Sechs Männer auf sechs Rädern haben ihr in der ersten Maiwoche 2026 zugeschaut. Hier ist, was sie gesehen haben — und was sie übersahen.</p>
+  <div class="editorial-byline">Eine Reportage · Generiert am ${new Date().toLocaleDateString('de-DE', {day:'numeric', month:'long', year:'numeric'})}</div>
+</section>
+${buildPreSection()}
+${tourDayKeys.map(buildDaySection).join('\n')}
+</article>
+<footer class="colophon">
+  <div class="colophon-inner">
+    <h3>Eine Reise im Mai</h3>
+    <p>Diese Reportage entstand auf Basis der Original-Logbucheinträge der Pfadfinder-Tour ${new Date().getFullYear()} — sechs ehemalige Pfadfinder, eine Strecke entlang der Ruhr, fünf Tage im Sattel.</p>
+    <p>Die kursiv gesetzten Sätze sind Originale aus dem Tour-Logbuch. Die Erzähltexte und historischen Hintergründe wurden ergänzt. Alle Fotos: die Mannschaft.</p>
+    <div class="colophon-meta">${esc(tourTitle)} · ${totalKm.toFixed(1)} km · ${totalPhotos} Fotos · Generiert am ${new Date().toLocaleDateString('de-DE')}</div>
+  </div>
+</footer>
+</body></html>`;
+
+  // ---- Download ----
+  try {
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pfadfinder-tour-reportage-${new Date().toISOString().slice(0,10)}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast('Reportage heruntergeladen ✓');
+  } catch (e) {
+    console.error('Story-Generator-Fehler:', e);
+    toast('Fehler beim Erstellen der Reportage', true);
+  }
+}
+window.generateStoryHtml = generateStoryHtml;
 
 function exportData() {
   const data = { posts, comments, etappeStats, exported: new Date().toISOString() };
