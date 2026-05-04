@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
 :root {
   --bg: #1a1612;
@@ -1422,6 +1423,8 @@ let mapInstance = null;
 let modalState = null;
 let storyCaptions = {};  // { "postId|photoIdx": { caption, rating, author, updated_at } }
 let storyState = { currentIdx: 0, photos: [], filterUnedited: false };
+let kasseSettlementMode = 'hub';  // 'hub' = alle über Christoph, 'direct' = direkte Greedy-Zahlungen
+let kasseHubPerson = 'Christoph';  // wer ist die Drehscheibe
 
 
 // === TOUR-BUCH PDF SPEC ===
@@ -5731,9 +5734,6 @@ function renderKasseOverview() {
   const balance = {};
   RIDERS.forEach(r => { balance[r] = paidByPerson[r] - owesByPerson[r]; });
 
-  // Settlements: wer schuldet wem? (Greedy-Algorithmus)
-  const settlements = calculateSettlements(balance);
-
   let html = '';
   html += '<div style="background: linear-gradient(135deg, rgba(199, 92, 46, 0.08), rgba(212, 165, 72, 0.05)); border: 1px solid rgba(212, 165, 72, 0.25); border-radius: 8px; padding: 1.2rem; margin-bottom: 1.5rem;">';
   html += '<div style="font-family: \'JetBrains Mono\', monospace; font-size: 0.7rem; color: var(--paper-dim); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.4rem;">Gesamtsumme</div>';
@@ -5756,19 +5756,138 @@ function renderKasseOverview() {
   });
   html += '</div>';
 
-  // Settlements
-  if (settlements.length > 0) {
-    html += '<h4 style="font-family: \'Bebas Neue\', sans-serif; letter-spacing: 0.12em; color: var(--paper); margin-bottom: 0.8rem; font-size: 0.95rem;">💰 Wer zahlt wem? <span style="color: var(--paper-dark); font-size: 0.75rem; letter-spacing: 0.05em; text-transform: none;">(' + settlements.length + ' Überweisung' + (settlements.length === 1 ? '' : 'en') + ')</span></h4>';
-    html += '<div style="display: grid; gap: 0.5rem; margin-bottom: 1.5rem;">';
-    settlements.forEach(s => {
-      html += '<div style="display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 0.9rem; background: rgba(107, 126, 61, 0.08); border: 1px solid rgba(107, 126, 61, 0.25); border-radius: 4px;">';
-      html += '<div style="color: var(--paper); font-size: 0.9rem;"><strong>' + escapeHtml(s.from) + '</strong> → <strong style="color: var(--gold);">' + escapeHtml(s.to) + '</strong></div>';
-      html += '<div style="font-family: \'JetBrains Mono\', monospace; color: var(--moss); font-weight: 600;">' + s.amount.toFixed(2) + ' €</div>';
+  // === Auslagen pro Person (was hat jeder ausgelegt) ===
+  html += '<h4 style="font-family: \'Bebas Neue\', sans-serif; letter-spacing: 0.12em; color: var(--paper); margin-bottom: 0.8rem; font-size: 0.95rem;">🧾 Auslagen pro Person</h4>';
+  html += '<p style="color: var(--paper-dark); font-size: 0.72rem; line-height: 1.5; margin-bottom: 0.8rem; font-style: italic;">Was hat jede Person bezahlt — mit allen Belegen.</p>';
+  html += '<div style="display: grid; gap: 1rem; margin-bottom: 1.5rem;">';
+  RIDERS.forEach(r => {
+    const myExpenses = expenses.filter(e => e.paid_by === r);
+    if (myExpenses.length === 0) {
+      html += '<div style="background: rgba(255,255,255,0.02); border: 1px solid var(--line-strong); border-radius: 4px; padding: 0.8rem 0.9rem; opacity: 0.5;">';
+      html += '<div style="display: flex; justify-content: space-between; align-items: center;">';
+      html += '<strong style="color: var(--paper-dim); font-size: 0.9rem;">' + escapeHtml(r) + '</strong>';
+      html += '<span style="font-family: \'JetBrains Mono\', monospace; font-size: 0.75rem; color: var(--paper-dark);">— keine Auslagen —</span>';
+      html += '</div></div>';
+      return;
+    }
+    // Sortieren nach Datum (oder created_at als Fallback)
+    const sortedExp = [...myExpenses].sort((a, b) => {
+      const dateA = a.expense_date || a.created_at || '';
+      const dateB = b.expense_date || b.created_at || '';
+      return dateA.localeCompare(dateB);
+    });
+    const personTotal = myExpenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+    html += '<div style="background: rgba(255,255,255,0.02); border: 1px solid var(--line-strong); border-radius: 4px; overflow: hidden;">';
+    // Header der Person
+    html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 0.9rem; background: rgba(199, 92, 46, 0.06); border-bottom: 1px solid var(--line-strong);">';
+    html += '<strong style="color: var(--paper); font-size: 0.95rem;">' + escapeHtml(r) + '</strong>';
+    html += '<div style="text-align: right;">';
+    html += '<div style="font-family: \'JetBrains Mono\', monospace; color: var(--gold); font-size: 1rem; font-weight: 600;">' + personTotal.toFixed(2) + ' €</div>';
+    html += '<div style="color: var(--paper-dim); font-size: 0.65rem; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.1em; text-transform: uppercase;">' + myExpenses.length + ' Beleg' + (myExpenses.length === 1 ? '' : 'e') + '</div>';
+    html += '</div>';
+    html += '</div>';
+    // Liste der Belege
+    html += '<div style="display: grid;">';
+    sortedExp.forEach((e, idx) => {
+      const amt = parseFloat(e.amount || 0);
+      const dateStr = e.expense_date ? new Date(e.expense_date).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit' }) : '';
+      const cat = e.category || '';
+      const isLast = idx === sortedExp.length - 1;
+      html += '<div style="padding: 0.6rem 0.9rem;' + (isLast ? '' : ' border-bottom: 1px solid rgba(255,255,255,0.04);') + '">';
+      html += '<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">';
+      html += '<div style="flex: 1; min-width: 0;">';
+      html += '<div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.15rem;">';
+      html += '<span style="color: var(--paper); font-size: 0.85rem;">' + escapeHtml(e.description) + '</span>';
+      if (cat) html += '<span style="font-size: 0.65rem; color: var(--paper-dim); font-family: \'JetBrains Mono\', monospace;">' + escapeHtml(cat) + '</span>';
+      html += '</div>';
+      if (dateStr) html += '<div style="color: var(--paper-dark); font-size: 0.7rem; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.05em;">' + dateStr + '</div>';
+      html += '</div>';
+      html += '<div style="font-family: \'JetBrains Mono\', monospace; color: var(--paper); font-size: 0.9rem; flex-shrink: 0;">' + amt.toFixed(2) + ' €</div>';
+      html += '</div>';
       html += '</div>';
     });
     html += '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // Settlements: Hub-Modus oder direkte Zahlungen
+  const hubAvailable = balance[kasseHubPerson] !== undefined;
+  const useHub = kasseSettlementMode === 'hub' && hubAvailable;
+  const settlements = calculateSettlements(balance, useHub ? kasseHubPerson : null);
+
+  if (settlements.length > 0 || expenses.length > 0) {
+    html += '<div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.8rem;">';
+    html += '<h4 style="font-family: \'Bebas Neue\', sans-serif; letter-spacing: 0.12em; color: var(--paper); font-size: 0.95rem; margin: 0;">💰 Wer zahlt wem? <span style="color: var(--paper-dark); font-size: 0.75rem; letter-spacing: 0.05em; text-transform: none;">(' + settlements.length + ' Überweisung' + (settlements.length === 1 ? '' : 'en') + ')</span></h4>';
+    if (hubAvailable) {
+      // Toggle für Hub/Direct
+      html += '<div style="display: flex; gap: 0.3rem; padding: 0.2rem; background: rgba(255,255,255,0.04); border-radius: 6px;">';
+      html += '<button type="button" onclick="setSettlementMode(\'hub\')" style="padding: 0.3rem 0.7rem; background: ' + (useHub ? 'var(--rust)' : 'transparent') + '; color: ' + (useHub ? 'white' : 'var(--paper-dim)') + '; border: none; font-family: \'JetBrains Mono\', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 4px; cursor: pointer;">Über ' + escapeHtml(kasseHubPerson) + '</button>';
+      html += '<button type="button" onclick="setSettlementMode(\'direct\')" style="padding: 0.3rem 0.7rem; background: ' + (!useHub ? 'var(--rust)' : 'transparent') + '; color: ' + (!useHub ? 'white' : 'var(--paper-dim)') + '; border: none; font-family: \'JetBrains Mono\', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 4px; cursor: pointer;">Direkt</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  if (settlements.length > 0) {
+    if (useHub) {
+      // Bei Hub-Modus: zwei Gruppen — eingehend bei Hub und ausgehend von Hub
+      const incoming = settlements.filter(s => s.to === kasseHubPerson);
+      const outgoing = settlements.filter(s => s.from === kasseHubPerson);
+      
+      html += '<div style="margin-bottom: 1.5rem;">';
+      
+      if (incoming.length > 0) {
+        html += '<div style="font-family: \'JetBrains Mono\', monospace; font-size: 0.65rem; color: var(--paper-dim); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.5rem;">↘ An ' + escapeHtml(kasseHubPerson) + ' überweisen</div>';
+        html += '<div style="display: grid; gap: 0.4rem; margin-bottom: 1rem;">';
+        incoming.forEach(s => {
+          html += '<div style="display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 0.9rem; background: rgba(199, 92, 46, 0.06); border: 1px solid rgba(199, 92, 46, 0.2); border-radius: 4px;">';
+          html += '<div style="color: var(--paper); font-size: 0.9rem;"><strong>' + escapeHtml(s.from) + '</strong> <span style="color: var(--paper-dim);">zahlt an</span> <strong style="color: var(--gold);">' + escapeHtml(s.to) + '</strong></div>';
+          html += '<div style="font-family: \'JetBrains Mono\', monospace; color: var(--rust); font-weight: 600;">' + s.amount.toFixed(2) + ' €</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      
+      if (outgoing.length > 0) {
+        html += '<div style="font-family: \'JetBrains Mono\', monospace; font-size: 0.65rem; color: var(--paper-dim); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.5rem;">↗ ' + escapeHtml(kasseHubPerson) + ' überweist</div>';
+        html += '<div style="display: grid; gap: 0.4rem;">';
+        outgoing.forEach(s => {
+          html += '<div style="display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 0.9rem; background: rgba(107, 126, 61, 0.08); border: 1px solid rgba(107, 126, 61, 0.25); border-radius: 4px;">';
+          html += '<div style="color: var(--paper); font-size: 0.9rem;"><strong style="color: var(--gold);">' + escapeHtml(s.from) + '</strong> <span style="color: var(--paper-dim);">zahlt an</span> <strong>' + escapeHtml(s.to) + '</strong></div>';
+          html += '<div style="font-family: \'JetBrains Mono\', monospace; color: var(--moss); font-weight: 600;">' + s.amount.toFixed(2) + ' €</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      
+      html += '</div>';
+    } else {
+      // Direkter Modus
+      html += '<div style="display: grid; gap: 0.5rem; margin-bottom: 1.5rem;">';
+      settlements.forEach(s => {
+        html += '<div style="display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 0.9rem; background: rgba(107, 126, 61, 0.08); border: 1px solid rgba(107, 126, 61, 0.25); border-radius: 4px;">';
+        html += '<div style="color: var(--paper); font-size: 0.9rem;"><strong>' + escapeHtml(s.from) + '</strong> → <strong style="color: var(--gold);">' + escapeHtml(s.to) + '</strong></div>';
+        html += '<div style="font-family: \'JetBrains Mono\', monospace; color: var(--moss); font-weight: 600;">' + s.amount.toFixed(2) + ' €</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
   } else {
     html += '<div style="padding: 1rem; background: rgba(107, 126, 61, 0.08); border: 1px solid rgba(107, 126, 61, 0.25); border-radius: 4px; color: var(--moss); font-size: 0.9rem; text-align: center; margin-bottom: 1.5rem;">✅ Alles ausgeglichen — keine Überweisungen nötig.</div>';
+  }
+
+  // Excel-Export-Button (nur wenn Auslagen vorhanden)
+  if (expenses.length > 0) {
+    html += '<div style="margin-bottom: 1.5rem; padding: 1rem 1.2rem; background: linear-gradient(135deg, rgba(199, 92, 46, 0.06), rgba(212, 165, 72, 0.04)); border: 1px solid rgba(212, 165, 72, 0.2); border-radius: 8px;">';
+    html += '<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem;">';
+    html += '<div>';
+    html += '<div style="font-family: \'Bebas Neue\', sans-serif; letter-spacing: 0.1em; color: var(--paper); font-size: 0.95rem; margin-bottom: 0.2rem;">📊 Prüf-Datei exportieren</div>';
+    html += '<div style="color: var(--paper-dim); font-size: 0.72rem; line-height: 1.4;">Excel mit allen Auslagen, Salden und Abrechnung — zur Kontrolle und Archivierung.</div>';
+    html += '</div>';
+    html += '<button onclick="exportKasseExcel()" style="padding: 0.7rem 1.1rem; background: var(--rust); border: none; color: white; font-family: \'JetBrains Mono\', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 6px; cursor: pointer; font-weight: 600; white-space: nowrap;">📥 Excel laden</button>';
+    html += '</div>';
+    html += '</div>';
   }
 
   // Liste aller Auslagen
@@ -5831,8 +5950,39 @@ function renderKasseOverview() {
   container.innerHTML = html;
 }
 
-function calculateSettlements(balance) {
-  // Greedy: größter Schuldner zahlt an größten Gläubiger, bis ausgeglichen
+function setSettlementMode(mode) {
+  kasseSettlementMode = mode;
+  renderKasseOverview();
+}
+window.setSettlementMode = setSettlementMode;
+
+function calculateSettlements(balance, hubPerson = null) {
+  // Hub-Modus: alle Zahlungen laufen über eine zentrale Person.
+  // Schuldner zahlen an Hub, Gläubiger bekommen vom Hub.
+  if (hubPerson && balance[hubPerson] !== undefined) {
+    const settlements = [];
+    Object.keys(balance).forEach(name => {
+      if (name === hubPerson) return;
+      const b = balance[name];
+      if (b < -0.01) {
+        // Hat zu wenig bezahlt → zahlt an Hub
+        settlements.push({ from: name, to: hubPerson, amount: -b });
+      } else if (b > 0.01) {
+        // Hat zu viel bezahlt → bekommt vom Hub
+        settlements.push({ from: hubPerson, to: name, amount: b });
+      }
+    });
+    // Erst die "an Hub"-Zahlungen, dann die "vom Hub"-Zahlungen — anschaulicher
+    settlements.sort((a, b) => {
+      if (a.to === hubPerson && b.to !== hubPerson) return -1;
+      if (a.to !== hubPerson && b.to === hubPerson) return 1;
+      return b.amount - a.amount;
+    });
+    return settlements;
+  }
+
+  // Greedy-Modus (Default): größter Schuldner zahlt an größten Gläubiger, bis ausgeglichen.
+  // Minimiert die Anzahl der Überweisungen, aber kann zu kreuz-und-quer-Zahlungen führen.
   const debtors = [];
   const creditors = [];
   Object.keys(balance).forEach(name => {
@@ -5859,6 +6009,482 @@ function calculateSettlements(balance) {
   }
   return settlements;
 }
+
+// === EXCEL-EXPORT FÜR KASSE ===
+function exportKasseExcel() {
+  if (typeof XLSX === 'undefined') {
+    toast('Excel-Library noch nicht geladen — Seite neu laden', true);
+    return;
+  }
+  if (!expenses || expenses.length === 0) {
+    toast('Keine Auslagen zum Exportieren', true);
+    return;
+  }
+
+  try {
+    // === BERECHNUNGEN (wie in renderKasseOverview) ===
+    const totalAll = expenses.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+    const paidByPerson = {};
+    const owesByPerson = {};
+    RIDERS.forEach(r => { paidByPerson[r] = 0; owesByPerson[r] = 0; });
+
+    expenses.forEach(e => {
+      const amt = parseFloat(e.amount || 0);
+      if (paidByPerson[e.paid_by] !== undefined) paidByPerson[e.paid_by] += amt;
+      if (e.custom_shares && typeof e.custom_shares === 'object' && Object.keys(e.custom_shares).length > 0) {
+        Object.keys(e.custom_shares).forEach(person => {
+          const share = parseFloat(e.custom_shares[person]) || 0;
+          if (owesByPerson[person] !== undefined) owesByPerson[person] += share;
+        });
+      } else {
+        const paidFor = (e.paid_for || []);
+        if (paidFor.length > 0) {
+          const share = amt / paidFor.length;
+          paidFor.forEach(person => {
+            if (owesByPerson[person] !== undefined) owesByPerson[person] += share;
+          });
+        }
+      }
+    });
+
+    const balance = {};
+    RIDERS.forEach(r => { balance[r] = paidByPerson[r] - owesByPerson[r]; });
+    const settlementsHub = calculateSettlements(balance, kasseHubPerson);
+    const settlementsDirect = calculateSettlements(balance, null);
+
+    // === STYLES ===
+    const STYLE_TITLE = {
+      font: { name: 'Arial', sz: 18, bold: true, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: 'B8542A' } },
+      alignment: { horizontal: 'center', vertical: 'center' },
+      border: { bottom: { style: 'medium', color: { rgb: '8A3D1E' } } }
+    };
+    const STYLE_SUBTITLE = {
+      font: { name: 'Arial', sz: 11, italic: true, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: 'B8542A' } },
+      alignment: { horizontal: 'center', vertical: 'center' }
+    };
+    const STYLE_SECTION_HEADER = {
+      font: { name: 'Arial', sz: 12, bold: true, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: '5A6E3E' } },
+      alignment: { horizontal: 'left', vertical: 'center' }
+    };
+    const STYLE_TABLE_HEADER = {
+      font: { name: 'Arial', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: '4A4538' } },
+      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+      border: {
+        top: { style: 'thin', color: { rgb: '888888' } },
+        bottom: { style: 'thin', color: { rgb: '888888' } },
+        left: { style: 'thin', color: { rgb: '888888' } },
+        right: { style: 'thin', color: { rgb: '888888' } }
+      }
+    };
+    const STYLE_CELL = {
+      font: { name: 'Arial', sz: 10 },
+      alignment: { vertical: 'center', wrapText: true },
+      border: {
+        top: { style: 'thin', color: { rgb: 'CCCCCC' } },
+        bottom: { style: 'thin', color: { rgb: 'CCCCCC' } },
+        left: { style: 'thin', color: { rgb: 'CCCCCC' } },
+        right: { style: 'thin', color: { rgb: 'CCCCCC' } }
+      }
+    };
+    const STYLE_CELL_NUM = {
+      ...STYLE_CELL,
+      alignment: { horizontal: 'right', vertical: 'center' },
+      numFmt: '#,##0.00 €'
+    };
+    const STYLE_CELL_DATE = {
+      ...STYLE_CELL,
+      alignment: { horizontal: 'center', vertical: 'center' }
+    };
+    const STYLE_CELL_BOLD = {
+      ...STYLE_CELL,
+      font: { name: 'Arial', sz: 10, bold: true }
+    };
+    const STYLE_TOTAL_ROW = {
+      font: { name: 'Arial', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: '8A3D1E' } },
+      alignment: { vertical: 'center' },
+      numFmt: '#,##0.00 €'
+    };
+    const STYLE_BAL_POS = {
+      ...STYLE_CELL_NUM,
+      font: { name: 'Arial', sz: 10, bold: true, color: { rgb: '5A6E3E' } },
+      fill: { fgColor: { rgb: 'E8EDD8' } }
+    };
+    const STYLE_BAL_NEG = {
+      ...STYLE_CELL_NUM,
+      font: { name: 'Arial', sz: 10, bold: true, color: { rgb: 'B8542A' } },
+      fill: { fgColor: { rgb: 'FBE8DD' } }
+    };
+    const STYLE_BAL_ZERO = {
+      ...STYLE_CELL_NUM,
+      font: { name: 'Arial', sz: 10, bold: true, color: { rgb: '888888' } },
+      fill: { fgColor: { rgb: 'F0F0F0' } }
+    };
+
+    function applyStyle(cell, style) {
+      if (!cell) return;
+      cell.s = style;
+    }
+
+    // === SHEET 1: ÜBERSICHT ===
+    const wsOverview = XLSX.utils.aoa_to_sheet([]);
+    
+    // Titel-Banner
+    XLSX.utils.sheet_add_aoa(wsOverview, [
+      ['🏕️ PFADFINDER AUF TOUR — REISEKASSE'],
+      ['Allzeit b(e)reit · Ruhrtalradweg 2026'],
+      [],
+      ['ÜBERSICHT'],
+    ], { origin: 'A1' });
+    
+    // Daten
+    const today = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+    XLSX.utils.sheet_add_aoa(wsOverview, [
+      ['Erstellt am:', today],
+      ['Anzahl Auslagen:', expenses.length],
+      ['Gesamtsumme:', totalAll],
+      ['Anzahl Pfadfinder:', RIDERS.length],
+      [],
+      ['SALDO PRO PERSON'],
+      ['Pfadfinder', 'Bezahlt (€)', 'Anteil (€)', 'Saldo (€)', 'Bedeutung']
+    ], { origin: 'A5' });
+    
+    let rowIdx = 12; // 1-basiert
+    RIDERS.forEach(r => {
+      const bal = balance[r];
+      const meaning = Math.abs(bal) < 0.01 ? 'ausgeglichen' : (bal > 0 ? 'bekommt zurück' : 'schuldet noch');
+      XLSX.utils.sheet_add_aoa(wsOverview, [[r, paidByPerson[r], owesByPerson[r], bal, meaning]], { origin: `A${rowIdx}` });
+      rowIdx++;
+    });
+    
+    // Summen-Zeile
+    XLSX.utils.sheet_add_aoa(wsOverview, [['SUMME', totalAll, totalAll, 0, '']], { origin: `A${rowIdx}` });
+    
+    // Spaltenbreiten
+    wsOverview['!cols'] = [
+      { wch: 20 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 18 }
+    ];
+    // Zeilenhöhen
+    wsOverview['!rows'] = [{ hpt: 28 }, { hpt: 18 }, { hpt: 8 }, { hpt: 22 }];
+    // Merge-Cells für Banner
+    wsOverview['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Titel (Excel-Zeile 1)
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }, // Untertitel (Zeile 2)
+      { s: { r: 3, c: 0 }, e: { r: 3, c: 4 } }, // ÜBERSICHT (Zeile 4)
+      { s: { r: 9, c: 0 }, e: { r: 9, c: 4 } }, // SALDO PRO PERSON (Zeile 10)
+    ];
+    
+    // Styles anwenden
+    applyStyle(wsOverview['A1'], STYLE_TITLE);
+    applyStyle(wsOverview['A2'], STYLE_SUBTITLE);
+    applyStyle(wsOverview['A4'], STYLE_SECTION_HEADER);
+    applyStyle(wsOverview['A10'], STYLE_SECTION_HEADER);
+    
+    // Daten-Zeilen 5-8 (Erstellt am, Anzahl Auslagen, Gesamtsumme, Anzahl Pfadfinder)
+    for (let r = 5; r <= 8; r++) {
+      applyStyle(wsOverview[`A${r}`], STYLE_CELL_BOLD);
+      const cellB = wsOverview[`B${r}`];
+      if (cellB) {
+        if (r === 7) applyStyle(cellB, STYLE_CELL_NUM); // Gesamtsumme
+        else applyStyle(cellB, STYLE_CELL);
+      }
+    }
+    
+    // Tabellen-Header Zeile 11
+    ['A', 'B', 'C', 'D', 'E'].forEach(c => applyStyle(wsOverview[`${c}11`], STYLE_TABLE_HEADER));
+    
+    // Daten-Zeilen ab Zeile 12
+    for (let i = 0; i < RIDERS.length; i++) {
+      const r = 12 + i;
+      const bal = balance[RIDERS[i]];
+      applyStyle(wsOverview[`A${r}`], STYLE_CELL_BOLD);
+      applyStyle(wsOverview[`B${r}`], STYLE_CELL_NUM);
+      applyStyle(wsOverview[`C${r}`], STYLE_CELL_NUM);
+      const balStyle = Math.abs(bal) < 0.01 ? STYLE_BAL_ZERO : (bal > 0 ? STYLE_BAL_POS : STYLE_BAL_NEG);
+      applyStyle(wsOverview[`D${r}`], balStyle);
+      applyStyle(wsOverview[`E${r}`], { ...STYLE_CELL, alignment: { horizontal: 'center', vertical: 'center' }, font: { name: 'Arial', sz: 9, italic: true, color: { rgb: '666666' } } });
+    }
+    
+    // Summen-Zeile
+    const sumR = 12 + RIDERS.length;
+    ['A', 'B', 'C', 'D', 'E'].forEach(c => applyStyle(wsOverview[`${c}${sumR}`], STYLE_TOTAL_ROW));
+
+    // === SHEET 2: ALLE AUSLAGEN ===
+    const expSorted = [...expenses].sort((a, b) => {
+      const dA = a.expense_date || a.created_at || '';
+      const dB = b.expense_date || b.created_at || '';
+      return dA.localeCompare(dB);
+    });
+    
+    const expHeaders = ['Datum', 'Beschreibung', 'Kategorie', 'Betrag (€)', 'Bezahler', 'Aufteilung', 'Anzahl Personen', 'Anteil pro Person (€)', 'Notizen'];
+    const wsExpenses = XLSX.utils.aoa_to_sheet([
+      ['🧾 ALLE AUSLAGEN'],
+      [`${expenses.length} Einträge · Gesamt: ${totalAll.toFixed(2)} €`],
+      [],
+      expHeaders
+    ]);
+    
+    expSorted.forEach((e, idx) => {
+      const amt = parseFloat(e.amount || 0);
+      const dateStr = e.expense_date ? new Date(e.expense_date) : (e.created_at ? new Date(e.created_at) : '');
+      const cat = e.category || '';
+      const hasCustom = e.custom_shares && typeof e.custom_shares === 'object' && Object.keys(e.custom_shares).length > 0;
+      let aufteilung, anzahl, anteil;
+      if (hasCustom) {
+        const parts = Object.keys(e.custom_shares).map(p => `${p}: ${parseFloat(e.custom_shares[p]).toFixed(2)}€`);
+        aufteilung = parts.join('; ');
+        anzahl = Object.keys(e.custom_shares).length;
+        anteil = '';  // bei custom variabel
+      } else {
+        const paidFor = e.paid_for || [];
+        if (paidFor.length === RIDERS.length) aufteilung = 'alle gleich';
+        else aufteilung = paidFor.join(', ');
+        anzahl = paidFor.length;
+        anteil = anzahl > 0 ? amt / anzahl : 0;
+      }
+      const row = idx + 5;
+      XLSX.utils.sheet_add_aoa(wsExpenses, [[
+        dateStr || '',
+        e.description || '',
+        cat,
+        amt,
+        e.paid_by || '',
+        aufteilung,
+        anzahl,
+        anteil === '' ? '(individuell)' : anteil,
+        e.notes || ''
+      ]], { origin: `A${row}` });
+    });
+    
+    // Summen-Zeile
+    const expSumRow = 5 + expSorted.length;
+    XLSX.utils.sheet_add_aoa(wsExpenses, [['', '', 'GESAMTSUMME:', totalAll, '', '', '', '', '']], { origin: `A${expSumRow}` });
+    
+    wsExpenses['!cols'] = [
+      { wch: 12 }, { wch: 30 }, { wch: 18 }, { wch: 12 }, { wch: 14 },
+      { wch: 30 }, { wch: 12 }, { wch: 16 }, { wch: 25 }
+    ];
+    wsExpenses['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 8 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 8 } }
+    ];
+    
+    applyStyle(wsExpenses['A1'], STYLE_TITLE);
+    applyStyle(wsExpenses['A2'], STYLE_SUBTITLE);
+    
+    // Tabellen-Header Zeile 4
+    for (let c = 0; c < expHeaders.length; c++) {
+      const cellRef = XLSX.utils.encode_cell({ r: 3, c });
+      applyStyle(wsExpenses[cellRef], STYLE_TABLE_HEADER);
+    }
+    
+    // Daten-Zeilen
+    for (let i = 0; i < expSorted.length; i++) {
+      const r = 4 + i;
+      // Datum
+      const cellA = wsExpenses[XLSX.utils.encode_cell({ r, c: 0 })];
+      if (cellA && cellA.v instanceof Date) {
+        cellA.s = { ...STYLE_CELL_DATE, numFmt: 'DD.MM.YYYY' };
+        cellA.t = 'd';
+      } else if (cellA) {
+        applyStyle(cellA, STYLE_CELL_DATE);
+      }
+      // Beschreibung
+      applyStyle(wsExpenses[XLSX.utils.encode_cell({ r, c: 1 })], STYLE_CELL);
+      // Kategorie
+      applyStyle(wsExpenses[XLSX.utils.encode_cell({ r, c: 2 })], { ...STYLE_CELL, font: { name: 'Arial', sz: 9, color: { rgb: '666666' } } });
+      // Betrag
+      applyStyle(wsExpenses[XLSX.utils.encode_cell({ r, c: 3 })], STYLE_CELL_NUM);
+      // Bezahler
+      applyStyle(wsExpenses[XLSX.utils.encode_cell({ r, c: 4 })], { ...STYLE_CELL, font: { name: 'Arial', sz: 10, bold: true } });
+      // Aufteilung
+      applyStyle(wsExpenses[XLSX.utils.encode_cell({ r, c: 5 })], { ...STYLE_CELL, font: { name: 'Arial', sz: 9 } });
+      // Anzahl
+      applyStyle(wsExpenses[XLSX.utils.encode_cell({ r, c: 6 })], STYLE_CELL_DATE);
+      // Anteil
+      const cellH = wsExpenses[XLSX.utils.encode_cell({ r, c: 7 })];
+      if (cellH && typeof cellH.v === 'number') applyStyle(cellH, STYLE_CELL_NUM);
+      else if (cellH) applyStyle(cellH, { ...STYLE_CELL, font: { name: 'Arial', sz: 9, italic: true, color: { rgb: '888888' } }, alignment: { horizontal: 'center', vertical: 'center' } });
+      // Notizen
+      applyStyle(wsExpenses[XLSX.utils.encode_cell({ r, c: 8 })], { ...STYLE_CELL, font: { name: 'Arial', sz: 9, italic: true } });
+    }
+    
+    // Summen-Zeile stylen
+    for (let c = 0; c < expHeaders.length; c++) {
+      const cell = wsExpenses[XLSX.utils.encode_cell({ r: expSumRow - 1, c })];
+      if (cell) applyStyle(cell, STYLE_TOTAL_ROW);
+    }
+
+    // === SHEET 3: PRO PERSON ===
+    const wsPerPerson = XLSX.utils.aoa_to_sheet([
+      ['🧾 AUSLAGEN PRO PERSON'],
+      ['Was hat jeder Pfadfinder bezahlt?'],
+      []
+    ]);
+    
+    let r = 4;
+    RIDERS.forEach(rider => {
+      const myExp = expSorted.filter(e => e.paid_by === rider);
+      const personTotal = myExp.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+      
+      // Person-Header
+      XLSX.utils.sheet_add_aoa(wsPerPerson, [
+        [`${rider}    (${myExp.length} Beleg${myExp.length === 1 ? '' : 'e'} · Gesamt: ${personTotal.toFixed(2)} €)`]
+      ], { origin: `A${r}` });
+      const headerRow = r;
+      r++;
+      
+      if (myExp.length === 0) {
+        XLSX.utils.sheet_add_aoa(wsPerPerson, [['(keine Auslagen)']], { origin: `A${r}` });
+        applyStyle(wsPerPerson[`A${r}`], { font: { name: 'Arial', sz: 9, italic: true, color: { rgb: '999999' } } });
+        r += 2;
+      } else {
+        // Tabellen-Header
+        XLSX.utils.sheet_add_aoa(wsPerPerson, [['Datum', 'Beschreibung', 'Kategorie', 'Betrag (€)', 'Aufteilung']], { origin: `A${r}` });
+        const tableHeaderRow = r;
+        r++;
+        // Daten
+        myExp.forEach(e => {
+          const amt = parseFloat(e.amount || 0);
+          const dateStr = e.expense_date ? new Date(e.expense_date) : '';
+          const hasCustom = e.custom_shares && typeof e.custom_shares === 'object' && Object.keys(e.custom_shares).length > 0;
+          let aufteilung;
+          if (hasCustom) aufteilung = Object.keys(e.custom_shares).map(p => `${p}: ${parseFloat(e.custom_shares[p]).toFixed(2)}€`).join('; ');
+          else { const pf = e.paid_for || []; aufteilung = pf.length === RIDERS.length ? 'alle gleich' : pf.join(', '); }
+          XLSX.utils.sheet_add_aoa(wsPerPerson, [[dateStr, e.description, e.category || '', amt, aufteilung]], { origin: `A${r}` });
+          r++;
+        });
+        // Summen-Zeile
+        XLSX.utils.sheet_add_aoa(wsPerPerson, [['', '', 'Summe ' + rider + ':', personTotal, '']], { origin: `A${r}` });
+        const sumR = r;
+        r += 2;
+        
+        // Styles für diese Person
+        applyStyle(wsPerPerson[`A${headerRow}`], { font: { name: 'Arial', sz: 12, bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '5A6E3E' } }, alignment: { horizontal: 'left', vertical: 'center' } });
+        if (!wsPerPerson['!merges']) wsPerPerson['!merges'] = [];
+        wsPerPerson['!merges'].push({ s: { r: headerRow - 1, c: 0 }, e: { r: headerRow - 1, c: 4 } });
+        for (let c = 0; c < 5; c++) applyStyle(wsPerPerson[XLSX.utils.encode_cell({ r: tableHeaderRow - 1, c })], STYLE_TABLE_HEADER);
+        for (let dataR = tableHeaderRow + 1; dataR < sumR; dataR++) {
+          const cellA = wsPerPerson[`A${dataR}`];
+          if (cellA && cellA.v instanceof Date) { cellA.s = { ...STYLE_CELL_DATE, numFmt: 'DD.MM.YYYY' }; cellA.t = 'd'; }
+          else if (cellA) applyStyle(cellA, STYLE_CELL_DATE);
+          applyStyle(wsPerPerson[`B${dataR}`], STYLE_CELL);
+          applyStyle(wsPerPerson[`C${dataR}`], { ...STYLE_CELL, font: { name: 'Arial', sz: 9, color: { rgb: '666666' } } });
+          applyStyle(wsPerPerson[`D${dataR}`], STYLE_CELL_NUM);
+          applyStyle(wsPerPerson[`E${dataR}`], { ...STYLE_CELL, font: { name: 'Arial', sz: 9 } });
+        }
+        for (let c = 0; c < 5; c++) applyStyle(wsPerPerson[XLSX.utils.encode_cell({ r: sumR - 1, c })], STYLE_TOTAL_ROW);
+      }
+    });
+    
+    wsPerPerson['!cols'] = [{ wch: 12 }, { wch: 30 }, { wch: 18 }, { wch: 12 }, { wch: 30 }];
+    if (!wsPerPerson['!merges']) wsPerPerson['!merges'] = [];
+    wsPerPerson['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } });
+    wsPerPerson['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 4 } });
+    applyStyle(wsPerPerson['A1'], STYLE_TITLE);
+    applyStyle(wsPerPerson['A2'], STYLE_SUBTITLE);
+
+    // === SHEET 4: ABRECHNUNG ===
+    const wsSettlements = XLSX.utils.aoa_to_sheet([
+      ['💰 ABRECHNUNG — WER ZAHLT WEM'],
+      ['Zwei Varianten zur Auswahl'],
+      [],
+      [`Variante 1: Über ${kasseHubPerson} (empfohlen — alles über eine Person)`],
+      ['Von', 'An', 'Betrag (€)']
+    ]);
+    
+    let sR = 6;
+    settlementsHub.forEach(s => {
+      XLSX.utils.sheet_add_aoa(wsSettlements, [[s.from, s.to, s.amount]], { origin: `A${sR}` });
+      sR++;
+    });
+    if (settlementsHub.length === 0) {
+      XLSX.utils.sheet_add_aoa(wsSettlements, [['Alles ausgeglichen — keine Zahlungen nötig.', '', '']], { origin: `A${sR}` });
+      sR++;
+    }
+    sR++;
+    
+    XLSX.utils.sheet_add_aoa(wsSettlements, [
+      [`Variante 2: Direkt (minimale Anzahl Überweisungen)`],
+      ['Von', 'An', 'Betrag (€)']
+    ], { origin: `A${sR}` });
+    const directHeaderRow = sR;  // 1-basiert: hier steht "Variante 2: Direkt"
+    sR += 2;
+    settlementsDirect.forEach(s => {
+      XLSX.utils.sheet_add_aoa(wsSettlements, [[s.from, s.to, s.amount]], { origin: `A${sR}` });
+      sR++;
+    });
+    if (settlementsDirect.length === 0) {
+      XLSX.utils.sheet_add_aoa(wsSettlements, [['Alles ausgeglichen — keine Zahlungen nötig.', '', '']], { origin: `A${sR}` });
+      sR++;
+    }
+    
+    wsSettlements['!cols'] = [{ wch: 18 }, { wch: 18 }, { wch: 14 }];
+    wsSettlements['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } },
+      { s: { r: 3, c: 0 }, e: { r: 3, c: 2 } },
+      { s: { r: directHeaderRow - 1, c: 0 }, e: { r: directHeaderRow - 1, c: 2 } }
+    ];
+    
+    applyStyle(wsSettlements['A1'], STYLE_TITLE);
+    applyStyle(wsSettlements['A2'], STYLE_SUBTITLE);
+    applyStyle(wsSettlements['A4'], STYLE_SECTION_HEADER);
+    applyStyle(wsSettlements[`A${directHeaderRow}`], STYLE_SECTION_HEADER);
+    
+    // Tabellen-Header
+    ['A5', 'B5', 'C5'].forEach(c => applyStyle(wsSettlements[c], STYLE_TABLE_HEADER));
+    const directHeaderTableRow = directHeaderRow + 1;
+    ['A', 'B', 'C'].forEach(col => applyStyle(wsSettlements[`${col}${directHeaderTableRow}`], STYLE_TABLE_HEADER));
+    
+    // Daten-Zeilen Hub
+    for (let i = 0; i < settlementsHub.length; i++) {
+      const dr = 6 + i;
+      applyStyle(wsSettlements[`A${dr}`], STYLE_CELL_BOLD);
+      applyStyle(wsSettlements[`B${dr}`], STYLE_CELL_BOLD);
+      applyStyle(wsSettlements[`C${dr}`], STYLE_CELL_NUM);
+    }
+    // Daten-Zeilen Direct
+    const directDataStart = directHeaderRow + 2;
+    for (let i = 0; i < settlementsDirect.length; i++) {
+      const dr = directDataStart + i;
+      applyStyle(wsSettlements[`A${dr}`], STYLE_CELL_BOLD);
+      applyStyle(wsSettlements[`B${dr}`], STYLE_CELL_BOLD);
+      applyStyle(wsSettlements[`C${dr}`], STYLE_CELL_NUM);
+    }
+
+    // === WORKBOOK ZUSAMMENBAUEN ===
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, wsOverview, 'Übersicht');
+    XLSX.utils.book_append_sheet(wb, wsExpenses, 'Auslagen');
+    XLSX.utils.book_append_sheet(wb, wsPerPerson, 'Pro Person');
+    XLSX.utils.book_append_sheet(wb, wsSettlements, 'Abrechnung');
+    
+    // Workbook-Properties
+    wb.Props = {
+      Title: 'Pfadfinder-Tour 2026 — Reisekasse',
+      Author: currentUser?.name || 'Pfadfinder',
+      CreatedDate: new Date(),
+      Subject: 'Reisekasse-Abrechnung',
+      Company: 'Pfadfindergemeinschaft'
+    };
+
+    // Download
+    const filename = `pfadfinder-kasse-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, filename);
+    toast('Excel-Datei heruntergeladen ✓');
+  } catch (e) {
+    console.error('Excel-Export-Fehler:', e);
+    toast('Fehler beim Excel-Export: ' + (e.message || e), true);
+  }
+}
+window.exportKasseExcel = exportKasseExcel;
+
+
 
 async function deleteExpense(id) {
   if (!kasseUnlocked) {
