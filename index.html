@@ -209,6 +209,71 @@ section.active { display: block; animation: fadeIn 0.4s ease-out; }
 .story-thumb-status.highlight { background: rgba(184,84,42,0.85); color: white; }
 .story-thumb-status.skip { background: rgba(180,180,180,0.5); color: white; }
 
+/* === KI STORY WIZARD === */
+.story-wizard-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 1rem; overflow-y: auto; animation: fadeIn 0.2s ease-out; }
+.story-wizard-card { background: var(--bg-card); border: 1px solid var(--line-strong); border-radius: 12px; max-width: 640px; width: 100%; max-height: 95vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.6); position: relative; }
+.story-wizard-header { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid var(--line-strong); position: relative; }
+.story-wizard-header .sw-icon { font-size: 2.5rem; line-height: 1; margin-bottom: 0.5rem; }
+.story-wizard-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 0.05em; color: var(--paper); margin-bottom: 0.4rem; }
+.story-wizard-header p { color: var(--paper-dim); font-size: 0.9rem; line-height: 1.5; }
+.sw-close { position: absolute; top: 1rem; right: 1rem; width: 2rem; height: 2rem; background: transparent; border: none; color: var(--paper-dim); font-size: 1.6rem; cursor: pointer; line-height: 1; padding: 0; transition: color 0.15s; }
+.sw-close:hover { color: var(--rust); }
+.story-wizard-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; padding: 1rem 1.5rem; background: rgba(184,84,42,0.05); border-bottom: 1px solid var(--line-strong); text-align: center; }
+.story-wizard-stats div { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--paper-dim); letter-spacing: 0.05em; text-transform: uppercase; line-height: 1.4; }
+.story-wizard-stats strong { display: block; font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--rust); letter-spacing: 0.02em; }
+.story-wizard-body { padding: 1rem 1.5rem 1.5rem; }
+.story-wizard-body fieldset { border: none; padding: 0; margin: 0 0 1.2rem; }
+.story-wizard-body legend { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--paper); margin-bottom: 0.6rem; padding: 0; font-weight: 600; }
+.story-wizard-body legend small { font-size: 0.7rem; opacity: 0.6; margin-left: 0.4rem; font-weight: 400; text-transform: none; letter-spacing: 0.02em; font-style: italic; }
+.sw-options { display: grid; grid-template-columns: 1fr; gap: 0.4rem; }
+.sw-options-row { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+.sw-options label { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.04); border: 1px solid var(--line-strong); border-radius: 6px; cursor: pointer; transition: all 0.15s; flex-direction: row; }
+.sw-options-row label { flex-direction: column; align-items: center; text-align: center; gap: 0.2rem; }
+.sw-options label:hover { background: rgba(184,84,42,0.08); border-color: var(--rust); }
+.sw-options input[type="radio"] { margin-top: 0.2rem; accent-color: var(--rust); flex-shrink: 0; }
+.sw-options-row input[type="radio"] { margin-top: 0; }
+.sw-options label span { color: var(--paper); font-size: 0.9rem; font-weight: 500; line-height: 1.3; }
+.sw-options label small { display: block; color: var(--paper-dim); font-size: 0.72rem; margin-top: 0.15rem; line-height: 1.3; font-style: italic; }
+.sw-options-row label small { margin-top: 0; }
+.sw-options input[type="radio"]:checked + span { color: var(--rust); font-weight: 600; }
+.sw-options label:has(input:checked) { background: rgba(184,84,42,0.12); border-color: var(--rust); }
+.sw-textarea { width: 100%; min-height: 70px; background: rgba(255,255,255,0.04); border: 1px solid var(--line-strong); border-radius: 6px; padding: 0.7rem; color: var(--paper); font-family: inherit; font-size: 0.9rem; line-height: 1.4; resize: vertical; }
+.sw-textarea:focus { outline: none; border-color: var(--rust); }
+.sw-textarea::placeholder { color: var(--paper-dark); font-style: italic; }
+.sw-buttons { display: flex; gap: 0.6rem; margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid var(--line-strong); }
+.sw-btn-secondary, .sw-btn-primary { flex: 1; padding: 0.8rem; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; font-weight: 600; transition: all 0.15s; border: 1px solid var(--line-strong); }
+.sw-btn-secondary { background: rgba(255,255,255,0.04); color: var(--paper-dim); }
+.sw-btn-secondary:hover { background: rgba(255,255,255,0.08); color: var(--paper); }
+.sw-btn-primary { background: var(--rust); color: white; border-color: var(--rust); flex: 2; }
+.sw-btn-primary:hover { background: #a84a26; }
+.sw-cost-hint { text-align: center; font-size: 0.7rem; color: var(--paper-dim); margin-top: 0.8rem; font-style: italic; }
+
+/* === LOADING-OVERLAY === */
+.story-loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 10001; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+.story-loading-card { background: var(--bg-card); border: 1px solid var(--line-strong); border-radius: 12px; padding: 2.5rem 2rem; text-align: center; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+.story-loading-spinner { width: 60px; height: 60px; margin: 0 auto 1.5rem; border: 4px solid rgba(184,84,42,0.15); border-top-color: var(--rust); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.story-loading-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 0.05em; color: var(--paper); margin-bottom: 0.5rem; }
+.story-loading-card p { color: var(--paper-dim); font-size: 0.85rem; line-height: 1.5; }
+
+/* === SNAPSHOT-GALERIE === */
+.story-snapshots-section { margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--line-strong); }
+.story-snapshots-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
+.story-snapshots-header h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 0.05em; color: var(--paper); margin: 0; }
+.story-generate-btn { padding: 0.7rem 1.2rem; background: linear-gradient(135deg, var(--rust), #d97757); color: white; border: none; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; font-weight: 600; transition: all 0.2s; box-shadow: 0 2px 8px rgba(184,84,42,0.3); }
+.story-generate-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(184,84,42,0.4); }
+.story-snapshots-list { display: grid; gap: 0.7rem; }
+.story-snapshot-card { background: var(--bg-card); border: 1px solid var(--line-strong); border-radius: 8px; padding: 1rem 1.2rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; transition: all 0.15s; }
+.story-snapshot-card:hover { background: rgba(184,84,42,0.05); border-color: var(--rust); }
+.story-snapshot-info { flex: 1; min-width: 0; }
+.story-snapshot-title { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 0.03em; color: var(--paper); margin-bottom: 0.3rem; }
+.story-snapshot-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--paper-dim); letter-spacing: 0.08em; text-transform: uppercase; }
+.story-snapshot-actions { display: flex; gap: 0.4rem; }
+.story-snapshot-actions button { padding: 0.5rem 0.9rem; background: rgba(255,255,255,0.04); border: 1px solid var(--line-strong); color: var(--paper-dim); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+.story-snapshot-actions button:hover { background: var(--rust); color: white; border-color: var(--rust); }
+.story-snapshot-actions .delete-btn:hover { background: #c75c2e; border-color: #c75c2e; }
+.story-snapshots-empty { text-align: center; padding: 2rem 1rem; color: var(--paper-dim); font-style: italic; font-size: 0.9rem; background: rgba(255,255,255,0.02); border-radius: 8px; }
+
 .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.7rem; margin-bottom: 0.25rem; letter-spacing: 0.02em; display: flex; align-items: baseline; gap: 0.75rem; }
 .section-title::after { content: ''; flex: 1; height: 1px; background: var(--line-strong); }
 .section-subtitle { font-family: 'Caveat', cursive; font-size: 1.1rem; color: var(--gold); margin-bottom: 1.25rem; display: block; }
@@ -1368,6 +1433,11 @@ body.hero-collapsed .hero-compact { display: flex; }
 // === SUPABASE CLIENT ===
 const SUPABASE_URL = 'https://gphbvfeaxpacvtzsoema.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwaGJ2ZmVheHBhY3Z0enNvZW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMDMxMTAsImV4cCI6MjA5Mjg3OTExMH0.zhpSQmIED5T4ksUb4Z45z-WwxZ69C5ltKNDHqcsWgbU';
+
+// === ANTHROPIC API (über Cloudflare Worker Proxy) ===
+// Der API-Key liegt sicher auf dem Worker, nicht hier im Code.
+const ANTHROPIC_PROXY_URL = 'https://pfadfinder-claude-proxy.christoph-aldering.workers.dev';
+const ANTHROPIC_MODEL = 'claude-opus-4-7'; // Opus 4.7 — neuestes und bestes Modell
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const ETAPPEN_GPX = [{"num":1,"name":"Winterberg \u2192 Meschede","distance_km":50.7,"elevation_gain_m":225,"point_count":1067,"simplified_count":201,"start":[51.19881,8.53254],"end":[51.35716,8.16876],"coords":[[51.19881,8.53254],[51.19898,8.53285],[51.2007,8.53362],[51.202,8.53428],[51.20118,8.53742],[51.2009,8.53949],[51.20148,8.54218],[51.20241,8.54691],[51.20511,8.55243],[51.2085,8.55583],[51.21278,8.55848],[51.2139,8.55886],[51.21372,8.55852],[51.21414,8.55887],[51.21531,8.55723],[51.21622,8.55017],[51.2156,8.54693],[51.21777,8.54175],[51.21834,8.54026],[51.21995,8.53937],[51.22206,8.53757],[51.22537,8.5324],[51.2271,8.53178],[51.23066,8.52957],[51.23334,8.52835],[51.23758,8.52784],[51.23918,8.52622],[51.24043,8.52657],[51.24242,8.5276],[51.24559,8.52871],[51.24773,8.52608],[51.24864,8.52605],[51.25099,8.52744],[51.25422,8.52882],[51.25559,8.52775],[51.25703,8.52714],[51.25971,8.52499],[51.26119,8.52356],[51.26129,8.52372],[51.26241,8.52292],[51.26524,8.52247],[51.26631,8.52292],[51.26796,8.52182],[51.26972,8.51881],[51.27218,8.51753],[51.27497,8.51612],[51.27696,8.51595],[51.27867,8.51597],[51.27863,8.51722],[51.27954,8.51685],[51.28101,8.51512],[51.28342,8.51353],[51.28649,8.51093],[51.28738,8.51156],[51.28814,8.51023],[51.28926,8.50813],[51.29142,8.50669],[51.29293,8.50635],[51.2949,8.50628],[51.29627,8.50707],[51.30064,8.50591],[51.30203,8.50536],[51.30476,8.50496],[51.30575,8.50394],[51.30706,8.50332],[51.30821,8.50445],[51.30956,8.50475],[51.31095,8.50422],[51.31229,8.5031],[51.31427,8.49798],[51.31564,8.49694],[51.31938,8.49712],[51.32219,8.49525],[51.32548,8.49253],[51.32813,8.49123],[51.3301,8.48897],[51.32922,8.48746],[51.32966,8.48716],[51.33024,8.48692],[51.33359,8.4867],[51.33767,8.48733],[51.34091,8.48626],[51.34342,8.48628],[51.34628,8.48854],[51.34721,8.48682],[51.34956,8.48698],[51.35172,8.48759],[51.35353,8.48754],[51.35468,8.48555],[51.35539,8.48475],[51.35672,8.48337],[51.35863,8.48124],[51.35985,8.47801],[51.36034,8.47537],[51.36082,8.47113],[51.36073,8.46627],[51.35972,8.46129],[51.36057,8.45928],[51.36203,8.45904],[51.36001,8.45863],[51.35939,8.46021],[51.35877,8.4623],[51.3579,8.46245],[51.35826,8.45957],[51.359,8.45745],[51.36075,8.45633],[51.36258,8.45367],[51.36292,8.45236],[51.36247,8.44116],[51.36269,8.43317],[51.36538,8.43167],[51.36727,8.42943],[51.36747,8.42832],[51.36702,8.42572],[51.36657,8.42125],[51.36572,8.42005],[51.36455,8.41665],[51.3634,8.41598],[51.36346,8.41511],[51.36438,8.41327],[51.36646,8.41201],[51.36665,8.4116],[51.36543,8.40941],[51.36343,8.40634],[51.36256,8.40457],[51.36193,8.40185],[51.36134,8.39966],[51.36143,8.39791],[51.3615,8.39722],[51.36084,8.39321],[51.36014,8.39062],[51.35971,8.38863],[51.3581,8.38352],[51.35854,8.38244],[51.35835,8.38101],[51.358,8.37814],[51.35827,8.37687],[51.35906,8.37546],[51.35941,8.36965],[51.35961,8.36539],[51.35856,8.3631],[51.35856,8.3611],[51.3596,8.36022],[51.36002,8.35783],[51.35728,8.34978],[51.35571,8.34387],[51.35539,8.343],[51.35479,8.34155],[51.35391,8.33932],[51.3537,8.33698],[51.35347,8.33011],[51.35471,8.32971],[51.3544,8.32715],[51.35321,8.32041],[51.35269,8.31604],[51.3528,8.31388],[51.35347,8.31306],[51.35181,8.30978],[51.35124,8.30526],[51.3503,8.29779],[51.34942,8.29114],[51.34916,8.28837],[51.34902,8.28735],[51.34863,8.28788],[51.34824,8.28462],[51.34814,8.2822],[51.3488,8.28134],[51.34904,8.2799],[51.34815,8.27948],[51.3474,8.27894],[51.3485,8.27656],[51.34906,8.27317],[51.34922,8.26949],[51.3489,8.26178],[51.34986,8.26059],[51.35023,8.25933],[51.35053,8.25597],[51.35267,8.25036],[51.35275,8.2498],[51.35348,8.24786],[51.35512,8.23984],[51.35465,8.23161],[51.35339,8.2202],[51.35319,8.21609],[51.35297,8.21391],[51.35267,8.20704],[51.35276,8.20561],[51.35318,8.20116],[51.35428,8.1986],[51.35688,8.19287],[51.35857,8.18913],[51.35921,8.18761],[51.36123,8.18302],[51.3639,8.17657],[51.36483,8.17425],[51.36502,8.1724],[51.36422,8.17185],[51.36318,8.17056],[51.36051,8.17048],[51.35821,8.16967],[51.35716,8.16876]]},{"num":2,"name":"Meschede \u2192 Menden","distance_km":58.3,"elevation_gain_m":114,"point_count":1245,"simplified_count":201,"start":[51.35716,8.16876],"end":[51.44672,7.78258],"coords":[[51.35716,8.16876],[51.35838,8.16975],[51.36139,8.17025],[51.36352,8.17099],[51.36463,8.17213],[51.36629,8.17065],[51.36725,8.16873],[51.36901,8.16787],[51.37102,8.16773],[51.37204,8.16856],[51.37265,8.17226],[51.37313,8.17534],[51.37311,8.17563],[51.37412,8.17729],[51.37587,8.1764],[51.37782,8.17082],[51.37932,8.16949],[51.37955,8.16885],[51.38025,8.16521],[51.38314,8.16239],[51.38651,8.16321],[51.38884,8.16478],[51.39005,8.16809],[51.38971,8.17442],[51.38942,8.17559],[51.38939,8.17795],[51.391,8.17845],[51.39567,8.17683],[51.39713,8.17083],[51.39781,8.16991],[51.39671,8.16554],[51.39537,8.15959],[51.39633,8.15707],[51.3959,8.15161],[51.39598,8.14788],[51.39758,8.14663],[51.39813,8.14424],[51.39802,8.1413],[51.39785,8.13946],[51.39824,8.13706],[51.3976,8.136],[51.39684,8.1315],[51.39551,8.13091],[51.3939,8.13238],[51.39133,8.13161],[51.39066,8.12997],[51.38928,8.12659],[51.39172,8.11839],[51.39089,8.11615],[51.39137,8.11247],[51.39198,8.11057],[51.39251,8.10958],[51.3943,8.10911],[51.395,8.10455],[51.39593,8.10103],[51.39677,8.09458],[51.40062,8.08873],[51.40165,8.08722],[51.40292,8.08575],[51.40435,8.08406],[51.40644,8.08112],[51.40919,8.0774],[51.40938,8.0729],[51.4076,8.06607],[51.40641,8.06594],[51.40507,8.06588],[51.4048,8.06464],[51.40132,8.06663],[51.39873,8.06715],[51.39577,8.0671],[51.39308,8.06749],[51.39156,8.06913],[51.39055,8.06871],[51.38883,8.06931],[51.38652,8.07033],[51.38498,8.06958],[51.38374,8.0654],[51.38366,8.0641],[51.38521,8.06181],[51.39047,8.06074],[51.39469,8.06012],[51.39475,8.0583],[51.39492,8.05662],[51.39763,8.05645],[51.39993,8.05861],[51.39977,8.05802],[51.40141,8.05843],[51.40452,8.05672],[51.40709,8.05442],[51.41079,8.05162],[51.41073,8.05128],[51.41175,8.05294],[51.41353,8.05075],[51.41588,8.04635],[51.41633,8.04409],[51.41648,8.0432],[51.41741,8.03758],[51.41906,8.03389],[51.41997,8.02945],[51.41971,8.0265],[51.42034,8.02466],[51.42089,8.02303],[51.4221,8.02392],[51.4226,8.02512],[51.4226,8.02239],[51.42444,8.0101],[51.42662,8.00527],[51.42881,8.00209],[51.42921,8.00203],[51.43095,8.0037],[51.43182,8.00399],[51.4328,8.00442],[51.43355,8.00436],[51.43416,8.00209],[51.43472,8.00134],[51.43559,7.99721],[51.43787,7.98889],[51.43938,7.98778],[51.43979,7.9856],[51.4403,7.98043],[51.44034,7.97559],[51.43976,7.97005],[51.43973,7.9683],[51.44054,7.96468],[51.44308,7.95894],[51.4478,7.95404],[51.44946,7.95271],[51.45241,7.95252],[51.45558,7.95399],[51.45635,7.9554],[51.45581,7.9583],[51.45699,7.95492],[51.46073,7.95643],[51.46408,7.95597],[51.4676,7.95224],[51.46976,7.94543],[51.47139,7.93835],[51.47358,7.93226],[51.47667,7.92944],[51.48173,7.92727],[51.48395,7.9272],[51.48727,7.92498],[51.4878,7.92464],[51.48937,7.91651],[51.49578,7.91542],[51.49778,7.91285],[51.49821,7.90976],[51.49901,7.90274],[51.49753,7.89751],[51.4961,7.8937],[51.4972,7.89194],[51.49656,7.88439],[51.4962,7.88158],[51.4957,7.8781],[51.4949,7.87682],[51.49411,7.87149],[51.49366,7.86997],[51.49333,7.86891],[51.49319,7.8688],[51.49284,7.86922],[51.49197,7.86795],[51.49097,7.86642],[51.48966,7.86518],[51.48873,7.86382],[51.48757,7.85981],[51.4871,7.85847],[51.48674,7.8544],[51.48652,7.8503],[51.48516,7.84848],[51.4813,7.84365],[51.47896,7.82694],[51.48019,7.81543],[51.4796,7.81238],[51.47925,7.81072],[51.4776,7.8044],[51.47583,7.80473],[51.47444,7.79875],[51.47394,7.79464],[51.47425,7.79154],[51.47369,7.79135],[51.47313,7.7903],[51.47201,7.78734],[51.47234,7.78436],[51.47223,7.78],[51.47158,7.77673],[51.47142,7.77467],[51.47175,7.77078],[51.47145,7.76847],[51.47068,7.76832],[51.47038,7.76772],[51.47028,7.76752],[51.46988,7.76827],[51.46858,7.76902],[51.46697,7.76749],[51.46421,7.76833],[51.4614,7.77221],[51.45905,7.77387],[51.45452,7.77579],[51.44821,7.77849],[51.44773,7.77987],[51.44672,7.78258]]},{"num":3,"name":"Menden \u2192 Wetter","distance_km":45.4,"elevation_gain_m":162,"point_count":925,"simplified_count":201,"start":[51.44672,7.78258],"end":[51.3937,7.33853],"coords":[[51.44672,7.78258],[51.44817,7.78142],[51.44809,7.779],[51.44847,7.77839],[51.45452,7.77579],[51.45895,7.77381],[51.45845,7.77207],[51.45837,7.7698],[51.45904,7.76624],[51.45907,7.76317],[51.45863,7.75931],[51.45895,7.7591],[51.45966,7.75051],[51.45992,7.74551],[51.46052,7.73474],[51.46028,7.734],[51.46042,7.73362],[51.46192,7.73208],[51.465,7.72889],[51.46513,7.72865],[51.46561,7.72254],[51.46594,7.7187],[51.46723,7.71672],[51.46873,7.71576],[51.47135,7.71289],[51.47222,7.71065],[51.47231,7.71017],[51.47299,7.7097],[51.47381,7.70947],[51.47388,7.70819],[51.47429,7.70327],[51.47434,7.6983],[51.47487,7.69871],[51.47557,7.69592],[51.47492,7.69339],[51.47466,7.69097],[51.47739,7.68903],[51.47706,7.67616],[51.4766,7.67614],[51.47698,7.6758],[51.47665,7.67255],[51.4755,7.6709],[51.47601,7.67042],[51.47414,7.66508],[51.47391,7.66496],[51.4733,7.66451],[51.47114,7.65856],[51.47032,7.65601],[51.4684,7.66012],[51.46667,7.6616],[51.46458,7.66222],[51.46285,7.65879],[51.46091,7.65592],[51.45962,7.65367],[51.45764,7.65146],[51.45701,7.64813],[51.45637,7.64342],[51.45527,7.6409],[51.45221,7.64168],[51.45116,7.63919],[51.45039,7.63445],[51.44935,7.62958],[51.45152,7.62788],[51.4511,7.62617],[51.45103,7.62049],[51.44382,7.59231],[51.44371,7.59133],[51.44347,7.58752],[51.44258,7.58414],[51.44096,7.57753],[51.43916,7.58066],[51.43679,7.58276],[51.4349,7.57652],[51.43519,7.57589],[51.43446,7.57439],[51.43457,7.57188],[51.43522,7.57023],[51.43477,7.56827],[51.4325,7.56712],[51.43008,7.56537],[51.42844,7.56236],[51.4282,7.56102],[51.42779,7.56058],[51.42748,7.56025],[51.42697,7.55903],[51.42542,7.55811],[51.42452,7.55809],[51.42377,7.55538],[51.42346,7.55325],[51.42213,7.55046],[51.42111,7.54815],[51.42262,7.54721],[51.4217,7.54612],[51.42053,7.54211],[51.4201,7.5422],[51.4178,7.53752],[51.41586,7.53442],[51.41534,7.53287],[51.41478,7.53221],[51.41645,7.52532],[51.4167,7.52184],[51.41617,7.51901],[51.41644,7.51801],[51.41705,7.51552],[51.41802,7.50969],[51.41845,7.50888],[51.41909,7.50843],[51.41914,7.50733],[51.41884,7.50519],[51.41856,7.50018],[51.41806,7.49787],[51.41717,7.49034],[51.41815,7.4858],[51.41811,7.47964],[51.41816,7.47829],[51.41515,7.47804],[51.41516,7.47908],[51.41524,7.4787],[51.41537,7.47784],[51.41494,7.47383],[51.41471,7.46998],[51.4134,7.46591],[51.40865,7.45769],[51.40752,7.45695],[51.40671,7.45651],[51.40544,7.45524],[51.40426,7.45427],[51.40327,7.45419],[51.4008,7.45258],[51.40016,7.45259],[51.39954,7.44924],[51.39678,7.4439],[51.39545,7.44117],[51.39459,7.43768],[51.39447,7.43637],[51.39487,7.43403],[51.39574,7.43123],[51.39623,7.42904],[51.39642,7.42837],[51.39682,7.42705],[51.39745,7.42553],[51.39825,7.42418],[51.39937,7.42268],[51.40005,7.42307],[51.40046,7.42194],[51.40072,7.42112],[51.40202,7.41622],[51.40216,7.41458],[51.40213,7.4108],[51.40154,7.4084],[51.40107,7.40703],[51.39895,7.40342],[51.39554,7.39849],[51.39338,7.39821],[51.39177,7.39967],[51.39097,7.40008],[51.3881,7.40169],[51.3865,7.40076],[51.38566,7.40031],[51.38475,7.39864],[51.38425,7.39747],[51.38386,7.39553],[51.38355,7.39401],[51.38358,7.39351],[51.38412,7.39304],[51.38404,7.39215],[51.38402,7.39146],[51.38404,7.39092],[51.38383,7.3903],[51.38413,7.38927],[51.38553,7.38657],[51.38529,7.38562],[51.38492,7.38443],[51.38457,7.3821],[51.38545,7.38105],[51.38937,7.37632],[51.39069,7.37119],[51.39134,7.36826],[51.39208,7.3665],[51.39291,7.36431],[51.39364,7.36387],[51.39461,7.36278],[51.39716,7.35907],[51.39937,7.35591],[51.40082,7.35165],[51.40113,7.34984],[51.40175,7.34875],[51.40266,7.34786],[51.40264,7.347],[51.40241,7.34533],[51.40194,7.34524],[51.40115,7.34389],[51.4006,7.34254],[51.39963,7.34098],[51.39843,7.34072],[51.39772,7.34077],[51.39778,7.34044],[51.39782,7.33948],[51.39715,7.33905],[51.39489,7.33805],[51.3937,7.33853]]},{"num":4,"name":"Wetter \u2192 Essen","distance_km":35.7,"elevation_gain_m":111,"point_count":724,"simplified_count":201,"start":[51.3937,7.33853],"end":[51.43102,7.09895],"coords":[[51.3937,7.33853],[51.39481,7.33799],[51.39649,7.33902],[51.39747,7.33899],[51.39782,7.33951],[51.39778,7.34044],[51.39736,7.34076],[51.39803,7.34079],[51.39893,7.34041],[51.39963,7.34098],[51.4006,7.34254],[51.40105,7.34344],[51.40131,7.34521],[51.40224,7.34522],[51.40241,7.34533],[51.40439,7.34523],[51.40548,7.34458],[51.40724,7.34357],[51.40784,7.34314],[51.40803,7.3432],[51.40863,7.34312],[51.40874,7.34363],[51.40873,7.34409],[51.40939,7.34413],[51.4098,7.34396],[51.41398,7.34588],[51.41849,7.34911],[51.41967,7.3493],[51.42127,7.34863],[51.42242,7.34726],[51.42382,7.34389],[51.4251,7.33819],[51.42555,7.33613],[51.42856,7.32558],[51.42907,7.3243],[51.4299,7.32183],[51.42999,7.31654],[51.4294,7.3127],[51.42883,7.31113],[51.42797,7.3098],[51.42266,7.30362],[51.42256,7.30146],[51.42221,7.30023],[51.42183,7.29942],[51.4215,7.29856],[51.42123,7.29786],[51.42117,7.29667],[51.4219,7.29421],[51.42396,7.29197],[51.42473,7.29211],[51.42554,7.29115],[51.42733,7.29007],[51.42801,7.28987],[51.42907,7.28958],[51.43032,7.28789],[51.43162,7.28378],[51.43225,7.28176],[51.43265,7.27976],[51.43249,7.27848],[51.43281,7.27781],[51.43409,7.27857],[51.43519,7.27913],[51.43546,7.28],[51.43592,7.28142],[51.43631,7.2821],[51.43736,7.28279],[51.43791,7.28235],[51.43813,7.28207],[51.43799,7.28027],[51.43773,7.2795],[51.43779,7.27836],[51.43626,7.27546],[51.43553,7.2747],[51.43441,7.27425],[51.43352,7.27425],[51.4317,7.27102],[51.4302,7.26893],[51.42928,7.26852],[51.4287,7.26741],[51.4256,7.26199],[51.42422,7.2615],[51.42348,7.26067],[51.42317,7.25958],[51.42291,7.25836],[51.42211,7.25701],[51.42125,7.25541],[51.42083,7.25474],[51.42037,7.25524],[51.41926,7.2546],[51.4174,7.25383],[51.41512,7.2531],[51.41425,7.25224],[51.41407,7.25175],[51.41384,7.25085],[51.41326,7.25103],[51.41287,7.25084],[51.41225,7.24982],[51.41171,7.24704],[51.41203,7.24358],[51.41251,7.23971],[51.41251,7.23591],[51.41232,7.23458],[51.41287,7.22832],[51.4133,7.22445],[51.4135,7.22067],[51.41385,7.22046],[51.41475,7.22234],[51.41875,7.22366],[51.41925,7.22187],[51.42007,7.21846],[51.42037,7.21563],[51.42081,7.21412],[51.42115,7.21341],[51.42137,7.21209],[51.4214,7.21115],[51.4215,7.21039],[51.42217,7.21047],[51.42227,7.211],[51.41944,7.20826],[51.41808,7.20641],[51.41633,7.2026],[51.41516,7.20024],[51.41417,7.19864],[51.41595,7.20113],[51.41587,7.20144],[51.41628,7.20165],[51.41696,7.20236],[51.41745,7.20241],[51.41794,7.202],[51.41848,7.20066],[51.4185,7.19872],[51.41779,7.19565],[51.4172,7.19531],[51.41689,7.19153],[51.41578,7.18843],[51.41312,7.18552],[51.41185,7.1842],[51.41016,7.18197],[51.40787,7.17857],[51.40487,7.17362],[51.40433,7.17335],[51.40373,7.17422],[51.40266,7.1743],[51.4022,7.17482],[51.40187,7.17288],[51.4016,7.17161],[51.40195,7.17059],[51.40257,7.17091],[51.40303,7.17159],[51.40409,7.17045],[51.40425,7.17018],[51.40483,7.16938],[51.40493,7.16838],[51.40535,7.16681],[51.40525,7.16407],[51.40473,7.1627],[51.40326,7.16142],[51.40166,7.16112],[51.40053,7.16174],[51.39594,7.16318],[51.39403,7.16334],[51.39217,7.16373],[51.38942,7.1629],[51.38783,7.16146],[51.38722,7.15975],[51.38719,7.15753],[51.38793,7.15595],[51.38922,7.15477],[51.39006,7.15325],[51.39043,7.15366],[51.39444,7.1504],[51.39813,7.14818],[51.40003,7.14753],[51.40664,7.14743],[51.40959,7.14621],[51.41191,7.14597],[51.41249,7.14602],[51.41485,7.14679],[51.41786,7.1484],[51.41888,7.14842],[51.42025,7.14721],[51.42067,7.14648],[51.4208,7.14626],[51.4212,7.14564],[51.42156,7.14413],[51.42253,7.14282],[51.42423,7.13957],[51.42525,7.13657],[51.42882,7.13006],[51.43021,7.12592],[51.43063,7.12296],[51.43051,7.11925],[51.42899,7.11453],[51.42857,7.11244],[51.42864,7.10766],[51.42835,7.10141],[51.42885,7.09777],[51.42992,7.0979],[51.42989,7.09924],[51.43009,7.09948],[51.43102,7.09895]]},{"num":5,"name":"Essen \u2192 Duisburg","distance_km":56.6,"elevation_gain_m":206,"point_count":1283,"simplified_count":201,"start":[51.43102,7.09895],"end":[51.45061,6.73923],"coords":[[51.43102,7.09895],[51.42992,7.0994],[51.42893,7.09745],[51.42978,7.09105],[51.43022,7.08841],[51.43643,7.0844],[51.43779,7.08375],[51.44166,7.08209],[51.44268,7.07803],[51.44257,7.07639],[51.44353,7.07649],[51.44384,7.07589],[51.44326,7.07207],[51.44026,7.06433],[51.438,7.06094],[51.43238,7.05687],[51.43079,7.0558],[51.42899,7.05613],[51.4286,7.05588],[51.42719,7.05584],[51.42399,7.0575],[51.42185,7.06284],[51.42066,7.06594],[51.41992,7.06696],[51.41905,7.06687],[51.41799,7.06741],[51.41591,7.0704],[51.41368,7.07399],[51.41112,7.07747],[51.40968,7.07885],[51.40718,7.07854],[51.40682,7.07686],[51.40685,7.07475],[51.40276,7.07556],[51.39946,7.076],[51.39758,7.07982],[51.39626,7.07998],[51.39359,7.07802],[51.39255,7.07625],[51.39062,7.07567],[51.38807,7.07521],[51.38656,7.07125],[51.387,7.06462],[51.38974,7.06008],[51.39222,7.05772],[51.39722,7.04976],[51.39715,7.04865],[51.39748,7.0473],[51.39847,7.0474],[51.40092,7.04292],[51.40287,7.03668],[51.4032,7.03128],[51.40231,7.02639],[51.40193,7.01962],[51.40122,7.0161],[51.40028,7.01261],[51.39925,7.01061],[51.39879,7.00708],[51.39843,7.00508],[51.39644,7.00298],[51.39337,6.99986],[51.39171,7.00134],[51.39051,7.00209],[51.38989,7.00165],[51.38972,7.00049],[51.38882,6.99953],[51.38745,6.99996],[51.38618,7.00005],[51.38701,6.99984],[51.3865,6.99867],[51.38622,6.99798],[51.38458,6.9976],[51.38336,6.99872],[51.38099,6.9941],[51.37994,6.98603],[51.37826,6.98186],[51.37768,6.97935],[51.37691,6.97032],[51.37463,6.96242],[51.37204,6.96155],[51.36764,6.96079],[51.36258,6.95442],[51.35896,6.94766],[51.35842,6.9442],[51.35888,6.94126],[51.36052,6.93879],[51.36136,6.9378],[51.35995,6.93437],[51.35927,6.93261],[51.35987,6.93177],[51.36094,6.93235],[51.36203,6.93153],[51.36325,6.92979],[51.36407,6.92779],[51.36769,6.91839],[51.36957,6.91177],[51.37225,6.90544],[51.37167,6.90254],[51.37167,6.90047],[51.37485,6.8975],[51.37749,6.89446],[51.38146,6.89092],[51.38444,6.88837],[51.38747,6.88727],[51.39104,6.88844],[51.39381,6.88877],[51.39779,6.88802],[51.40015,6.8879],[51.40442,6.88889],[51.40735,6.8885],[51.41,6.88745],[51.41176,6.88059],[51.40978,6.8773],[51.41164,6.87469],[51.41437,6.87155],[51.41524,6.87226],[51.41683,6.87091],[51.41791,6.86969],[51.42013,6.87099],[51.42446,6.87142],[51.42578,6.87108],[51.42642,6.87044],[51.42736,6.87107],[51.4281,6.87281],[51.42874,6.87352],[51.42934,6.87423],[51.43053,6.87411],[51.43141,6.87251],[51.43223,6.871],[51.43235,6.86918],[51.43231,6.86786],[51.43235,6.86813],[51.43294,6.86627],[51.43478,6.86408],[51.43791,6.86366],[51.44004,6.86327],[51.44134,6.85916],[51.44294,6.85666],[51.44409,6.8544],[51.44493,6.8509],[51.44564,6.84866],[51.44602,6.84782],[51.44664,6.84546],[51.44706,6.84412],[51.44566,6.83138],[51.44563,6.83059],[51.44878,6.8285],[51.45334,6.82555],[51.45373,6.82627],[51.45408,6.82464],[51.45705,6.81847],[51.45819,6.81868],[51.45988,6.81517],[51.45995,6.81168],[51.45998,6.80966],[51.45326,6.80573],[51.45114,6.80061],[51.45161,6.79295],[51.45206,6.79245],[51.44875,6.79123],[51.44781,6.79084],[51.44613,6.78876],[51.44515,6.78559],[51.44471,6.78148],[51.44283,6.78169],[51.4421,6.77744],[51.4411,6.77672],[51.44082,6.77409],[51.44062,6.77278],[51.44026,6.77036],[51.43975,6.76812],[51.43868,6.76531],[51.43865,6.76398],[51.4396,6.7628],[51.43746,6.75797],[51.43767,6.75635],[51.44112,6.75231],[51.44093,6.75147],[51.44143,6.74605],[51.44166,6.74442],[51.44187,6.74267],[51.4418,6.73975],[51.4436,6.73543],[51.44644,6.72512],[51.44813,6.72296],[51.44935,6.72206],[51.44712,6.72428],[51.44547,6.7276],[51.44212,6.73752],[51.44158,6.73996],[51.44177,6.74282],[51.44134,6.74515],[51.44136,6.74589],[51.44262,6.74652],[51.44301,6.74727],[51.44352,6.74694],[51.445,6.74475],[51.44798,6.74295],[51.44892,6.74204],[51.45071,6.73952],[51.45061,6.73923]]}];
@@ -2265,7 +2335,44 @@ function renderStoryMode() {
         }).join('')}
       </div>
     </div>
+    
+    <div class="story-snapshots-section">
+      <div class="story-snapshots-header">
+        <h3>📚 Generierte Stories</h3>
+        <button class="story-generate-btn" onclick="openStoryWizard()">
+          ✨ Neue Story generieren
+        </button>
+      </div>
+      ${renderStorySnapshotsList()}
+    </div>
   `;
+}
+
+function renderStorySnapshotsList() {
+  if (!storySnapshots || storySnapshots.length === 0) {
+    return '<div class="story-snapshots-empty">Noch keine Stories generiert. Klick oben auf "Neue Story generieren", um die erste KI-Story aus deinen Captions zu erstellen.</div>';
+  }
+  return '<div class="story-snapshots-list">' + storySnapshots.map(s => {
+    const date = new Date(s.created_at).toLocaleDateString('de-DE', {day:'2-digit', month:'short', year:'numeric'});
+    const time = new Date(s.created_at).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+    const settings = s.wizard_settings || {};
+    const toneShort = { 'warm-erzaehlerisch': 'Warm', 'augenzwinkernd': 'Augenzwinkernd', 'ehrwuerdig': 'Ehrwürdig', 'poetisch': 'Poetisch', 'nuechtern': 'Nüchtern' }[settings.tone] || settings.tone || '';
+    return `<div class="story-snapshot-card">
+      <div class="story-snapshot-info">
+        <div class="story-snapshot-title">${esc(s.title || 'Story')}</div>
+        <div class="story-snapshot-meta">
+          ${date} · ${time} · von ${esc(s.created_by || '?')}
+          ${toneShort ? ' · ' + esc(toneShort) : ''}
+          ${s.photo_count ? ' · ' + s.photo_count + ' Fotos' : ''}
+          ${s.caption_count ? ' · ' + s.caption_count + ' Captions' : ''}
+        </div>
+      </div>
+      <div class="story-snapshot-actions">
+        <button onclick="openStorySnapshot('${esc(s.id)}')">📖 Öffnen</button>
+        <button class="delete-btn" onclick="deleteStorySnapshot('${esc(s.id)}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
 }
 
 // Local-State für unverarbeitete Eingaben
@@ -2436,6 +2543,10 @@ function scrollToStoryTop() {
 function initStoryTabIfNeeded() {
   buildStoryPhotosList();
   renderStoryMode();
+  // Snapshots im Hintergrund neu laden, falls jemand zwischenzeitlich was generiert hat
+  loadStorySnapshots().then(() => {
+    if (document.getElementById('tab-story')?.classList.contains('active')) renderStoryMode();
+  });
 }
 
 // Realtime: andere Pfadfinder-Beiträge live übernehmen
@@ -2470,6 +2581,583 @@ window.storySaveAndNext = storySaveAndNext;
 window.storyJumpTo = storyJumpTo;
 window.storyToggleFilter = storyToggleFilter;
 window.initStoryTabIfNeeded = initStoryTabIfNeeded;
+
+// ============================================================
+// === KI-STORY-GENERATOR (Etappe 1: Reportage) ===
+// ============================================================
+
+// === Story-Snapshots laden ===
+let storySnapshots = [];
+
+async function loadStorySnapshots() {
+  try {
+    const { data, error } = await sb.from('story_snapshots')
+      .select('id, format, title, caption_count, photo_count, wizard_settings, created_by, created_at')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.warn('Story-Snapshots konnten nicht geladen werden:', error);
+      return;
+    }
+    storySnapshots = data || [];
+  } catch (e) {
+    console.warn('Story-Snapshots Load-Fehler:', e);
+  }
+}
+
+// === Daten-Aufbereitung: Captions + Live-Kommentare zusammenführen ===
+function buildStoryDataForKI() {
+  const H = (typeof _storyHelpers === 'function') ? _storyHelpers() : null;
+  const sorted = [...posts].sort((a, b) => a.timestamp - b.timestamp);
+  
+  // Pro Etappe: Tag-Gruppe finden, Posts und Fotos zuordnen
+  const etappeData = [];
+  
+  ETAPPEN.forEach(etappe => {
+    if (!etappe.dateISO || !etappe.num || etappe.num < 1) return;
+    const dayKey = new Date(etappe.dateISO).toLocaleDateString('de-DE', {year:'numeric', month:'2-digit', day:'2-digit'});
+    
+    // Posts an diesem Tag finden
+    const dayPosts = sorted.filter(p => {
+      const pKey = new Date(p.timestamp).toLocaleDateString('de-DE', {year:'numeric', month:'2-digit', day:'2-digit'});
+      return pKey === dayKey;
+    });
+    
+    // Pro Post: Fotos und Captions extrahieren
+    const photoEntries = [];
+    dayPosts.forEach(p => {
+      const photos = (p.photos || []).filter(ph => typeof ph === 'string' && ph.startsWith('http'));
+      photos.forEach((url, idx) => {
+        const captionKey = `${p.id}|${idx}`;
+        const captionData = (typeof storyCaptions !== 'undefined') ? storyCaptions[captionKey] : null;
+        const rating = captionData?.rating ?? null;
+        const caption = captionData?.caption || '';
+        
+        // Skip-Filter: ✕-markierte Fotos weglassen
+        if (rating === 0) return;
+        
+        photoEntries.push({
+          url,
+          postId: p.id,
+          photoIdx: idx,
+          time: new Date(p.timestamp).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}),
+          author: p.author || '',
+          liveComment: p.text || '',
+          caption: caption,
+          rating: rating ?? 1,
+          gps: (p.photo_gps && p.photo_gps[idx]) || null
+        });
+      });
+    });
+    
+    const dayStats = etappeStats[etappe.num] || {};
+    
+    etappeData.push({
+      num: etappe.num,
+      from: etappe.from,
+      to: etappe.to,
+      date: dayKey,
+      dateISO: etappe.dateISO,
+      photoCount: photoEntries.length,
+      highlightCount: photoEntries.filter(p => p.rating === 3).length,
+      photos: photoEntries,
+      km: dayStats.actualKm || null,
+      hm: dayStats.actualHm || null,
+      duration: dayStats.durationMin || null
+    });
+  });
+  
+  return etappeData.filter(e => e.photos.length > 0);
+}
+
+// === KI-Aufruf über Cloudflare Worker Proxy ===
+async function callClaudeAPI(systemPrompt, userPrompt, maxTokens = 16000) {
+  if (!ANTHROPIC_PROXY_URL) {
+    throw new Error('Proxy-URL nicht konfiguriert.');
+  }
+  
+  const response = await fetch(ANTHROPIC_PROXY_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: ANTHROPIC_MODEL,
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }]
+    })
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMsg = `API-Fehler ${response.status}`;
+    try {
+      const errorJson = JSON.parse(errorText);
+      errorMsg = errorJson.error?.message || errorMsg;
+    } catch (e) {}
+    throw new Error(errorMsg);
+  }
+  
+  const data = await response.json();
+  if (!data.content || !data.content[0] || !data.content[0].text) {
+    throw new Error('Unerwartete API-Antwort');
+  }
+  return data.content[0].text;
+}
+
+// === Wizard-Modal öffnen ===
+function openStoryWizard() {
+  // Vorab-Check: API-Key konfiguriert?
+  if (!ANTHROPIC_PROXY_URL) {
+    toast('Proxy-URL fehlt. Bitte ANTHROPIC_PROXY_URL im Code setzen.', true);
+    return;
+  }
+  
+  // Daten-Vorprüfung
+  const data = buildStoryDataForKI();
+  if (data.length === 0) {
+    toast('Noch keine Fotos zum Verarbeiten.', true);
+    return;
+  }
+  const totalPhotos = data.reduce((s, e) => s + e.photos.length, 0);
+  const totalHighlights = data.reduce((s, e) => s + e.highlightCount, 0);
+  const totalCaptions = data.reduce((s, e) => s + e.photos.filter(p => p.caption.trim().length > 0).length, 0);
+  
+  // Modal aufbauen
+  const modal = document.createElement('div');
+  modal.id = 'story-wizard-modal';
+  modal.className = 'story-wizard-overlay';
+  modal.innerHTML = `
+    <div class="story-wizard-card">
+      <div class="story-wizard-header">
+        <div class="sw-icon">✨</div>
+        <h2>Neue Story generieren</h2>
+        <p>Beantworte ein paar Fragen — Claude schreibt dir daraus eine maßgeschneiderte Geschichte.</p>
+        <button class="sw-close" onclick="closeStoryWizard()">×</button>
+      </div>
+      
+      <div class="story-wizard-stats">
+        <div><strong>${data.length}</strong> Etappen</div>
+        <div><strong>${totalPhotos}</strong> Fotos</div>
+        <div><strong>${totalCaptions}</strong> Captions</div>
+        <div><strong>${totalHighlights}</strong> Highlights ⭐⭐⭐</div>
+      </div>
+      
+      <form id="story-wizard-form" class="story-wizard-body" onsubmit="event.preventDefault(); generateStoryWithKI();">
+        <fieldset>
+          <legend>1. Tonalität</legend>
+          <div class="sw-options">
+            <label><input type="radio" name="tone" value="warm-erzaehlerisch" checked><span>Warm & erzählerisch</span><small>Reportage-Stil mit Tiefe</small></label>
+            <label><input type="radio" name="tone" value="augenzwinkernd"><span>Augenzwinkernd</span><small>Mit Humor und Selbstironie</small></label>
+            <label><input type="radio" name="tone" value="ehrwuerdig"><span>Ehrwürdig</span><small>Wie aus dem 19. Jahrhundert</small></label>
+            <label><input type="radio" name="tone" value="poetisch"><span>Poetisch</span><small>Lyrisch, bildhaft</small></label>
+            <label><input type="radio" name="tone" value="nuechtern"><span>Nüchtern-sachlich</span><small>Wie ein Reisebericht</small></label>
+          </div>
+        </fieldset>
+        
+        <fieldset>
+          <legend>2. Schwerpunkt</legend>
+          <div class="sw-options">
+            <label><input type="radio" name="focus" value="reise" checked><span>Reise-Erlebnis</span><small>Strecke, Etappen, Stimmungen</small></label>
+            <label><input type="radio" name="focus" value="freundschaft"><span>Freundschaft</span><small>Die Truppe und ihre Dynamik</small></label>
+            <label><input type="radio" name="focus" value="landschaft"><span>Landschaft & Natur</span><small>Ruhrtal, Sauerland, Industriekulisse</small></label>
+            <label><input type="radio" name="focus" value="kultur"><span>Geschichte & Kultur</span><small>Zeche Nachtigall, Arnsberg, Industriekultur</small></label>
+            <label><input type="radio" name="focus" value="bunt"><span>Buntes Bild</span><small>Alles ein bisschen</small></label>
+          </div>
+        </fieldset>
+        
+        <fieldset>
+          <legend>3. Länge</legend>
+          <div class="sw-options sw-options-row">
+            <label><input type="radio" name="length" value="kompakt"><span>Kompakt</span><small>~ 600 Wörter</small></label>
+            <label><input type="radio" name="length" value="mittel" checked><span>Mittel</span><small>~ 1500 Wörter</small></label>
+            <label><input type="radio" name="length" value="ausfuehrlich"><span>Ausführlich</span><small>~ 3000 Wörter</small></label>
+          </div>
+        </fieldset>
+        
+        <fieldset>
+          <legend>4. Für wen?</legend>
+          <div class="sw-options sw-options-row">
+            <label><input type="radio" name="audience" value="truppe" checked><span>Die Truppe</span></label>
+            <label><input type="radio" name="audience" value="familie"><span>Familie</span></label>
+            <label><input type="radio" name="audience" value="aussen"><span>Außenstehende</span></label>
+          </div>
+        </fieldset>
+        
+        <fieldset>
+          <legend>5. Hintergrund-Wissen einweben?</legend>
+          <div class="sw-options sw-options-row">
+            <label><input type="radio" name="background" value="ja" checked><span>Ja, gerne</span><small>Geschichte der Orte</small></label>
+            <label><input type="radio" name="background" value="bisschen"><span>Etwas</span><small>Nur wo passend</small></label>
+            <label><input type="radio" name="background" value="nein"><span>Nein</span><small>Reine Erzählung</small></label>
+          </div>
+        </fieldset>
+        
+        <fieldset>
+          <legend>6. Besondere Wünsche <small>(optional)</small></legend>
+          <textarea name="wishes" class="sw-textarea" placeholder="z.B. 'Bitte den Marienkäfer auf meinem Hemd erwähnen', 'Friedhelm soll mehr Spotlight bekommen', 'die Walpurgisnacht in Menden ausführlich beschreiben'..."></textarea>
+        </fieldset>
+        
+        <div class="sw-buttons">
+          <button type="button" class="sw-btn-secondary" onclick="closeStoryWizard()">Abbrechen</button>
+          <button type="submit" class="sw-btn-primary">✨ Story generieren</button>
+        </div>
+        
+        <p class="sw-cost-hint">Hinweis: Die KI denkt ~30-90 Sekunden. Kosten ca. 30-50 ct pro Story.</p>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function closeStoryWizard() {
+  const modal = document.getElementById('story-wizard-modal');
+  if (modal) modal.remove();
+}
+
+// === Story generieren mit KI ===
+async function generateStoryWithKI() {
+  const form = document.getElementById('story-wizard-form');
+  if (!form) return;
+  
+  const settings = {
+    tone: form.tone.value,
+    focus: form.focus.value,
+    length: form.length.value,
+    audience: form.audience.value,
+    background: form.background.value,
+    wishes: form.wishes.value.trim()
+  };
+  
+  // Loading-Modal anzeigen
+  closeStoryWizard();
+  showStoryLoading();
+  
+  try {
+    const data = buildStoryDataForKI();
+    const totalPhotos = data.reduce((s, e) => s + e.photos.length, 0);
+    const totalCaptions = data.reduce((s, e) => s + e.photos.filter(p => p.caption.trim().length > 0).length, 0);
+    
+    // System-Prompt
+    const systemPrompt = buildSystemPrompt(settings);
+    
+    // User-Prompt (Daten + Anweisung)
+    const userPrompt = buildUserPrompt(data, settings);
+    
+    updateLoadingStatus('Claude denkt nach...', 'Das kann 30-90 Sekunden dauern.');
+    
+    const aiResponse = await callClaudeAPI(systemPrompt, userPrompt);
+    
+    updateLoadingStatus('Story wird gespeichert...', '');
+    
+    // HTML zusammensetzen (KI gibt Markdown/HTML-Bestandteile, wir bauen die Hülle)
+    const html = wrapStoryInHtmlTemplate(aiResponse, data, settings);
+    
+    // Snapshot speichern
+    const snapshotId = 'story_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    const title = generateStoryTitle(settings);
+    
+    const { error: insertError } = await sb.from('story_snapshots').insert({
+      id: snapshotId,
+      format: 'reportage',
+      title: title,
+      html_content: html,
+      caption_count: totalCaptions,
+      photo_count: totalPhotos,
+      wizard_settings: settings,
+      created_by: currentUser?.name || 'Unbekannt'
+    });
+    
+    if (insertError) {
+      console.error('Snapshot-Insert-Fehler:', insertError);
+      toast('Story erstellt, aber Speichern fehlgeschlagen: ' + insertError.message, true);
+    } else {
+      toast('Story erfolgreich erstellt ✓');
+    }
+    
+    // Snapshots neu laden
+    await loadStorySnapshots();
+    
+    // Story im neuen Tab öffnen
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    
+    closeStoryLoading();
+    
+    // Story-Tab aktualisieren falls aktiv
+    if (document.getElementById('tab-story')?.classList.contains('active')) {
+      renderStoryMode();
+    }
+    
+  } catch (e) {
+    console.error('KI-Story-Fehler:', e);
+    closeStoryLoading();
+    toast('Fehler beim Generieren: ' + (e.message || e), true);
+  }
+}
+
+// === Loading-Anzeige ===
+function showStoryLoading() {
+  const overlay = document.createElement('div');
+  overlay.id = 'story-loading-overlay';
+  overlay.className = 'story-loading-overlay';
+  overlay.innerHTML = `
+    <div class="story-loading-card">
+      <div class="story-loading-spinner"></div>
+      <h3 id="story-loading-title">Wird vorbereitet...</h3>
+      <p id="story-loading-subtitle">Daten werden zusammengestellt.</p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function updateLoadingStatus(title, subtitle) {
+  const t = document.getElementById('story-loading-title');
+  const s = document.getElementById('story-loading-subtitle');
+  if (t) t.textContent = title;
+  if (s) s.textContent = subtitle;
+}
+
+function closeStoryLoading() {
+  const overlay = document.getElementById('story-loading-overlay');
+  if (overlay) overlay.remove();
+}
+
+// === Prompt-Bau ===
+function buildSystemPrompt(settings) {
+  const toneMap = {
+    'warm-erzaehlerisch': 'warm-erzählerisch im Stil einer guten Reportage. Mit literarischer Tiefe, aber zugänglich.',
+    'augenzwinkernd': 'mit Augenzwinkern, Selbstironie und freundlichem Witz. Niemals zynisch, immer warm.',
+    'ehrwuerdig': 'im Stil eines Reisetagebuchs aus dem 19. Jahrhundert. Verklausuliertes Deutsch, "wahrhaftig", "bescheidenermaßen", lange Sätze.',
+    'poetisch': 'lyrisch, bildhaft, mit metaphorischer Sprache. Anschaulich wie ein Naturschriftsteller.',
+    'nuechtern': 'sachlich, präzise, wie ein guter Journalist. Fakten und Beobachtungen, sparsame Adjektive.'
+  };
+  const focusMap = {
+    'reise': 'das Reise-Erlebnis: die Strecke, das Vorankommen, die Stimmungen unterwegs.',
+    'freundschaft': 'die Freundschaft und Truppen-Dynamik: wie die sechs Männer miteinander umgehen, kleine Beobachtungen.',
+    'landschaft': 'die Landschaft: Ruhrtal, Sauerland, der Übergang zur Industriekulisse.',
+    'kultur': 'Geschichte und Kultur der besuchten Orte (Zeche Nachtigall, Arnsberg, Friedrich Harkort, Ruhrtalradweg).',
+    'bunt': 'ein buntes Bild aus Reise, Freundschaft, Landschaft und Kultur in ausgewogener Mischung.'
+  };
+  const lengthMap = {
+    'kompakt': 'Kompakt: ca. 600 Wörter insgesamt. Pro Etappe 100-150 Wörter Erzähltext.',
+    'mittel': 'Mittlere Länge: ca. 1500 Wörter insgesamt. Pro Etappe 250-400 Wörter Erzähltext.',
+    'ausfuehrlich': 'Ausführlich: ca. 3000 Wörter insgesamt. Pro Etappe 500-800 Wörter Erzähltext, mit Detail und Tiefe.'
+  };
+  const audienceMap = {
+    'truppe': 'die Pfadfinder selbst — Insider-Witze sind willkommen, wenn aus den Daten ableitbar.',
+    'familie': 'die Familien der Pfadfinder — verständlich, warmherzig, persönlich.',
+    'aussen': 'Außenstehende — keine Insider-Voraussetzungen, alles wird kurz erklärt.'
+  };
+  const backgroundMap = {
+    'ja': 'WICHTIG: Webe historische und kulturelle Hintergründe großzügig ein, wo es passt — Zeche Nachtigall (gegründet 1714, erster Tiefbauschacht 1832), Friedrich Harkort und seine Dampfmaschinen-Werkstatt in Wetter, Arnsberg (789 erstmals erwähnt, 1238 Stadtrechte), die Ruhrquelle (696m am Ruhrkopf), 20 Jahre Ruhrtalradweg.',
+    'bisschen': 'Webe Hintergrund-Wissen sparsam ein, nur wo es organisch passt.',
+    'nein': 'Keine historischen Exkurse — bleibe bei der Erzählung der Tour selbst.'
+  };
+  
+  return `Du bist ein erstklassiger deutscher Reportage-Schreiber. Du schreibst eine Story über die "Pfadfinder-Tour 2026" — sechs ehemalige Pfadfinder (alle Männer, ca. 60 Jahre) sind den Ruhrtalradweg von Winterberg bis Duisburg gefahren, vom 29. April bis 3. Mai 2026.
+
+Die sechs Pfadfinder sind:
+- **Christoph** (der Hauptchronist, schreibt die meisten Logbuch-Einträge): Brille, volles graues Haar, etwas dicker, dunkle Kleidung
+- **Willi**: Brille, grauer Vollbart, schlank, helle Kleidung
+- **Charly**: kräftig, Glatze
+- **Stefan**: Brille, volles graues Haar, Polo-Shirt-Typ
+- **Burkhard**: Brille, Geheimratsecken, kräftig, kariertes Hemd
+- **Friedhelm**: Brille, helle kurze Haare, kein Bart, gerne Hawaii-Shirts
+
+Tonalität: ${toneMap[settings.tone]}
+
+Schwerpunkt: ${focusMap[settings.focus]}
+
+Länge: ${lengthMap[settings.length]}
+
+Zielgruppe: ${audienceMap[settings.audience]}
+
+Hintergrund-Wissen: ${backgroundMap[settings.background]}
+
+${settings.wishes ? `Besondere Wünsche des Auftraggebers:\n${settings.wishes}` : ''}
+
+WICHTIGE ANWEISUNGEN:
+
+1. Du erhältst pro Etappe Daten mit Live-Kommentaren (was während der Tour gepostet wurde) und nachträglichen Captions (was Christoph später zu jedem Foto erinnerte). Beide Quellen sollst du verweben — sie sind beide wertvoll. Live-Kommentare sind oft kurz und spontan, Captions sind reflektierter.
+
+2. Authentische Original-Zitate aus Live-Kommentaren oder Captions kannst du im Erzähltext **kursiv** einbinden (mit <em>-Tags), in Anführungszeichen. Aber nicht zu viele, sondern gut platziert.
+
+3. Strukturiere die Story als HTML mit folgenden Tags:
+   - <section class="story-day"> für jede Etappe
+   - <h2 class="day-title"> für Etappen-Überschrift (z.B. "Etappe 1 — Aufbruch in die Höhen")
+   - <p class="day-meta"> für Datum/Strecke
+   - <div class="day-prose"> mit mehreren <p>-Absätzen für die Erzählung
+   - <figure class="story-photo"> mit <img src="FOTOURL" loading="lazy"> und <figcaption> — die Foto-URLs musst du AUS DEN DATEN nehmen und an den passenden Stellen platzieren
+   - Optional: <aside class="story-pullout"><blockquote>...</blockquote></aside> für hervorgehobene Zitate
+   - Optional: <aside class="story-context"><h3>Hintergrund</h3><p>...</p></aside> für historische Kontextboxen
+
+4. Verteile die Fotos sinnvoll im Erzähltext. **Highlights** (rating: 3) bevorzugt als Hero-Bild oben in der Etappe oder als Pullout. Skip-Fotos werden nicht geliefert — du musst sie nicht behandeln.
+
+5. Gib NUR den HTML-Body-Inhalt zurück — keine <html>, <body>, <head> Tags. Beginne direkt mit <section class="story-day">.
+
+6. Erfinde nichts dazu, was nicht aus den Daten ableitbar ist. Wenn Hintergrund-Wissen erlaubt ist, kannst du das Wissen über die Orte einweben (Zeche Nachtigall, Arnsberg etc.).
+
+7. Schreibe in fließendem, gutem Deutsch. Keine bullet-points, keine Aufzählungen, sondern erzählender Text.`;
+}
+
+function buildUserPrompt(etappeData, settings) {
+  let prompt = `Hier sind die Tour-Daten zum Verarbeiten:\n\n`;
+  
+  etappeData.forEach(e => {
+    prompt += `## ETAPPE ${e.num}: ${e.from} → ${e.to}\n`;
+    prompt += `Datum: ${e.date}`;
+    if (e.km) prompt += ` · Strecke: ${e.km} km`;
+    if (e.hm) prompt += ` · Höhenmeter: ${e.hm} m`;
+    prompt += `\n\n`;
+    
+    e.photos.forEach((photo, idx) => {
+      const ratingStr = photo.rating === 3 ? ' [⭐⭐⭐ HIGHLIGHT]' : photo.rating === 2 ? ' [⭐⭐ Mit dabei]' : '';
+      prompt += `### Foto ${idx + 1}${ratingStr}\n`;
+      prompt += `URL: ${photo.url}\n`;
+      prompt += `Zeit: ${photo.time}, Author: ${photo.author}\n`;
+      if (photo.liveComment) prompt += `Live-Kommentar während der Tour: "${photo.liveComment}"\n`;
+      if (photo.caption) prompt += `Nachträgliche Erinnerung: "${photo.caption}"\n`;
+      if (!photo.liveComment && !photo.caption) prompt += `(keine Texte)\n`;
+      prompt += `\n`;
+    });
+  });
+  
+  prompt += `\n---\n\nSchreibe nun die Story als zusammenhängende HTML-Erzählung. Beginne direkt mit <section class="story-day"> für die erste Etappe.`;
+  
+  return prompt;
+}
+
+function generateStoryTitle(settings) {
+  const date = new Date().toLocaleDateString('de-DE', {day:'2-digit', month:'short', year:'numeric'});
+  const toneNames = {
+    'warm-erzaehlerisch': 'Reportage', 'augenzwinkernd': 'Mit Augenzwinkern',
+    'ehrwuerdig': 'Reisetagebuch', 'poetisch': 'Poetische Reise', 'nuechtern': 'Reisebericht'
+  };
+  return `${toneNames[settings.tone]} · ${date}`;
+}
+
+// === HTML-Hülle um KI-Output ===
+function wrapStoryInHtmlTemplate(bodyContent, etappeData, settings) {
+  const totalPhotos = etappeData.reduce((s, e) => s + e.photos.length, 0);
+  const totalCaptions = etappeData.reduce((s, e) => s + e.photos.filter(p => p.caption.trim().length > 0).length, 0);
+  let totalKm = 0;
+  Object.values(etappeStats).forEach(s => { totalKm += parseFloat(s.actualKm) || 0; });
+  
+  const title = generateStoryTitle(settings);
+  const today = new Date().toLocaleDateString('de-DE', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'});
+  
+  return `<!DOCTYPE html>
+<html lang="de"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${title} — Pfadfinder Tour 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#f4ede1;--paper-tinted:#ebe0cd;--ink:#1a1410;--ink-soft:#4a3f33;--ink-fade:#7a6e5f;--moss-deep:#3d4f28;--rust:#b8542a;--rust-deep:#8a3d1e;--gold:#c89c4a;--rule:rgba(26,20,16,.15)}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:'Fraunces',Georgia,serif;font-size:18px;line-height:1.7;-webkit-font-smoothing:antialiased}
+img{max-width:100%;height:auto;display:block}
+.story-hero{padding:clamp(3rem,8vh,6rem) clamp(1.5rem,4vw,3rem);text-align:center;border-bottom:1px solid var(--rule)}
+.story-hero-eyebrow{font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.25em;text-transform:uppercase;color:var(--rust);margin-bottom:1rem}
+.story-hero-title{font-family:'Fraunces',serif;font-weight:300;font-size:clamp(2.5rem,7vw,5rem);line-height:1;letter-spacing:-.02em;margin-bottom:1rem}
+.story-hero-title em{font-style:italic;color:var(--rust)}
+.story-hero-meta{font-family:'Fraunces',serif;font-style:italic;color:var(--ink-soft);font-size:1.1rem}
+.story-hero-stats{display:flex;justify-content:center;gap:2rem;flex-wrap:wrap;margin-top:2rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--ink-fade);letter-spacing:.1em;text-transform:uppercase}
+.story-hero-stats span{display:flex;flex-direction:column;align-items:center;gap:.3rem}
+.story-hero-stats strong{font-family:'Fraunces',serif;font-style:normal;font-size:1.6rem;color:var(--ink);font-weight:300}
+article{max-width:46rem;margin:0 auto;padding:clamp(2rem,5vh,4rem) clamp(1.5rem,4vw,2.5rem)}
+.story-day{margin-bottom:clamp(3rem,6vh,5rem);padding-top:clamp(2rem,4vh,3rem);border-top:1px solid var(--rule)}
+.story-day:first-of-type{border-top:none;padding-top:0}
+.day-title{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(2rem,4vw,3rem);line-height:1.1;letter-spacing:-.01em;margin-bottom:.5rem}
+.day-meta{font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-fade);margin-bottom:2rem;padding-bottom:1rem;border-bottom:1px solid var(--rule)}
+.day-prose p{font-family:'Fraunces',serif;font-size:1.1rem;line-height:1.7;margin-bottom:1.2rem;text-align:justify;hyphens:auto;color:var(--ink)}
+.day-prose p:first-child::first-letter{font-size:4em;font-weight:300;font-style:italic;float:left;line-height:.85;margin:.05em .1em 0 -.02em;color:var(--rust);font-family:'Fraunces',serif}
+.day-prose em{font-style:italic;color:var(--rust-deep);font-weight:400}
+.story-photo{margin:2rem 0;background:var(--paper-tinted);overflow:hidden}
+.story-photo img{width:100%;aspect-ratio:4/3;object-fit:cover}
+.story-photo figcaption{font-family:'Fraunces',serif;font-style:italic;font-size:1rem;color:var(--ink-soft);padding:.8rem 1rem;line-height:1.4;background:var(--paper-tinted)}
+.story-pullout{margin:2.5rem auto;padding:1.5rem 2rem;max-width:36rem;text-align:center;border-top:2px solid var(--rust);border-bottom:2px solid var(--rust)}
+.story-pullout blockquote{font-family:'Fraunces',serif;font-weight:300;font-style:italic;font-size:clamp(1.4rem,3vw,2rem);line-height:1.3;letter-spacing:-.005em;color:var(--ink);margin:0}
+.story-context{margin:2rem 0;padding:1.5rem;background:rgba(26,20,16,.04);border-left:4px solid var(--moss-deep);font-size:.95rem;line-height:1.6}
+.story-context h3{font-family:'Fraunces',serif;font-weight:500;font-size:1.2rem;margin-bottom:.6rem;color:var(--moss-deep)}
+.story-context p{color:var(--ink-soft);font-family:'Fraunces',serif}
+.story-footer{padding:clamp(2rem,5vh,4rem) clamp(1.5rem,4vw,3rem);background:var(--ink);color:var(--paper);text-align:center;margin-top:4rem}
+.story-footer p{font-family:'Fraunces',serif;font-style:italic;font-size:1rem;line-height:1.6;max-width:40rem;margin:0 auto 1rem}
+.story-footer-meta{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-fade);margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid rgba(244,237,225,.1)}
+::selection{background:var(--rust);color:var(--paper)}
+@media print{body{font-size:11pt}.story-hero{page-break-after:always}.story-day{page-break-before:auto;page-break-inside:avoid}.story-photo,.story-pullout,.story-context{page-break-inside:avoid}}
+</style></head><body>
+
+<header class="story-hero">
+  <div class="story-hero-eyebrow">Pfadfinder Tour 2026 · KI-Reportage</div>
+  <h1 class="story-hero-title">${escapeHtml(title)}</h1>
+  <p class="story-hero-meta">Erstellt am ${today}</p>
+  <div class="story-hero-stats">
+    <span><strong>${totalKm.toFixed(0)}</strong> km</span>
+    <span><strong>${etappeData.length}</strong> Etappen</span>
+    <span><strong>${totalPhotos}</strong> Fotos</span>
+    <span><strong>${totalCaptions}</strong> Captions</span>
+    <span><strong>6</strong> Pfadfinder</span>
+  </div>
+</header>
+
+<article>
+${bodyContent}
+</article>
+
+<footer class="story-footer">
+  <p>Diese Geschichte wurde von Claude Opus 4.7 geschrieben — basierend auf den Original-Logbucheinträgen und nachträglichen Erinnerungen der Pfadfinder-Tour 2026.</p>
+  <p>Sechs ehemalige Pfadfinder, ${etappeData.length} Etappen, ${totalKm.toFixed(0)} km von der Quelle der Ruhr bis zum Rhein.</p>
+  <div class="story-footer-meta">Pfadfinder auf Tour '26 · Sauerland → Rhein · Generiert am ${today}</div>
+</footer>
+
+</body></html>`;
+}
+
+window.openStoryWizard = openStoryWizard;
+window.closeStoryWizard = closeStoryWizard;
+window.generateStoryWithKI = generateStoryWithKI;
+window.loadStorySnapshots = loadStorySnapshots;
+window.deleteStorySnapshot = deleteStorySnapshot;
+window.openStorySnapshot = openStorySnapshot;
+
+async function deleteStorySnapshot(id) {
+  if (!confirm('Diese Story wirklich löschen?')) return;
+  try {
+    const { error } = await sb.from('story_snapshots').delete().eq('id', id);
+    if (error) {
+      toast('Löschen fehlgeschlagen: ' + error.message, true);
+      return;
+    }
+    storySnapshots = storySnapshots.filter(s => s.id !== id);
+    toast('Story gelöscht');
+    if (document.getElementById('tab-story')?.classList.contains('active')) renderStoryMode();
+  } catch (e) {
+    toast('Fehler', true);
+  }
+}
+
+async function openStorySnapshot(id) {
+  try {
+    const { data, error } = await sb.from('story_snapshots').select('html_content').eq('id', id).single();
+    if (error || !data) {
+      toast('Story konnte nicht geladen werden', true);
+      return;
+    }
+    const blob = new Blob([data.html_content], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (e) {
+    toast('Fehler', true);
+  }
+}
+
+
 
 
 
@@ -7245,6 +7933,7 @@ function initRealtimeSubscriptions() {
   initPacking();
   await loadPackingData();
   await loadStoryCaptions();
+  await loadStorySnapshots();
   initRealtimeSubscriptions();
   initStoryRealtimeSubscription();
 
