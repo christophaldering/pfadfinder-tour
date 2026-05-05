@@ -247,6 +247,8 @@ section.active { display: block; animation: fadeIn 0.4s ease-out; }
 .sw-btn-primary { background: var(--rust); color: white; border-color: var(--rust); flex: 2; }
 .sw-btn-primary:hover { background: #a84a26; }
 .sw-cost-hint { text-align: center; font-size: 0.7rem; color: var(--paper-dim); margin-top: 0.8rem; font-style: italic; }
+.sw-hint { font-size: 0.75rem; color: var(--paper-dim); margin-top: 0.6rem; padding: 0.5rem 0.7rem; background: rgba(184,84,42,0.06); border-left: 2px solid var(--rust); border-radius: 3px; line-height: 1.4; }
+.sw-hint strong { color: var(--rust); font-weight: 600; }
 
 /* === LOADING-OVERLAY === */
 .story-loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 10001; display: flex; align-items: center; justify-content: center; padding: 2rem; }
@@ -2351,8 +2353,8 @@ function renderStorySnapshotsList() {
   if (!storySnapshots || storySnapshots.length === 0) {
     return '<div class="story-snapshots-empty">Noch keine Stories generiert. Klick oben auf "Neue Story generieren", um die erste KI-Story aus deinen Captions zu erstellen.</div>';
   }
-  const formatIcons = { 'reportage': '📖', 'zeitung': '📰', 'tagebuch': '📓', 'comic': '💬' };
-  const formatNames = { 'reportage': 'Reportage', 'zeitung': 'Zeitung', 'tagebuch': 'Tagebuch', 'comic': 'Comic' };
+  const formatIcons = { 'reportage': '📖', 'zeitung': '📰', 'tagebuch': '📓', 'comic': '💬', 'scrolltelling': '🎬' };
+  const formatNames = { 'reportage': 'Reportage', 'zeitung': 'Zeitung', 'tagebuch': 'Tagebuch', 'comic': 'Comic', 'scrolltelling': 'Scroll-Story' };
   return '<div class="story-snapshots-list">' + storySnapshots.map(s => {
     const date = new Date(s.created_at).toLocaleDateString('de-DE', {day:'2-digit', month:'short', year:'numeric'});
     const time = new Date(s.created_at).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
@@ -2812,6 +2814,7 @@ function openStoryWizard() {
             <label><input type="radio" name="format" value="zeitung"><span>📰 Pfadfinder Press</span><small>Tour-Tageszeitung im Boulevard-Stil</small></label>
             <label><input type="radio" name="format" value="tagebuch"><span>📓 Reisetagebuch</span><small>Im Stil des 19. Jahrhunderts, Sepia</small></label>
             <label><input type="radio" name="format" value="comic"><span>💬 Picture Stories</span><small>Foto-Comic mit Sprechblasen</small></label>
+            <label><input type="radio" name="format" value="scrolltelling"><span>🎬 Scroll-Story</span><small>Filmische Reise mit allen Fotos in Akten</small></label>
           </div>
         </fieldset>
         
@@ -2844,6 +2847,7 @@ function openStoryWizard() {
             <label><input type="radio" name="length" value="mittel" checked><span>Mittel</span><small>~ 1500 Wörter</small></label>
             <label><input type="radio" name="length" value="ausfuehrlich"><span>Ausführlich</span><small>~ 3000 Wörter</small></label>
           </div>
+          <p class="sw-hint">💡 Bei <strong>🎬 Scroll-Story</strong> empfehlen wir "Ausführlich" — sonst wird die filmische Wirkung schwach.</p>
         </fieldset>
         
         <fieldset>
@@ -2916,12 +2920,14 @@ async function generateStoryWithKI() {
     // User-Prompt (Daten + Anweisung)
     const userPrompt = buildUserPrompt(data, settings);
     
-    const formatLabels = { 'reportage': '📖 Reportage', 'zeitung': '📰 Pfadfinder Press', 'tagebuch': '📓 Reisetagebuch', 'comic': '💬 Picture Stories' };
+    const formatLabels = { 'reportage': '📖 Reportage', 'zeitung': '📰 Pfadfinder Press', 'tagebuch': '📓 Reisetagebuch', 'comic': '💬 Picture Stories', 'scrolltelling': '🎬 Scroll-Story' };
     const formatLabel = formatLabels[settings.format] || 'Story';
     updateLoadingStatus(`Claude schreibt deine ${formatLabel}...`, 'Wörter werden generiert: 0');
     
     let lastProgressTime = Date.now();
-    const aiResponse = await callClaudeAPI(systemPrompt, userPrompt, 16000, (charCount, partialText) => {
+    // Scroll-Story braucht mehr Tokens — viele Fotos und lange Erzählung
+    const maxTokens = settings.format === 'scrolltelling' ? 32000 : 16000;
+    const aiResponse = await callClaudeAPI(systemPrompt, userPrompt, maxTokens, (charCount, partialText) => {
       // Geschätzte Wortzahl (Zeichen / 6)
       const words = Math.round(charCount / 6);
       const elapsed = Math.floor((Date.now() - lastProgressTime) / 1000);
@@ -3034,6 +3040,8 @@ Die sechs Pfadfinder sind:
       return buildTagebuchPrompt(baseContext, settings, backgroundMap[settings.background], wishesBlock);
     case 'comic':
       return buildComicPrompt(baseContext, settings, backgroundMap[settings.background], wishesBlock);
+    case 'scrolltelling':
+      return buildScrolltellingPrompt(baseContext, settings, backgroundMap[settings.background], wishesBlock);
     case 'reportage':
     default:
       return buildReportagePrompt(baseContext, settings, backgroundMap[settings.background], wishesBlock);
@@ -3271,6 +3279,148 @@ WEITERE REGELN:
 - Du DARFST Sprechblasen erfinden — sie müssen aber **plausibel** sein und auf den echten Caption-Inhalten basieren. Niemals ins Lächerliche oder Charakterfremde.`;
 }
 
+function buildScrolltellingPrompt(baseContext, settings, backgroundInst, wishesBlock) {
+  const lengthHints = {
+    'kompakt': 'Pro Akt ca. 250-350 Wörter Erzähltext, 1-2 Pull-Quotes, ALLE Etappen-Fotos in einer Galerie unten im Akt.',
+    'mittel': 'Pro Akt ca. 500-700 Wörter Erzähltext, 2-3 Pull-Quotes, Hero-Foto oben (Highlight!), eingebettete Fotos im Text, Galerie unten mit den restlichen Fotos.',
+    'ausfuehrlich': 'Pro Akt ca. 900-1200 Wörter Erzähltext, mehrere Sub-Sektionen, 3-4 Pull-Quotes, Hero-Foto oben, eingebettete Fotos, ausführliche Galerie unten. Der Akt soll sich anfühlen wie ein eigenes Magazin-Kapitel.'
+  };
+  
+  const toneMap = {
+    'warm-erzaehlerisch': 'warm-erzählerisch, mit literarischer Tiefe, im Stil filmischer Reportagen wie sie SPIEGEL, ZEIT-Magazin oder NY Times schreiben',
+    'augenzwinkernd': 'mit Augenzwinkern und feiner Selbstironie, aber filmisch und ernsthaft genug für die großen Momente',
+    'ehrwuerdig': 'in feierlicher, fast literarischer Sprache — Reise-Reflexion mit Ehrfurcht für die Strecke',
+    'poetisch': 'lyrisch, bildhaft, mit metaphorischer Sprache. Die Landschaft selbst spricht durch deine Worte',
+    'nuechtern': 'sachlich-präzise wie eine gute Dokumentation, mit Aufmerksamkeit für Details'
+  };
+  
+  return `Du bist ein erstklassiger Scroll-Telling-Autor — du schreibst filmische Web-Reportagen im Stil von "Snow Fall" (NY Times), "CaskSense" oder hochwertigen Magazin-Online-Stories. ${baseContext}
+
+Diese Story wird als "Scroll-Story" präsentiert: man scrollt durch die Akte wie durch einen Film. Große Bilder, atmosphärische Übergänge, Pull-Quotes, mehrere Galerien.
+
+LÄNGE: ${lengthHints[settings.length]}
+
+TONALITÄT: ${toneMap[settings.tone]}.
+
+Hintergrund-Wissen: ${backgroundInst}${wishesBlock}
+
+WICHTIGE REGEL: ALLE FOTOS MÜSSEN IN DER STORY ERSCHEINEN.
+Jede Etappe enthält Fotos. Du MUSST jedes einzelne Foto unterbringen — entweder eingebettet in den Erzähltext (für besonders schöne / aussagekräftige), als Hero-Bild oben (für Highlights mit rating: 3), oder am Ende der Etappe in einer Foto-Galerie. Skip-Fotos werden nicht geliefert. Aber von den gelieferten Fotos darf KEINES weggelassen werden.
+
+STRUKTUR DER STORY (genau einhalten):
+
+<header class="scroll-prologue">
+  <div class="scroll-pretitle">PFADFINDER · TOUR 2026</div>
+  <h1 class="scroll-maintitle">[KREATIVER HAUPTTITEL]</h1>
+  <p class="scroll-subtitle">[Untertitel mit Datum / Strecke]</p>
+  <p class="scroll-prologue-meta">[Akte] · [Etappen] · [km]</p>
+  <div class="scroll-scroll-hint">↓ Scroll</div>
+</header>
+
+<!-- AKT-MARKIERUNG: am Anfang jedes Akts -->
+<section class="scroll-act-divider">
+  <div class="dalle-placeholder" data-prompt="DETAILLIERTER DALL-E-PROMPT FÜR DIESES AKT-BILD AUF ENGLISCH, im Stil 35mm Editorial Photography, atmospheric, cinematic">
+    <div class="dalle-placeholder-text">
+      <span class="dalle-icon">🎨</span>
+      <span class="dalle-label">Atmosphären-Bild</span>
+      <span class="dalle-prompt-preview">[Kurze deutsche Beschreibung]</span>
+    </div>
+  </div>
+  <div class="scroll-act-label">[Ortsname / Stimmung]</div>
+  <div class="scroll-act-number">Akt [römisch]</div>
+  <h2 class="scroll-act-title">[Akt-Titel]</h2>
+  <p class="scroll-act-intro">[2-3 Sätze, die den Akt einleiten — atmosphärisch]</p>
+</section>
+
+<!-- AKT-INHALT -->
+<section class="scroll-act">
+  <div class="scroll-meta">[Datum] · [Von → Nach] · [km]</div>
+  
+  <!-- Hero-Foto: das beste Highlight der Etappe (rating 3) -->
+  <figure class="scroll-hero">
+    <img src="ECHTE_FOTO_URL_AUS_DEN_DATEN" loading="lazy">
+    <figcaption class="scroll-hero-caption">[Bildunterschrift, atmosphärisch]</figcaption>
+  </figure>
+  
+  <div class="scroll-section">
+    <div class="scroll-section-label">[Sub-Akt-Label, z.B. "Aufbruch"]</div>
+    <h3 class="scroll-section-title">[Sub-Akt-Überschrift mit *Hervorhebung*]</h3>
+    <div class="scroll-prose">
+      <p>Erzähl-Absatz...</p>
+      <p>Weiterer Absatz...</p>
+    </div>
+    <!-- Eingebettetes Foto im Erzähltext -->
+    <figure class="scroll-photo-inline">
+      <img src="ECHTE_FOTO_URL" loading="lazy">
+      <figcaption>[Bildunterschrift]</figcaption>
+    </figure>
+    <div class="scroll-prose"><p>Weiter im Text...</p></div>
+  </div>
+  
+  <!-- Pull-Quote: ein hervorgehobener Satz aus den Captions oder Live-Kommentaren -->
+  <blockquote class="scroll-pullquote">
+    <p>"Ein eindrücklicher Satz, der für sich steht."</p>
+    <cite>— [Pfadfinder-Name oder Beobachtung]</cite>
+  </blockquote>
+  
+  <div class="scroll-section">
+    <h3 class="scroll-section-title">[Weiterer Sub-Akt]</h3>
+    <div class="scroll-prose"><p>Mehr Erzählung...</p></div>
+  </div>
+  
+  <!-- GALERIE: ALLE restlichen Fotos der Etappe, die noch nicht im Text waren -->
+  <div class="scroll-gallery">
+    <h4 class="scroll-gallery-title">Bilder vom Tag</h4>
+    <div class="scroll-gallery-grid">
+      <figure><img src="ECHTE_URL" loading="lazy"><figcaption>[Kurze Caption]</figcaption></figure>
+      <figure><img src="ECHTE_URL" loading="lazy"><figcaption>[Kurze Caption]</figcaption></figure>
+      [... ALLE restlichen Fotos der Etappe hier — keines weglassen!]
+    </div>
+  </div>
+</section>
+
+<!-- DALL-E-PLATZHALTER -->
+Wo immer du ein **atmosphärisches Übergangs-Bild** brauchst (zwischen Akten, am Anfang, in dramatischen Momenten), platzierst du KEIN echtes Foto. Stattdessen:
+<div class="dalle-placeholder" data-prompt="DETAILLIERTER ENGLISCHER DALL-E-PROMPT, z.B. 'Aerial view of the Ruhr valley in spring, morning mist, river winding through green hills, 35mm editorial photography style, cinematic, golden hour'">
+  <div class="dalle-placeholder-text">
+    <span class="dalle-icon">🎨</span>
+    <span class="dalle-label">Atmosphären-Bild</span>
+    <span class="dalle-prompt-preview">[Kurze deutsche Beschreibung des gewünschten Bildes]</span>
+  </div>
+</div>
+
+GUTE DALL-E-PROMPTS:
+- Auf Englisch geschrieben
+- Spezifisch über Inhalt + Stil + Stimmung
+- Stil-Anker: "35mm editorial photography", "atmospheric", "cinematic", "golden hour", "wide angle"
+- Beispiele:
+  * "The source of the Ruhr river at Winterberg, ancient stones in moss, early morning mist rising, 35mm editorial photography, atmospheric"
+  * "Industrial silhouette of Zeche Nachtigall colliery against evening sky, smokestacks and mining wheel, 35mm editorial photography, dramatic golden hour lighting"
+  * "Rhine river at dusk, harbor cranes of Duisburg in distance, water reflecting orange-purple sky, 35mm editorial photography, cinematic wide angle"
+- Setze 5-8 solche Platzhalter über die ganze Story verteilt — am Anfang jedes Akts und an dramatischen Übergängen.
+
+EINE KOMPLETTE SCROLL-STORY HAT FOLGENDE TEILE:
+1. **Prologue/Hero** — Hauptüberschrift, Untertitel, Scroll-Hint
+2. **Akt I: Der Aufbruch** — Anreise, Etappe 1 von Winterberg nach Meschede
+3. **Akt II: Ins Sauerland** — Etappe 2, Meschede → Menden
+4. **Akt III: Walpurgisnacht & weiter** — Etappe 3, Menden → Wetter
+5. **Akt IV: Industriekultur** — Etappe 4, Wetter → Essen (Zeche Nachtigall, Friedrich Harkort)
+6. **Akt V: Zum Rhein** — Etappe 5, Essen → Duisburg, Rhein erreicht
+7. **Akt VI: Heimkehr & Reflexion** — Rückreise (sofern Etappe 6 vorhanden), Epilog
+8. **Cast** — die 6 Pfadfinder mit Charakter-Beschreibungen (NICHT vergessen!)
+
+EINBETTEN VON ZITATEN: Echte Captions oder Live-Kommentare können als <em>kursive Einsprengsel im Erzähltext</em>, in "Anführungszeichen" oder als <blockquote class="scroll-pullquote"> stehen. Keine "freie Erfindung".
+
+WEITERE REGELN:
+- Nutze ALLE echten Foto-URLs aus den Daten — keines vergessen!
+- Beginne direkt mit <header class="scroll-prologue"> — keine <html>/<body>-Tags.
+- Schreibe ALLE Etappen in chronologischer Reihenfolge.
+- Schreibe in fließendem Deutsch, mit Drama und Atmosphäre — das ist eine filmische Story, kein nüchterner Bericht.
+- Cast-Sektion am Ende: <section class="scroll-cast"> mit <article class="cast-member"> für jeden Pfadfinder mit Rolle/Charakterisierung.
+
+WICHTIG ZU VOLLSTÄNDIGKEIT: Lieber ALLE Fotos in einfacher Galerie unten, als die Hälfte vergessen. Die Galerie ist Teil der Story — sie zeigt, dass dies eine echte, gelebte Reise war.`;
+}
+
 function buildUserPrompt(etappeData, settings) {
   let prompt = `Hier sind die Tour-Daten zum Verarbeiten:\n\n`;
   
@@ -3304,7 +3454,8 @@ function generateStoryTitle(settings) {
     'reportage': 'Reportage',
     'zeitung': 'Pfadfinder Press',
     'tagebuch': 'Reisetagebuch',
-    'comic': 'Picture Stories'
+    'comic': 'Picture Stories',
+    'scrolltelling': 'Scroll-Story'
   };
   const formatName = formatNames[settings.format] || 'Story';
   return `${formatName} · ${date}`;
@@ -3319,6 +3470,8 @@ function wrapStoryInHtmlTemplate(bodyContent, etappeData, settings) {
       return wrapTagebuchTemplate(bodyContent, etappeData, settings);
     case 'comic':
       return wrapComicTemplate(bodyContent, etappeData, settings);
+    case 'scrolltelling':
+      return wrapScrolltellingTemplate(bodyContent, etappeData, settings);
     case 'reportage':
     default:
       return wrapReportageTemplate(bodyContent, etappeData, settings);
@@ -3675,6 +3828,168 @@ ${bodyContent}
   <p>Sprechblasen geschrieben von Claude Opus 4.7 — basierend auf den echten Captions und Live-Kommentaren der Pfadfinder.</p>
   <p>Sechs Pfadfinder · ${etappeData.length} Etappen · ${totalKm.toFixed(0)} km · ${totalPhotos} Action-Panels</p>
   <div class="comic-footer-burst">FORTSETZUNG FOLGT!</div>
+</footer>
+
+</body></html>`;
+}
+
+// === SCROLL-TELLING-TEMPLATE ===
+function wrapScrolltellingTemplate(bodyContent, etappeData, settings) {
+  const totalPhotos = etappeData.reduce((s, e) => s + e.photos.length, 0);
+  let totalKm = 0;
+  Object.values(etappeStats).forEach(s => { totalKm += parseFloat(s.actualKm) || 0; });
+  
+  const title = generateStoryTitle(settings);
+  const today = new Date().toLocaleDateString('de-DE', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'});
+  
+  return `<!DOCTYPE html>
+<html lang="de"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${title} — Pfadfinder Tour 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0e10;--bg-soft:#17171a;--bg-card:#1d1d20;
+  --paper:#f0ede4;--paper-soft:#dad5c6;--paper-dim:#a8a293;
+  --accent:#c89c4a;--accent-soft:#9c7635;--accent-bright:#e6b558;
+  --rust:#b8542a;--rust-deep:#8a3d1e;
+  --rule:rgba(240,237,228,.12);--rule-soft:rgba(240,237,228,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--paper);font-family:'Inter',sans-serif;font-size:18px;line-height:1.65;overflow-x:hidden}
+img{max-width:100%;height:auto;display:block}
+
+/* === PROLOGUE === */
+.scroll-prologue{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:4rem 1.5rem;background:radial-gradient(ellipse at center,rgba(200,156,74,.08),transparent 70%),var(--bg);position:relative;overflow:hidden}
+.scroll-prologue::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle at 20% 30%,rgba(184,84,42,.06),transparent 50%),radial-gradient(circle at 80% 70%,rgba(200,156,74,.05),transparent 50%);pointer-events:none}
+.scroll-pretitle{font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.4em;color:var(--accent);text-transform:uppercase;margin-bottom:2rem;position:relative;z-index:2}
+.scroll-maintitle{font-family:'Fraunces',serif;font-weight:300;font-size:clamp(3rem,11vw,8rem);line-height:.95;letter-spacing:-.04em;color:var(--paper);margin-bottom:1.5rem;position:relative;z-index:2;max-width:14ch}
+.scroll-maintitle em{font-style:italic;color:var(--accent);font-weight:400}
+.scroll-subtitle{font-family:'Fraunces',serif;font-style:italic;font-size:clamp(1.2rem,2.5vw,1.6rem);color:var(--paper-soft);max-width:38rem;margin-bottom:2rem;line-height:1.4;position:relative;z-index:2}
+.scroll-prologue-meta{font-family:'JetBrains Mono',monospace;font-size:.8rem;letter-spacing:.2em;color:var(--paper-dim);text-transform:uppercase;margin-bottom:3rem;position:relative;z-index:2}
+.scroll-scroll-hint{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.3em;color:var(--paper-dim);text-transform:uppercase;animation:bounce 2s ease-in-out infinite;position:relative;z-index:2}
+@keyframes bounce{0%,100%{transform:translateY(0);opacity:.6}50%{transform:translateY(8px);opacity:1}}
+
+/* === ACT-DIVIDER === */
+.scroll-act-divider{padding:6rem 1.5rem 4rem;text-align:center;background:var(--bg-soft);position:relative;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.dalle-placeholder{aspect-ratio:21/9;max-width:1200px;margin:0 auto 3rem;background:linear-gradient(135deg,rgba(200,156,74,.12),rgba(184,84,42,.08));border:2px dashed var(--accent-soft);border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.dalle-placeholder::before{content:"";position:absolute;inset:0;background-image:repeating-linear-gradient(45deg,transparent,transparent 30px,rgba(200,156,74,.03) 30px,rgba(200,156,74,.03) 31px);pointer-events:none}
+.dalle-placeholder-text{display:flex;flex-direction:column;align-items:center;gap:.6rem;text-align:center;padding:1.5rem;color:var(--accent-soft)}
+.dalle-icon{font-size:2.4rem;line-height:1}
+.dalle-label{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accent)}
+.dalle-prompt-preview{font-family:'Fraunces',serif;font-style:italic;font-size:1rem;color:var(--paper-soft);max-width:42ch;line-height:1.4}
+.dalle-placeholder img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.scroll-act-label{font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.3em;color:var(--accent);text-transform:uppercase;margin-bottom:.6rem}
+.scroll-act-number{font-family:'Fraunces',serif;font-style:italic;font-size:1rem;color:var(--paper-dim);margin-bottom:.4rem;letter-spacing:.05em}
+.scroll-act-title{font-family:'Fraunces',serif;font-weight:300;font-size:clamp(2.4rem,6vw,4.5rem);line-height:1;letter-spacing:-.02em;color:var(--paper);margin-bottom:1.2rem;max-width:18ch;margin-left:auto;margin-right:auto}
+.scroll-act-title em{font-style:italic;color:var(--accent)}
+.scroll-act-intro{font-family:'Fraunces',serif;font-style:italic;font-size:clamp(1.1rem,2vw,1.3rem);color:var(--paper-soft);max-width:38rem;margin:0 auto;line-height:1.5}
+
+/* === ACT === */
+.scroll-act{padding:4rem 1.5rem;max-width:48rem;margin:0 auto}
+.scroll-meta{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;color:var(--accent);text-transform:uppercase;margin-bottom:2rem;border-bottom:1px solid var(--rule);padding-bottom:1rem}
+
+/* === HERO-FOTO === */
+.scroll-hero{margin:0 -1.5rem 3rem;position:relative}
+@media (min-width:768px){.scroll-hero{margin:0 -3rem 3rem}}
+@media (min-width:1024px){.scroll-hero{margin:0 -8rem 3rem}}
+.scroll-hero img{width:100%;aspect-ratio:21/9;object-fit:cover}
+.scroll-hero-caption{font-family:'Fraunces',serif;font-style:italic;font-size:.95rem;color:var(--paper-dim);text-align:center;padding:1rem 1.5rem;line-height:1.4;max-width:42rem;margin:0 auto}
+
+/* === SECTION === */
+.scroll-section{margin-bottom:3rem}
+.scroll-section-label{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.25em;color:var(--accent);text-transform:uppercase;margin-bottom:.8rem}
+.scroll-section-title{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.1;letter-spacing:-.01em;color:var(--paper);margin-bottom:1.5rem}
+.scroll-section-title em{font-style:italic;color:var(--accent)}
+.scroll-prose p{font-family:'Fraunces',serif;font-size:1.15rem;line-height:1.75;margin-bottom:1.4rem;color:var(--paper-soft)}
+.scroll-prose p:first-of-type::first-letter{font-family:'Fraunces',serif;font-size:4em;font-weight:300;font-style:italic;float:left;line-height:.9;margin:.05em .12em 0 -.02em;color:var(--accent)}
+.scroll-prose em{font-style:italic;color:var(--paper)}
+.scroll-prose strong{font-weight:600;color:var(--paper)}
+
+/* === INLINE-FOTOS === */
+.scroll-photo-inline{margin:2.5rem -1.5rem;background:var(--bg-card)}
+@media (min-width:768px){.scroll-photo-inline{margin:2.5rem -2rem}}
+.scroll-photo-inline img{width:100%;aspect-ratio:16/9;object-fit:cover}
+.scroll-photo-inline figcaption{font-family:'Fraunces',serif;font-style:italic;font-size:.9rem;color:var(--paper-dim);padding:.8rem 1rem;text-align:left;line-height:1.4;border-top:1px solid var(--rule)}
+
+/* === PULL-QUOTE === */
+.scroll-pullquote{margin:4rem -1.5rem;padding:3rem 2rem;text-align:center;background:linear-gradient(180deg,transparent,rgba(200,156,74,.04),transparent);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);position:relative}
+.scroll-pullquote::before{content:""";position:absolute;top:1rem;left:50%;transform:translateX(-50%);font-family:'Fraunces',serif;font-size:6rem;line-height:1;color:var(--accent);opacity:.2}
+.scroll-pullquote p{font-family:'Fraunces',serif;font-weight:300;font-style:italic;font-size:clamp(1.5rem,3.5vw,2.4rem);line-height:1.3;color:var(--paper);max-width:34rem;margin:0 auto 1rem;letter-spacing:-.005em;position:relative;z-index:2}
+.scroll-pullquote cite{font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.2em;color:var(--accent);font-style:normal;text-transform:uppercase;display:block}
+
+/* === GALLERY === */
+.scroll-gallery{margin-top:4rem;padding-top:3rem;border-top:1px solid var(--rule)}
+.scroll-gallery-title{font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.25em;color:var(--accent);text-transform:uppercase;margin-bottom:1.5rem;text-align:center}
+.scroll-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem}
+.scroll-gallery-grid figure{background:var(--bg-card);overflow:hidden;transition:transform .3s ease}
+.scroll-gallery-grid figure:hover{transform:translateY(-4px)}
+.scroll-gallery-grid img{width:100%;aspect-ratio:1/1;object-fit:cover}
+.scroll-gallery-grid figcaption{font-family:'Inter',sans-serif;font-size:.8rem;color:var(--paper-dim);padding:.6rem .8rem;line-height:1.4}
+
+/* === CAST === */
+.scroll-cast{padding:6rem 1.5rem;background:var(--bg-soft);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.scroll-cast-title{font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.4em;color:var(--accent);text-transform:uppercase;text-align:center;margin-bottom:1rem}
+.scroll-cast-heading{font-family:'Fraunces',serif;font-weight:300;font-size:clamp(2.4rem,6vw,4rem);line-height:1;letter-spacing:-.02em;color:var(--paper);text-align:center;margin-bottom:3rem}
+.scroll-cast-heading em{font-style:italic;color:var(--accent)}
+.scroll-cast-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem;max-width:64rem;margin:0 auto}
+.cast-member{background:var(--bg-card);padding:1.8rem 1.5rem;border-radius:6px;border:1px solid var(--rule);text-align:center}
+.cast-role{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;color:var(--accent);text-transform:uppercase;margin-bottom:.6rem}
+.cast-name{font-family:'Fraunces',serif;font-weight:400;font-size:1.6rem;color:var(--paper);margin-bottom:.8rem;line-height:1.2}
+.cast-description{font-family:'Inter',sans-serif;font-size:.95rem;color:var(--paper-dim);line-height:1.5;font-style:italic}
+
+/* === FOOTER === */
+.scroll-footer{padding:5rem 1.5rem 4rem;text-align:center;background:var(--bg)}
+.scroll-footer-emblem{font-family:'Fraunces',serif;font-size:2rem;color:var(--accent);margin-bottom:1.5rem;font-style:italic;font-weight:300}
+.scroll-footer p{font-family:'Fraunces',serif;font-style:italic;font-size:1.05rem;line-height:1.6;color:var(--paper-soft);max-width:38rem;margin:0 auto 1rem}
+.scroll-footer-credits{margin-top:3rem;padding-top:2rem;border-top:1px solid var(--rule);font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;color:var(--paper-dim);text-transform:uppercase;line-height:1.8}
+.scroll-footer-credits strong{color:var(--accent);display:block;margin-top:1rem;margin-bottom:.4rem;font-weight:600}
+
+::selection{background:var(--accent);color:var(--bg)}
+
+@media print{
+  @page { margin: 1cm; size: A4; }
+  body{font-size:10pt;line-height:1.5;background:white !important;color:black !important}
+  .scroll-prologue{min-height:auto;page-break-after:always;background:white !important;color:black !important}
+  .scroll-prologue *{color:black !important}
+  .scroll-act-divider,.scroll-act{page-break-before:always;background:white !important;color:black !important}
+  .scroll-act-divider *,.scroll-act *{color:black !important}
+  .scroll-act-title,.scroll-section-title,.scroll-cast-heading{color:black !important}
+  .scroll-prose p{color:#222 !important}
+  .scroll-pullquote{background:none !important;border:1px solid #888;padding:1rem;margin:1rem 0}
+  .scroll-pullquote p{color:black !important}
+  .scroll-hero,.scroll-photo-inline{margin:1rem 0}
+  .scroll-hero img,.scroll-photo-inline img{max-height:14cm;object-fit:contain}
+  .scroll-gallery-grid{grid-template-columns:repeat(3,1fr);gap:.5rem}
+  .scroll-gallery-grid img{aspect-ratio:1/1;max-height:5cm}
+  .scroll-cast{page-break-before:always;background:white !important}
+  .scroll-cast *{color:black !important}
+  .cast-member{background:white !important;border:1px solid #ccc}
+  .scroll-footer{background:white !important}
+  .scroll-footer *{color:black !important}
+  .dalle-placeholder{background:white !important;border:1px dashed #888;aspect-ratio:auto;min-height:6cm}
+  .dalle-placeholder *{color:#666 !important}
+}
+</style></head><body>
+
+${bodyContent}
+
+<footer class="scroll-footer">
+  <div class="scroll-footer-emblem">— Allzeit b(e)reit —</div>
+  <p>Geschrieben von Claude Opus 4.7 — auf Basis der echten Logbucheinträge und Erinnerungen der Pfadfinder-Tour 2026.</p>
+  <p>${etappeData.length} Etappen · ${totalKm.toFixed(0)} km · ${totalPhotos} Bilder · sechs Männer · eine Reise.</p>
+  <div class="scroll-footer-credits">
+    <strong>Drehbuch & Erzählung</strong>
+    Claude Opus 4.7
+    <strong>Atmosphären-Bilder</strong>
+    DALL-E (Prompts in der Story markiert)
+    <strong>Fotografie</strong>
+    Die Pfadfinder selbst
+    <strong>Erstellt</strong>
+    ${today}
+  </div>
 </footer>
 
 </body></html>`;
