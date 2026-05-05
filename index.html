@@ -265,6 +265,7 @@ section.active { display: block; animation: fadeIn 0.4s ease-out; }
 .story-snapshots-list { display: grid; gap: 0.7rem; }
 .story-snapshot-card { background: var(--bg-card); border: 1px solid var(--line-strong); border-radius: 8px; padding: 1rem 1.2rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; transition: all 0.15s; }
 .story-snapshot-card:hover { background: rgba(184,84,42,0.05); border-color: var(--rust); }
+.story-snapshot-format-badge { font-size: 1.6rem; line-height: 1; padding: 0.4rem; background: rgba(184,84,42,0.08); border-radius: 8px; flex-shrink: 0; }
 .story-snapshot-info { flex: 1; min-width: 0; }
 .story-snapshot-title { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 0.03em; color: var(--paper); margin-bottom: 0.3rem; }
 .story-snapshot-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--paper-dim); letter-spacing: 0.08em; text-transform: uppercase; }
@@ -2342,19 +2343,23 @@ function renderStorySnapshotsList() {
   if (!storySnapshots || storySnapshots.length === 0) {
     return '<div class="story-snapshots-empty">Noch keine Stories generiert. Klick oben auf "Neue Story generieren", um die erste KI-Story aus deinen Captions zu erstellen.</div>';
   }
+  const formatIcons = { 'reportage': '📖', 'zeitung': '📰', 'tagebuch': '📓', 'comic': '💬' };
+  const formatNames = { 'reportage': 'Reportage', 'zeitung': 'Zeitung', 'tagebuch': 'Tagebuch', 'comic': 'Comic' };
   return '<div class="story-snapshots-list">' + storySnapshots.map(s => {
     const date = new Date(s.created_at).toLocaleDateString('de-DE', {day:'2-digit', month:'short', year:'numeric'});
     const time = new Date(s.created_at).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
     const settings = s.wizard_settings || {};
     const toneShort = { 'warm-erzaehlerisch': 'Warm', 'augenzwinkernd': 'Augenzwinkernd', 'ehrwuerdig': 'Ehrwürdig', 'poetisch': 'Poetisch', 'nuechtern': 'Nüchtern' }[settings.tone] || settings.tone || '';
+    const formatIcon = formatIcons[s.format] || '📄';
+    const formatName = formatNames[s.format] || s.format || '';
     return `<div class="story-snapshot-card">
+      <div class="story-snapshot-format-badge" title="${esc(formatName)}">${formatIcon}</div>
       <div class="story-snapshot-info">
         <div class="story-snapshot-title">${esc(s.title || 'Story')}</div>
         <div class="story-snapshot-meta">
           ${date} · ${time} · von ${esc(s.created_by || '?')}
           ${toneShort ? ' · ' + esc(toneShort) : ''}
           ${s.photo_count ? ' · ' + s.photo_count + ' Fotos' : ''}
-          ${s.caption_count ? ' · ' + s.caption_count + ' Captions' : ''}
         </div>
       </div>
       <div class="story-snapshot-actions">
@@ -2793,7 +2798,17 @@ function openStoryWizard() {
       
       <form id="story-wizard-form" class="story-wizard-body" onsubmit="event.preventDefault(); generateStoryWithKI();">
         <fieldset>
-          <legend>1. Tonalität</legend>
+          <legend>1. Format</legend>
+          <div class="sw-options">
+            <label><input type="radio" name="format" value="reportage" checked><span>📖 Reportage</span><small>Magazin-Stil mit Etappen-Erzählung</small></label>
+            <label><input type="radio" name="format" value="zeitung"><span>📰 Pfadfinder Press</span><small>Tour-Tageszeitung im Boulevard-Stil</small></label>
+            <label><input type="radio" name="format" value="tagebuch"><span>📓 Reisetagebuch</span><small>Im Stil des 19. Jahrhunderts, Sepia</small></label>
+            <label><input type="radio" name="format" value="comic"><span>💬 Picture Stories</span><small>Foto-Comic mit Sprechblasen</small></label>
+          </div>
+        </fieldset>
+        
+        <fieldset>
+          <legend>2. Tonalität</legend>
           <div class="sw-options">
             <label><input type="radio" name="tone" value="warm-erzaehlerisch" checked><span>Warm & erzählerisch</span><small>Reportage-Stil mit Tiefe</small></label>
             <label><input type="radio" name="tone" value="augenzwinkernd"><span>Augenzwinkernd</span><small>Mit Humor und Selbstironie</small></label>
@@ -2804,7 +2819,7 @@ function openStoryWizard() {
         </fieldset>
         
         <fieldset>
-          <legend>2. Schwerpunkt</legend>
+          <legend>3. Schwerpunkt</legend>
           <div class="sw-options">
             <label><input type="radio" name="focus" value="reise" checked><span>Reise-Erlebnis</span><small>Strecke, Etappen, Stimmungen</small></label>
             <label><input type="radio" name="focus" value="freundschaft"><span>Freundschaft</span><small>Die Truppe und ihre Dynamik</small></label>
@@ -2815,7 +2830,7 @@ function openStoryWizard() {
         </fieldset>
         
         <fieldset>
-          <legend>3. Länge</legend>
+          <legend>4. Länge</legend>
           <div class="sw-options sw-options-row">
             <label><input type="radio" name="length" value="kompakt"><span>Kompakt</span><small>~ 600 Wörter</small></label>
             <label><input type="radio" name="length" value="mittel" checked><span>Mittel</span><small>~ 1500 Wörter</small></label>
@@ -2824,7 +2839,7 @@ function openStoryWizard() {
         </fieldset>
         
         <fieldset>
-          <legend>4. Für wen?</legend>
+          <legend>5. Für wen?</legend>
           <div class="sw-options sw-options-row">
             <label><input type="radio" name="audience" value="truppe" checked><span>Die Truppe</span></label>
             <label><input type="radio" name="audience" value="familie"><span>Familie</span></label>
@@ -2833,7 +2848,7 @@ function openStoryWizard() {
         </fieldset>
         
         <fieldset>
-          <legend>5. Hintergrund-Wissen einweben?</legend>
+          <legend>6. Hintergrund-Wissen einweben?</legend>
           <div class="sw-options sw-options-row">
             <label><input type="radio" name="background" value="ja" checked><span>Ja, gerne</span><small>Geschichte der Orte</small></label>
             <label><input type="radio" name="background" value="bisschen"><span>Etwas</span><small>Nur wo passend</small></label>
@@ -2842,7 +2857,7 @@ function openStoryWizard() {
         </fieldset>
         
         <fieldset>
-          <legend>6. Besondere Wünsche <small>(optional)</small></legend>
+          <legend>7. Besondere Wünsche <small>(optional)</small></legend>
           <textarea name="wishes" class="sw-textarea" placeholder="z.B. 'Bitte den Marienkäfer auf meinem Hemd erwähnen', 'Friedhelm soll mehr Spotlight bekommen', 'die Walpurgisnacht in Menden ausführlich beschreiben'..."></textarea>
         </fieldset>
         
@@ -2869,6 +2884,7 @@ async function generateStoryWithKI() {
   if (!form) return;
   
   const settings = {
+    format: form.format.value,
     tone: form.tone.value,
     focus: form.focus.value,
     length: form.length.value,
@@ -2892,7 +2908,9 @@ async function generateStoryWithKI() {
     // User-Prompt (Daten + Anweisung)
     const userPrompt = buildUserPrompt(data, settings);
     
-    updateLoadingStatus('Claude schreibt deine Story...', 'Wörter werden generiert: 0');
+    const formatLabels = { 'reportage': '📖 Reportage', 'zeitung': '📰 Pfadfinder Press', 'tagebuch': '📓 Reisetagebuch', 'comic': '💬 Picture Stories' };
+    const formatLabel = formatLabels[settings.format] || 'Story';
+    updateLoadingStatus(`Claude schreibt deine ${formatLabel}...`, 'Wörter werden generiert: 0');
     
     let lastProgressTime = Date.now();
     const aiResponse = await callClaudeAPI(systemPrompt, userPrompt, 16000, (charCount, partialText) => {
@@ -2900,7 +2918,7 @@ async function generateStoryWithKI() {
       const words = Math.round(charCount / 6);
       const elapsed = Math.floor((Date.now() - lastProgressTime) / 1000);
       updateLoadingStatus(
-        'Claude schreibt deine Story...',
+        `Claude schreibt deine ${formatLabel}...`,
         `${words} Wörter generiert${elapsed > 0 ? ' · ' + elapsed + 's' : ''}`
       );
     });
@@ -2916,7 +2934,7 @@ async function generateStoryWithKI() {
     
     const { error: insertError } = await sb.from('story_snapshots').insert({
       id: snapshotId,
-      format: 'reportage',
+      format: settings.format,
       title: title,
       html_content: html,
       caption_count: totalCaptions,
@@ -2981,6 +2999,40 @@ function closeStoryLoading() {
 
 // === Prompt-Bau ===
 function buildSystemPrompt(settings) {
+  // Gemeinsamer Basis-Prompt für alle Formate
+  const baseContext = `Du schreibst über die "Pfadfinder-Tour 2026" — sechs ehemalige Pfadfinder (alle Männer, ca. 60 Jahre) sind den Ruhrtalradweg von Winterberg bis Duisburg gefahren, vom 29. April bis 3. Mai 2026.
+
+Die sechs Pfadfinder sind:
+- **Christoph** (Hauptchronist, schreibt die meisten Logbuch-Einträge): Brille, volles graues Haar, etwas dicker, dunkle Kleidung
+- **Willi**: Brille, grauer Vollbart, schlank, helle Kleidung
+- **Charly**: kräftig, Glatze
+- **Stefan**: Brille, volles graues Haar, Polo-Shirt-Typ
+- **Burkhard**: Brille, Geheimratsecken, kräftig, kariertes Hemd
+- **Friedhelm**: Brille, helle kurze Haare, kein Bart, gerne Hawaii-Shirts`;
+
+  const wishesBlock = settings.wishes ? `\n\nBesondere Wünsche des Auftraggebers:\n${settings.wishes}` : '';
+  
+  const backgroundMap = {
+    'ja': 'WICHTIG: Webe historische und kulturelle Hintergründe großzügig ein, wo es passt — Zeche Nachtigall (gegründet 1714, erster Tiefbauschacht 1832), Friedrich Harkort und seine Dampfmaschinen-Werkstatt in Wetter, Arnsberg (789 erstmals erwähnt, 1238 Stadtrechte), die Ruhrquelle (696m am Ruhrkopf), 20 Jahre Ruhrtalradweg.',
+    'bisschen': 'Webe Hintergrund-Wissen sparsam ein, nur wo es organisch passt.',
+    'nein': 'Keine historischen Exkurse — bleibe bei der Erzählung der Tour selbst.'
+  };
+
+  // Format-spezifischer Prompt
+  switch (settings.format) {
+    case 'zeitung':
+      return buildZeitungPrompt(baseContext, settings, backgroundMap[settings.background], wishesBlock);
+    case 'tagebuch':
+      return buildTagebuchPrompt(baseContext, settings, backgroundMap[settings.background], wishesBlock);
+    case 'comic':
+      return buildComicPrompt(baseContext, settings, backgroundMap[settings.background], wishesBlock);
+    case 'reportage':
+    default:
+      return buildReportagePrompt(baseContext, settings, backgroundMap[settings.background], wishesBlock);
+  }
+}
+
+function buildReportagePrompt(baseContext, settings, backgroundInst, wishesBlock) {
   const toneMap = {
     'warm-erzaehlerisch': 'warm-erzählerisch im Stil einer guten Reportage. Mit literarischer Tiefe, aber zugänglich.',
     'augenzwinkernd': 'mit Augenzwinkern, Selbstironie und freundlichem Witz. Niemals zynisch, immer warm.',
@@ -3005,21 +3057,8 @@ function buildSystemPrompt(settings) {
     'familie': 'die Familien der Pfadfinder — verständlich, warmherzig, persönlich.',
     'aussen': 'Außenstehende — keine Insider-Voraussetzungen, alles wird kurz erklärt.'
   };
-  const backgroundMap = {
-    'ja': 'WICHTIG: Webe historische und kulturelle Hintergründe großzügig ein, wo es passt — Zeche Nachtigall (gegründet 1714, erster Tiefbauschacht 1832), Friedrich Harkort und seine Dampfmaschinen-Werkstatt in Wetter, Arnsberg (789 erstmals erwähnt, 1238 Stadtrechte), die Ruhrquelle (696m am Ruhrkopf), 20 Jahre Ruhrtalradweg.',
-    'bisschen': 'Webe Hintergrund-Wissen sparsam ein, nur wo es organisch passt.',
-    'nein': 'Keine historischen Exkurse — bleibe bei der Erzählung der Tour selbst.'
-  };
   
-  return `Du bist ein erstklassiger deutscher Reportage-Schreiber. Du schreibst eine Story über die "Pfadfinder-Tour 2026" — sechs ehemalige Pfadfinder (alle Männer, ca. 60 Jahre) sind den Ruhrtalradweg von Winterberg bis Duisburg gefahren, vom 29. April bis 3. Mai 2026.
-
-Die sechs Pfadfinder sind:
-- **Christoph** (der Hauptchronist, schreibt die meisten Logbuch-Einträge): Brille, volles graues Haar, etwas dicker, dunkle Kleidung
-- **Willi**: Brille, grauer Vollbart, schlank, helle Kleidung
-- **Charly**: kräftig, Glatze
-- **Stefan**: Brille, volles graues Haar, Polo-Shirt-Typ
-- **Burkhard**: Brille, Geheimratsecken, kräftig, kariertes Hemd
-- **Friedhelm**: Brille, helle kurze Haare, kein Bart, gerne Hawaii-Shirts
+  return `Du bist ein erstklassiger deutscher Reportage-Schreiber. ${baseContext}
 
 Tonalität: ${toneMap[settings.tone]}
 
@@ -3029,9 +3068,7 @@ Länge: ${lengthMap[settings.length]}
 
 Zielgruppe: ${audienceMap[settings.audience]}
 
-Hintergrund-Wissen: ${backgroundMap[settings.background]}
-
-${settings.wishes ? `Besondere Wünsche des Auftraggebers:\n${settings.wishes}` : ''}
+Hintergrund-Wissen: ${backgroundInst}${wishesBlock}
 
 WICHTIGE ANWEISUNGEN:
 
@@ -3055,6 +3092,175 @@ WICHTIGE ANWEISUNGEN:
 6. Erfinde nichts dazu, was nicht aus den Daten ableitbar ist. Wenn Hintergrund-Wissen erlaubt ist, kannst du das Wissen über die Orte einweben (Zeche Nachtigall, Arnsberg etc.).
 
 7. Schreibe in fließendem, gutem Deutsch. Keine bullet-points, keine Aufzählungen, sondern erzählender Text.`;
+}
+
+function buildZeitungPrompt(baseContext, settings, backgroundInst, wishesBlock) {
+  const lengthHints = {
+    'kompakt': 'Pro Etappe eine knappe Tageszeitungs-Seite mit: Schlagzeile, Lead, kurzer Hauptartikel (~150 Wörter), 1 Foto.',
+    'mittel': 'Pro Etappe eine vollwertige Tageszeitungs-Seite mit: Schlagzeile, Lead, Hauptartikel (~250 Wörter), 1-2 Nebenmeldungen, 2-3 Fotos, Wetter-Kasten.',
+    'ausfuehrlich': 'Pro Etappe eine üppige Tageszeitungs-Seite mit: Schlagzeile, Lead, ausführlicher Hauptartikel (~400 Wörter), 2-3 Nebenmeldungen, mehrere Fotos mit Bildunterschriften, Wetter-Kasten, Kleinanzeigen oder "Heute am Wegesrand"-Box.'
+  };
+  
+  return `Du bist Chefredakteur der "PFADFINDER PRESS", einer Boulevard-Tageszeitung im Stil der BILD oder Bunten. ${baseContext}
+
+Du schreibst eine Sonderausgabe pro Tour-Etappe — knackig, mit reißerischen Überschriften, kurzen Sätzen, viel Drama, aber niemals gemein. Mit Augenzwinkern.
+
+LÄNGE: ${lengthHints[settings.length]}
+
+Hintergrund-Wissen: ${backgroundInst}${wishesBlock}
+
+STIL-MUSTER:
+- Schlagzeilen RIESIG, oft mit Ausrufezeichen: "PFADFINDER STÜRMEN SAUERLAND!"
+- Lead-Absätze (1-2 Sätze) bringen den Kern auf den Punkt
+- Kurze, aktive Sätze. Subjektive Adjektive: "spektakulär", "dramatisch", "sensationell"
+- Wörtliche Zitate (echt aus Captions/Kommentaren) als Aufmacher
+- Pro Etappe: Schlagzeile + Lead + Hauptartikel + (mittel/ausführlich:) Nebenmeldungen + Wetter-Kasten
+
+HTML-STRUKTUR pro Etappe:
+<section class="news-day">
+  <header class="news-masthead">
+    <div class="news-issue">AUSGABE Nr. [Etappennummer] · [Datum]</div>
+    <h2 class="news-headline">DEINE_SCHLAGZEILE</h2>
+    <p class="news-lead">Lead in 1-2 Sätzen.</p>
+  </header>
+  <div class="news-byline">Von unserem Reporter vor Ort · [Ort/Strecke]</div>
+  <article class="news-main">
+    <p>Hauptartikel mit mehreren Absätzen...</p>
+    <figure class="news-photo"><img src="URL" loading="lazy"><figcaption>Spannende Bildunterschrift</figcaption></figure>
+    <p>Weiter im Text...</p>
+  </article>
+  <aside class="news-sidebar">
+    <div class="news-weather">
+      <h3>Heute</h3>
+      <p>Wetterbeschreibung in 1-2 Sätzen, leite es aus den Captions/Kommentaren ab.</p>
+    </div>
+    <div class="news-snippet">
+      <h3>Auch heute geschehen</h3>
+      <p>Eine kleine Nebenmeldung, sehr kurz.</p>
+    </div>
+  </aside>
+</section>
+
+WEITERE REGELN:
+- Nutze die Foto-URLs aus den Daten — Highlights (rating: 3) prominent.
+- Beginne direkt mit <section class="news-day"> — keine <html>/<body>-Tags.
+- Erfinde Schlagzeilen die zur jeweiligen Etappe passen, aus den echten Daten ableitbar.
+- Original-Zitate aus Captions/Kommentaren als wörtliche Rede einbauen ("...so der Pfadfinder Christoph") — das macht's authentisch.
+- Schreibe alle 5 Etappen, in chronologischer Reihenfolge.`;
+}
+
+function buildTagebuchPrompt(baseContext, settings, backgroundInst, wishesBlock) {
+  const lengthHints = {
+    'kompakt': 'Pro Etappe ca. 150 Wörter Tagebuch-Eintrag.',
+    'mittel': 'Pro Etappe ca. 350 Wörter Tagebuch-Eintrag mit Beobachtungen und Reflexionen.',
+    'ausfuehrlich': 'Pro Etappe ca. 600 Wörter Tagebuch-Eintrag mit detaillierten Beobachtungen, Reflexionen und kleinen Anekdoten.'
+  };
+  
+  return `Du bist Christoph, der Hauptchronist der Pfadfinder-Tour, und du schreibst dein Reisetagebuch im Stil eines Bildungsbürgers des späten 19. Jahrhunderts (etwa 1880-1900). ${baseContext}
+
+Du schreibst aus der Ich-Perspektive ("wir") und im Stil von Theodor Fontanes Wanderungen oder einem ehrenwerten Reisebericht jener Zeit.
+
+LÄNGE: ${lengthHints[settings.length]}
+
+Hintergrund-Wissen: ${backgroundInst}${wishesBlock}
+
+STIL-VORGABEN:
+- Verklausuliertes, gediegenes Deutsch des 19. Jahrhunderts
+- Häufige Adverbien: "wahrhaftig", "bescheidenermaßen", "alsdann", "selbiges", "fürwahr", "in der Tat", "sintemalen", "dieweil", "vornehmlich"
+- Längere, verschachtelte Sätze mit eingeschobenen Nebensätzen
+- "Mein lieber Freund Willi", "der wackere Charly", "Friedhelm in seinem hawaiianischen Hemde"
+- Reflexionen über die Landschaft, die Mühen des Tages, die Freundschaft
+- Tagesaktuelle Captions/Live-Kommentare leicht "zeitgemäß" umformulieren — z.B. "Brotzeit" wird "alsbald rasteten wir zu einer kleinen Mahlzeit"
+- Datums-Angaben bedacht: "Am Morgen des 29. April, bei einer wahrhaft erquicklichen Frische der Luft..."
+
+HTML-STRUKTUR pro Etappe:
+<section class="diary-day">
+  <header class="diary-header">
+    <div class="diary-date">Den [Datum auf 19.-Jh.-Art]</div>
+    <h2 class="diary-title">[Etappentitel: poetisch, z.B. "Vom Winterberg gen Meschede"]</h2>
+    <p class="diary-meta">[Strecke und Witterung kurz]</p>
+  </header>
+  <div class="diary-entry">
+    <p class="diary-prose">Erster Absatz, beginnt mit Schmuckinitial...</p>
+    <p class="diary-prose">Weitere Absätze...</p>
+    <figure class="diary-photo">
+      <img src="URL" loading="lazy">
+      <figcaption class="diary-handwritten">[Bildunterschrift in Caveat-Handschrift, 19.-Jh.-Stil, kurz]</figcaption>
+    </figure>
+    <p class="diary-prose">Weiter im Text...</p>
+    <blockquote class="diary-quote">[Originalzitat aus Captions/Kommentaren — wenn sinnvoll, leicht "umgeschrieben"]</blockquote>
+  </div>
+</section>
+
+WEITERE REGELN:
+- Nutze die Foto-URLs aus den Daten. Highlights (rating: 3) prominent platzieren.
+- Beginne direkt mit <section class="diary-day"> — keine <html>/<body>-Tags.
+- Schreibe alle Etappen in chronologischer Reihenfolge.
+- Gib der Tour einen Hauch von Patina, ohne ins Lächerliche zu kippen — es ist ein liebevolles Spiel mit dem Stil.
+- Zitate von Pfadfindern in <blockquote class="diary-quote"> mit Caveat-Handschrift-Look.`;
+}
+
+function buildComicPrompt(baseContext, settings, backgroundInst, wishesBlock) {
+  const lengthHints = {
+    'kompakt': 'Pro Etappe 3-5 "Panels" (Foto + Sprechblase). Knapp, comic-typisch.',
+    'mittel': 'Pro Etappe 5-8 Panels mit Sprechblasen. Eine Mini-Geschichte pro Etappe.',
+    'ausfuehrlich': 'Pro Etappe 8-12 Panels mit Sprechblasen, Erzählertext-Kästen, dramaturgischer Bogen.'
+  };
+  
+  return `Du bist Comic-Autor und gestaltest aus der Pfadfinder-Tour einen Foto-Comic im Stil von "Picture Stories" oder Fotoroman. ${baseContext}
+
+Du nimmst die echten Fotos und gestaltest dazu **Sprechblasen mit plausibler wörtlicher Rede**, die du aus den Captions und Live-Kommentaren ableitest. Sprechblasen können auch erfunden sein, müssen aber zu den Personen und Situationen passen.
+
+LÄNGE: ${lengthHints[settings.length]}
+
+Hintergrund-Wissen: ${backgroundInst}${wishesBlock}
+
+STIL-VORGABEN:
+- Comic-typisch: kurze, knackige Sätze in Sprechblasen
+- Lautmalerei in CAPS: "ZACK!", "PUSTE-PUSTE!", "PROST!", "AUTSCH!"
+- Pro Panel max 1-2 Sprechblasen (je 1-2 kurze Sätze)
+- Identifiziere wer auf dem Foto sprechen könnte — leite es aus Captions, Personen-Beschreibungen, Kontext ab
+- Wenn unklar wer spricht: "Erzähler"-Kasten oben/unten verwenden
+- Manchmal Gedankenblasen statt Sprechblasen für innere Monologe
+
+HTML-STRUKTUR pro Etappe:
+<section class="comic-day">
+  <header class="comic-chapter">
+    <h2 class="comic-title">KAPITEL [N]: [TITEL IN GROSSBUCHSTABEN]</h2>
+    <p class="comic-subtitle">[Datum] · [Strecke]</p>
+  </header>
+  <div class="comic-panels">
+    <figure class="comic-panel">
+      <img src="URL" loading="lazy">
+      <div class="comic-bubble bubble-top-left" data-speaker="Christoph">
+        <span class="speaker-name">CHRISTOPH</span>
+        Sprechblasen-Text in Großbuchstaben!
+      </div>
+    </figure>
+    <figure class="comic-panel">
+      <img src="URL" loading="lazy">
+      <div class="comic-narrator">PLÖTZLICH, AM RUHRTALRADWEG...</div>
+      <div class="comic-bubble bubble-bottom-right" data-speaker="Willi">
+        <span class="speaker-name">WILLI</span>
+        DA HINTEN — SCHAUT MAL!
+      </div>
+    </figure>
+  </div>
+</section>
+
+REGELN FÜR SPRECHBLASEN:
+- Klassen für Position: bubble-top-left, bubble-top-right, bubble-bottom-left, bubble-bottom-right, bubble-top-center, bubble-bottom-center
+- data-speaker="Christoph" / "Willi" / "Charly" / "Stefan" / "Burkhard" / "Friedhelm"
+- Speaker-Name als <span class="speaker-name"> oben in der Blase
+- Text dann normal — IN GROSSBUCHSTABEN für comic-Wirkung
+- Bei Gedanken: <div class="comic-bubble bubble-thought ...">
+
+WEITERE REGELN:
+- Nutze ausnahmslos die echten Foto-URLs aus den Daten.
+- Highlights (rating: 3) bevorzugt als große Panels nutzen.
+- Beginne direkt mit <section class="comic-day"> — keine <html>/<body>-Tags.
+- Schreibe alle Etappen in chronologischer Reihenfolge.
+- Du DARFST Sprechblasen erfinden — sie müssen aber **plausibel** sein und auf den echten Caption-Inhalten basieren. Niemals ins Lächerliche oder Charakterfremde.`;
 }
 
 function buildUserPrompt(etappeData, settings) {
@@ -3086,15 +3292,32 @@ function buildUserPrompt(etappeData, settings) {
 
 function generateStoryTitle(settings) {
   const date = new Date().toLocaleDateString('de-DE', {day:'2-digit', month:'short', year:'numeric'});
-  const toneNames = {
-    'warm-erzaehlerisch': 'Reportage', 'augenzwinkernd': 'Mit Augenzwinkern',
-    'ehrwuerdig': 'Reisetagebuch', 'poetisch': 'Poetische Reise', 'nuechtern': 'Reisebericht'
+  const formatNames = {
+    'reportage': 'Reportage',
+    'zeitung': 'Pfadfinder Press',
+    'tagebuch': 'Reisetagebuch',
+    'comic': 'Picture Stories'
   };
-  return `${toneNames[settings.tone]} · ${date}`;
+  const formatName = formatNames[settings.format] || 'Story';
+  return `${formatName} · ${date}`;
 }
 
 // === HTML-Hülle um KI-Output ===
 function wrapStoryInHtmlTemplate(bodyContent, etappeData, settings) {
+  switch (settings.format) {
+    case 'zeitung':
+      return wrapZeitungTemplate(bodyContent, etappeData, settings);
+    case 'tagebuch':
+      return wrapTagebuchTemplate(bodyContent, etappeData, settings);
+    case 'comic':
+      return wrapComicTemplate(bodyContent, etappeData, settings);
+    case 'reportage':
+    default:
+      return wrapReportageTemplate(bodyContent, etappeData, settings);
+  }
+}
+
+function wrapReportageTemplate(bodyContent, etappeData, settings) {
   const totalPhotos = etappeData.reduce((s, e) => s + e.photos.length, 0);
   const totalCaptions = etappeData.reduce((s, e) => s + e.photos.filter(p => p.caption.trim().length > 0).length, 0);
   let totalKm = 0;
@@ -3172,7 +3395,226 @@ ${bodyContent}
 </body></html>`;
 }
 
-window.openStoryWizard = openStoryWizard;
+// === ZEITUNGS-TEMPLATE ===
+function wrapZeitungTemplate(bodyContent, etappeData, settings) {
+  const totalPhotos = etappeData.reduce((s, e) => s + e.photos.length, 0);
+  const totalCaptions = etappeData.reduce((s, e) => s + e.photos.filter(p => p.caption.trim().length > 0).length, 0);
+  let totalKm = 0;
+  Object.values(etappeStats).forEach(s => { totalKm += parseFloat(s.actualKm) || 0; });
+  
+  const title = generateStoryTitle(settings);
+  const today = new Date().toLocaleDateString('de-DE', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'});
+  
+  return `<!DOCTYPE html>
+<html lang="de"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${title} — Pfadfinder Press</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Old+Standard+TT:wght@400;700&family=PT+Serif:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#f5f1e8;--paper-dark:#e8e0cf;--ink:#0e0e0e;--ink-soft:#444;--ink-fade:#888;--rule:#0e0e0e;--accent:#b8001b}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:'PT Serif',Georgia,serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+img{max-width:100%;height:auto;display:block}
+.news-titlepage{padding:2rem clamp(1rem,4vw,3rem);text-align:center;border-bottom:6px double var(--rule)}
+.news-masthead-main{font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(3rem,9vw,6rem);letter-spacing:-.03em;line-height:.9;margin-bottom:.3rem}
+.news-tagline{font-family:'Old Standard TT',serif;font-style:italic;font-size:1.1rem;color:var(--ink-soft);margin-bottom:.8rem}
+.news-issue-info{display:flex;justify-content:space-between;align-items:center;font-family:'Old Standard TT',serif;font-size:.85rem;border-top:2px solid var(--rule);border-bottom:2px solid var(--rule);padding:.5rem 0;margin-top:1rem;text-transform:uppercase;letter-spacing:.1em}
+article{max-width:64rem;margin:0 auto;padding:0 clamp(1rem,3vw,2rem)}
+.news-day{padding:2.5rem 0;border-bottom:3px double var(--rule);page-break-after:always}
+.news-day:last-child{border-bottom:none}
+.news-masthead{margin-bottom:1.2rem;text-align:center;border-bottom:2px solid var(--rule);padding-bottom:1rem}
+.news-issue{font-family:'Old Standard TT',serif;font-size:.75rem;text-transform:uppercase;letter-spacing:.2em;color:var(--ink-soft);margin-bottom:.6rem}
+.news-headline{font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(2.2rem,6vw,4rem);line-height:1;letter-spacing:-.02em;margin-bottom:.5rem;text-transform:uppercase}
+.news-lead{font-family:'PT Serif',serif;font-weight:700;font-size:1.2rem;line-height:1.4;color:var(--ink);font-style:italic}
+.news-byline{font-family:'Old Standard TT',serif;font-size:.85rem;font-style:italic;color:var(--ink-soft);margin-bottom:1rem;border-bottom:1px solid var(--rule);padding-bottom:.5rem;text-transform:uppercase;letter-spacing:.05em}
+.news-main{column-count:2;column-gap:2rem;column-rule:1px solid rgba(0,0,0,.15);font-family:'PT Serif',serif;font-size:.95rem;line-height:1.6;text-align:justify;hyphens:auto}
+@media (max-width:600px){.news-main{column-count:1}}
+.news-main p{margin-bottom:.8rem;text-indent:1.5em}
+.news-main p:first-of-type{text-indent:0}
+.news-main p:first-of-type::first-letter{font-family:'Playfair Display',serif;font-size:3.5em;font-weight:900;float:left;line-height:.9;margin:.05em .12em 0 -.02em;color:var(--accent)}
+.news-photo{break-inside:avoid;margin:1rem 0;border:1px solid var(--rule)}
+.news-photo img{width:100%;aspect-ratio:4/3;object-fit:cover}
+.news-photo figcaption{font-family:'PT Serif',serif;font-size:.78rem;font-style:italic;color:var(--ink-soft);padding:.4rem .6rem;border-top:1px solid var(--rule);background:var(--paper-dark);text-align:left}
+.news-sidebar{margin-top:1.5rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
+.news-weather,.news-snippet{border:2px solid var(--rule);padding:.8rem 1rem;background:var(--paper-dark)}
+.news-weather h3,.news-snippet h3{font-family:'Playfair Display',serif;font-weight:900;font-size:1rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--rule);padding-bottom:.3rem;margin-bottom:.5rem}
+.news-weather p,.news-snippet p{font-family:'PT Serif',serif;font-size:.85rem;line-height:1.4}
+.news-footer{padding:2rem 1rem;text-align:center;border-top:6px double var(--rule);background:var(--paper-dark);margin-top:2rem}
+.news-footer p{font-family:'Old Standard TT',serif;font-size:.85rem;font-style:italic;color:var(--ink-soft);margin-bottom:.4rem}
+::selection{background:var(--accent);color:var(--paper)}
+@media print{body{font-size:10pt}.news-day{page-break-after:always}.news-photo{page-break-inside:avoid}}
+</style></head><body>
+
+<header class="news-titlepage">
+  <div class="news-masthead-main">PFADFINDER PRESS</div>
+  <div class="news-tagline">Die Tour-Tageszeitung — Sauerland bis Rhein</div>
+  <div class="news-issue-info">
+    <span>Sonderausgabe</span>
+    <span>${today}</span>
+    <span>Ruhrtalradweg 2026</span>
+  </div>
+</header>
+
+<article>
+${bodyContent}
+</article>
+
+<footer class="news-footer">
+  <p>Verantwortlicher Schriftleiter: Christoph · Texte verfasst von Claude Opus 4.7</p>
+  <p>Sechs Pfadfinder · ${etappeData.length} Etappen · ${totalKm.toFixed(0)} km · ${totalPhotos} Bilder</p>
+  <p>Pfadfinder Press · Sonderausgabe vom ${today}</p>
+</footer>
+
+</body></html>`;
+}
+
+// === TAGEBUCH-TEMPLATE ===
+function wrapTagebuchTemplate(bodyContent, etappeData, settings) {
+  const totalPhotos = etappeData.reduce((s, e) => s + e.photos.length, 0);
+  const totalCaptions = etappeData.reduce((s, e) => s + e.photos.filter(p => p.caption.trim().length > 0).length, 0);
+  let totalKm = 0;
+  Object.values(etappeStats).forEach(s => { totalKm += parseFloat(s.actualKm) || 0; });
+  
+  const title = generateStoryTitle(settings);
+  const today = new Date().toLocaleDateString('de-DE', {day: 'numeric', month: 'long', year: 'numeric'});
+  
+  return `<!DOCTYPE html>
+<html lang="de"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${title} — Reisetagebuch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Cinzel:wght@400..700&family=Caveat:wght@400..700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#f0e5cc;--paper-dark:#e2d4b1;--paper-stain:#d8c89a;--ink:#2b1d10;--ink-soft:#5a4530;--ink-fade:#856e51;--rule:#5a4530;--accent:#7d2718}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:'EB Garamond',Garamond,serif;font-size:18px;line-height:1.7;-webkit-font-smoothing:antialiased;background-image:radial-gradient(circle at 20% 30%,rgba(216,200,154,.4),transparent 50%),radial-gradient(circle at 80% 70%,rgba(216,200,154,.3),transparent 50%);background-attachment:fixed}
+img{max-width:100%;height:auto;display:block}
+.diary-titlepage{padding:clamp(3rem,8vh,5rem) clamp(1.5rem,4vw,3rem);text-align:center;border-bottom:1px solid var(--ink-soft)}
+.diary-pretitle{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.4em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:1.5rem}
+.diary-maintitle{font-family:'Cinzel',serif;font-weight:600;font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;letter-spacing:.05em;color:var(--ink);margin-bottom:.8rem}
+.diary-subtitle{font-family:'EB Garamond',serif;font-style:italic;font-size:1.2rem;color:var(--ink-soft);margin-bottom:2rem}
+.diary-author{font-family:'Caveat',cursive;font-size:1.8rem;color:var(--accent);transform:rotate(-2deg);display:inline-block}
+article{max-width:42rem;margin:0 auto;padding:clamp(2rem,5vh,4rem) clamp(1.5rem,4vw,3rem)}
+.diary-day{margin-bottom:clamp(3rem,7vh,5rem);padding-bottom:2rem;border-bottom:1px dashed var(--ink-fade);page-break-after:always}
+.diary-day:last-of-type{border-bottom:none}
+.diary-header{margin-bottom:1.5rem;text-align:center}
+.diary-date{font-family:'EB Garamond',serif;font-style:italic;font-size:1.1rem;color:var(--ink-soft);margin-bottom:.4rem}
+.diary-title{font-family:'Cinzel',serif;font-weight:500;font-size:clamp(1.6rem,3.5vw,2.4rem);line-height:1.15;letter-spacing:.02em;color:var(--ink);margin-bottom:.4rem}
+.diary-meta{font-family:'EB Garamond',serif;font-style:italic;font-size:.95rem;color:var(--ink-fade)}
+.diary-entry{font-family:'EB Garamond',serif}
+.diary-prose{font-size:1.05rem;line-height:1.8;margin-bottom:1.2rem;text-align:justify;hyphens:auto;color:var(--ink)}
+.diary-prose:first-of-type::first-letter{font-family:'Cinzel',serif;font-size:4em;font-weight:600;float:left;line-height:.85;margin:.05em .15em 0 -.02em;color:var(--accent)}
+.diary-photo{margin:2rem auto;max-width:32rem;background:var(--paper-dark);padding:.6rem .6rem 0;box-shadow:0 4px 14px rgba(43,29,16,.2);transform:rotate(-1deg)}
+.diary-photo:nth-of-type(even){transform:rotate(1deg)}
+.diary-photo img{width:100%;aspect-ratio:4/3;object-fit:cover;filter:sepia(.25) saturate(.85)}
+.diary-photo .diary-handwritten{font-family:'Caveat',cursive;font-size:1.3rem;color:var(--accent);text-align:center;padding:.6rem .4rem;line-height:1.2}
+.diary-quote{border-left:3px solid var(--accent);padding:1rem 1.5rem;margin:1.5rem 0;background:var(--paper-dark);font-family:'EB Garamond',serif;font-style:italic;font-size:1.05rem;color:var(--ink-soft);line-height:1.6}
+.diary-footer{padding:clamp(2rem,5vh,4rem) clamp(1.5rem,4vw,3rem);text-align:center;border-top:1px solid var(--ink-soft);background:var(--paper-dark);margin-top:3rem}
+.diary-footer p{font-family:'EB Garamond',serif;font-style:italic;font-size:1rem;color:var(--ink-soft);line-height:1.6;max-width:32rem;margin:0 auto .8rem}
+.diary-signature{font-family:'Caveat',cursive;font-size:1.6rem;color:var(--accent);transform:rotate(-2deg);display:inline-block;margin-top:1rem}
+::selection{background:var(--accent);color:var(--paper)}
+@media print{body{font-size:11pt;background:var(--paper)}.diary-day{page-break-after:always}.diary-photo,.diary-quote{page-break-inside:avoid}}
+</style></head><body>
+
+<header class="diary-titlepage">
+  <div class="diary-pretitle">Reisetagebuch</div>
+  <h1 class="diary-maintitle">Eine Reise von der Quelle der Ruhr bis zum Rhein</h1>
+  <p class="diary-subtitle">Aufgezeichnet im Lenze 2026 · Im Kreise von sechs Mannen</p>
+  <div class="diary-author">— Christoph, der Chronist</div>
+</header>
+
+<article>
+${bodyContent}
+</article>
+
+<footer class="diary-footer">
+  <p>Auf daß diese Geschichte uns lange in Erinnerung bleibe. Sechs ehrwürdige Pfadfinder, ${etappeData.length} Etappen, ${totalKm.toFixed(0)} Kilometer von der Quelle der Ruhr bis zum mächtigen Rhein.</p>
+  <p>Aufgezeichnet im Mai des Jahres 2026, in der gediegenen Manier eines Bildungsbürgers vergangener Tage, von Claude Opus 4.7 nach den wahrhaftigen Aufzeichnungen der Reisenden.</p>
+  <div class="diary-signature">Allzeit b(e)reit</div>
+</footer>
+
+</body></html>`;
+}
+
+// === COMIC-TEMPLATE ===
+function wrapComicTemplate(bodyContent, etappeData, settings) {
+  const totalPhotos = etappeData.reduce((s, e) => s + e.photos.length, 0);
+  let totalKm = 0;
+  Object.values(etappeStats).forEach(s => { totalKm += parseFloat(s.actualKm) || 0; });
+  
+  const title = generateStoryTitle(settings);
+  const today = new Date().toLocaleDateString('de-DE', {day: 'numeric', month: 'long', year: 'numeric'});
+  
+  return `<!DOCTYPE html>
+<html lang="de"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${title} — Picture Stories</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#fff8e8;--paper-yellow:#ffec84;--paper-burst:#ff5050;--ink:#000;--ink-soft:#333;--blue:#3a4cff;--orange:#ff8c00;--green:#3cb043}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:'Comic Neue',sans-serif;font-size:17px;line-height:1.4;-webkit-font-smoothing:antialiased;background-image:repeating-linear-gradient(45deg,transparent,transparent 30px,rgba(0,0,0,.025) 30px,rgba(0,0,0,.025) 31px);background-attachment:fixed}
+img{max-width:100%;height:auto;display:block}
+.comic-titlepage{padding:clamp(2.5rem,7vh,5rem) clamp(1.5rem,4vw,3rem);text-align:center;background:var(--paper-yellow);border-bottom:6px solid var(--ink);position:relative}
+.comic-titlepage::before{content:"BLAM!";position:absolute;top:1rem;left:2rem;font-family:'Bangers',cursive;font-size:3rem;color:var(--paper-burst);transform:rotate(-15deg);text-shadow:3px 3px 0 var(--ink)}
+.comic-titlepage::after{content:"WOW!";position:absolute;top:1rem;right:2rem;font-family:'Bangers',cursive;font-size:3rem;color:var(--blue);transform:rotate(12deg);text-shadow:3px 3px 0 var(--ink)}
+.comic-maintitle{font-family:'Bangers',cursive;font-size:clamp(3rem,10vw,6.5rem);line-height:.9;letter-spacing:.04em;color:var(--ink);text-shadow:5px 5px 0 var(--paper-burst);margin-bottom:.8rem}
+.comic-subtitle{font-family:'Permanent Marker',cursive;font-size:1.4rem;color:var(--ink);transform:rotate(-2deg);display:inline-block;background:white;padding:.4rem 1.2rem;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink)}
+article{max-width:54rem;margin:0 auto;padding:clamp(1.5rem,4vh,3rem) clamp(1rem,3vw,2rem)}
+.comic-day{margin-bottom:3rem;padding-bottom:2rem;border-bottom:4px dashed var(--ink);page-break-after:always}
+.comic-day:last-of-type{border-bottom:none}
+.comic-chapter{margin-bottom:1.5rem;text-align:center}
+.comic-title{font-family:'Bangers',cursive;font-size:clamp(2rem,5vw,3rem);line-height:1;letter-spacing:.05em;color:var(--ink);background:var(--paper-yellow);display:inline-block;padding:.5rem 1.5rem;border:4px solid var(--ink);box-shadow:6px 6px 0 var(--ink);transform:rotate(-1deg);margin-bottom:1rem}
+.comic-subtitle{font-family:'Comic Neue',sans-serif;font-weight:700;font-size:.95rem;color:var(--ink-soft)}
+.comic-panels{display:flex;flex-direction:column;gap:1.2rem}
+.comic-panel{position:relative;background:white;border:4px solid var(--ink);box-shadow:6px 6px 0 var(--ink);overflow:hidden}
+.comic-panel img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+.comic-bubble{position:absolute;background:white;border:3px solid var(--ink);border-radius:18px;padding:.7rem 1rem;font-family:'Comic Neue',sans-serif;font-weight:700;font-size:1rem;line-height:1.25;max-width:60%;box-shadow:3px 3px 0 var(--ink);z-index:2}
+.comic-bubble::after{content:"";position:absolute;width:0;height:0}
+.bubble-top-left{top:.8rem;left:.8rem}
+.bubble-top-left::after{bottom:-18px;left:24px;border:9px solid transparent;border-top-color:var(--ink);border-bottom:0}
+.bubble-top-right{top:.8rem;right:.8rem}
+.bubble-top-right::after{bottom:-18px;right:24px;border:9px solid transparent;border-top-color:var(--ink);border-bottom:0}
+.bubble-bottom-left{bottom:.8rem;left:.8rem}
+.bubble-bottom-left::after{top:-18px;left:24px;border:9px solid transparent;border-bottom-color:var(--ink);border-top:0}
+.bubble-bottom-right{bottom:.8rem;right:.8rem}
+.bubble-bottom-right::after{top:-18px;right:24px;border:9px solid transparent;border-bottom-color:var(--ink);border-top:0}
+.bubble-top-center{top:.8rem;left:50%;transform:translateX(-50%)}
+.bubble-bottom-center{bottom:.8rem;left:50%;transform:translateX(-50%)}
+.bubble-thought{border-style:dashed;border-radius:24px}
+.bubble-thought::after{display:none}
+.speaker-name{display:block;font-family:'Bangers',cursive;font-size:.85rem;letter-spacing:.05em;color:var(--paper-burst);margin-bottom:.2rem;text-transform:uppercase}
+.comic-narrator{position:absolute;top:.8rem;left:.8rem;right:.8rem;background:var(--paper-yellow);border:3px solid var(--ink);padding:.5rem .8rem;font-family:'Bangers',cursive;font-size:1rem;line-height:1.2;letter-spacing:.03em;text-align:center;box-shadow:3px 3px 0 var(--ink);z-index:2;text-transform:uppercase}
+.comic-footer{padding:2.5rem 1.5rem;text-align:center;background:var(--paper-yellow);border-top:6px solid var(--ink);margin-top:3rem}
+.comic-footer p{font-family:'Comic Neue',sans-serif;font-weight:700;font-size:1rem;color:var(--ink);max-width:40rem;margin:0 auto .6rem;line-height:1.5}
+.comic-footer-burst{font-family:'Bangers',cursive;font-size:2.5rem;color:var(--paper-burst);text-shadow:3px 3px 0 var(--ink);transform:rotate(-3deg);display:inline-block;margin-top:1rem}
+::selection{background:var(--paper-burst);color:white}
+@media (max-width:600px){.comic-bubble{max-width:75%;font-size:.9rem;padding:.5rem .7rem}.speaker-name{font-size:.75rem}}
+@media print{.comic-day{page-break-after:always}.comic-panel{page-break-inside:avoid}}
+</style></head><body>
+
+<header class="comic-titlepage">
+  <h1 class="comic-maintitle">PFADFINDER<br>PICTURE STORIES</h1>
+  <p class="comic-subtitle">Sechs Helden · Ein Radweg · Tausend Abenteuer!</p>
+</header>
+
+<article>
+${bodyContent}
+</article>
+
+<footer class="comic-footer">
+  <p>Sprechblasen geschrieben von Claude Opus 4.7 — basierend auf den echten Captions und Live-Kommentaren der Pfadfinder.</p>
+  <p>Sechs Pfadfinder · ${etappeData.length} Etappen · ${totalKm.toFixed(0)} km · ${totalPhotos} Action-Panels</p>
+  <div class="comic-footer-burst">FORTSETZUNG FOLGT!</div>
+</footer>
+
+</body></html>`;
+}
 window.closeStoryWizard = closeStoryWizard;
 window.generateStoryWithKI = generateStoryWithKI;
 window.loadStorySnapshots = loadStorySnapshots;
