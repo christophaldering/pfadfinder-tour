@@ -2669,8 +2669,8 @@ function buildStoryDataForKI() {
   return etappeData.filter(e => e.photos.length > 0);
 }
 
-// === KI-Aufruf über Cloudflare Worker Proxy ===
-async function callClaudeAPI(systemPrompt, userPrompt, maxTokens = 8000) {
+// === KI-Aufruf über Cloudflare Worker Proxy mit Streaming ===
+async function callClaudeAPI(systemPrompt, userPrompt, maxTokens = 16000, onProgress = null) {
   if (!ANTHROPIC_PROXY_URL) {
     throw new Error('Proxy-URL nicht konfiguriert.');
   }
@@ -2698,11 +2698,69 @@ async function callClaudeAPI(systemPrompt, userPrompt, maxTokens = 8000) {
     throw new Error(errorMsg);
   }
   
-  const data = await response.json();
-  if (!data.content || !data.content[0] || !data.content[0].text) {
-    throw new Error('Unerwartete API-Antwort');
+  // Streaming-Antwort verarbeiten (Server-Sent Events)
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let fullText = '';
+  let charCount = 0;
+  let lastProgressUpdate = Date.now();
+  
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      buffer += decoder.decode(value, { stream: true });
+      
+      // SSE-Zeilen abarbeiten (durch \n\n getrennt)
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // letzte unvollständige Zeile zurücklegen
+      
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const dataStr = line.slice(6).trim();
+        if (!dataStr || dataStr === '[DONE]') continue;
+        
+        try {
+          const event = JSON.parse(dataStr);
+          
+          // content_block_delta: hier kommen die Text-Stücke
+          if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+            const chunk = event.delta.text || '';
+            fullText += chunk;
+            charCount += chunk.length;
+            
+            // Progress-Callback alle 500ms aufrufen
+            if (onProgress && (Date.now() - lastProgressUpdate > 500)) {
+              onProgress(charCount, fullText);
+              lastProgressUpdate = Date.now();
+            }
+          }
+          
+          // message_stop: Stream beendet
+          if (event.type === 'message_stop') {
+            if (onProgress) onProgress(charCount, fullText);
+          }
+          
+          // error event
+          if (event.type === 'error') {
+            throw new Error('API-Fehler: ' + (event.error?.message || 'Unbekannt'));
+          }
+        } catch (e) {
+          if (e.message?.startsWith('API-Fehler:')) throw e;
+          // Sonstige Parse-Fehler ignorieren (manche SSE-Events haben kein JSON)
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
   }
-  return data.content[0].text;
+  
+  if (!fullText) {
+    throw new Error('Keine Antwort empfangen');
+  }
+  return fullText;
 }
 
 // === Wizard-Modal öffnen ===
@@ -2844,9 +2902,18 @@ async function generateStoryWithKI() {
     // User-Prompt (Daten + Anweisung)
     const userPrompt = buildUserPrompt(data, settings);
     
-    updateLoadingStatus('Claude schreibt deine Story...', 'Das dauert 30-60 Sekunden. Danach wird sie gespeichert und geöffnet.');
+    updateLoadingStatus('Claude schreibt deine Story...', 'Wörter werden generiert: 0');
     
-    const aiResponse = await callClaudeAPI(systemPrompt, userPrompt);
+    let lastProgressTime = Date.now();
+    const aiResponse = await callClaudeAPI(systemPrompt, userPrompt, 16000, (charCount, partialText) => {
+      // Geschätzte Wortzahl (Zeichen / 6)
+      const words = Math.round(charCount / 6);
+      const elapsed = Math.floor((Date.now() - lastProgressTime) / 1000);
+      updateLoadingStatus(
+        'Claude schreibt deine Story...',
+        `${words} Wörter generiert${elapsed > 0 ? ' · ' + elapsed + 's' : ''}`
+      );
+    });
     
     updateLoadingStatus('Story wird gespeichert...', '');
     
@@ -2943,8 +3010,8 @@ function buildSystemPrompt(settings) {
   };
   const lengthMap = {
     'kompakt': 'Kompakt: ca. 600 Wörter insgesamt. Pro Etappe 100-150 Wörter Erzähltext.',
-    'mittel': 'Mittlere Länge: ca. 1200 Wörter insgesamt. Pro Etappe 200-350 Wörter Erzähltext.',
-    'ausfuehrlich': 'Ausführlich: ca. 2200 Wörter insgesamt. Pro Etappe 400-600 Wörter Erzähltext, mit Detail und Tiefe.'
+    'mittel': 'Mittlere Länge: ca. 1500 Wörter insgesamt. Pro Etappe 250-400 Wörter Erzähltext.',
+    'ausfuehrlich': 'Ausführlich: ca. 3000 Wörter insgesamt. Pro Etappe 500-800 Wörter Erzähltext, mit Detail und Tiefe.'
   };
   const audienceMap = {
     'truppe': 'die Pfadfinder selbst — Insider-Witze sind willkommen, wenn aus den Daten ableitbar.',
