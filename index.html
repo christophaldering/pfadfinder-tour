@@ -311,6 +311,8 @@ section.active { display: block; animation: fadeIn 0.4s ease-out; }
 .story-snapshot-actions button { padding: 0.5rem 0.9rem; background: rgba(255,255,255,0.04); border: 1px solid var(--line-strong); color: var(--paper-dim); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 4px; cursor: pointer; transition: all 0.15s; }
 .story-snapshot-actions button:hover { background: var(--rust); color: white; border-color: var(--rust); }
 .story-snapshot-actions .delete-btn:hover { background: #c75c2e; border-color: #c75c2e; }
+.story-snapshot-actions .link-btn { background: rgba(184,84,42,0.15); color: var(--rust); border-color: rgba(184,84,42,0.4); }
+.story-snapshot-actions .link-btn:hover { background: var(--rust); color: white; border-color: var(--rust); }
 .story-snapshots-empty { text-align: center; padding: 2rem 1rem; color: var(--paper-dim); font-style: italic; font-size: 0.9rem; background: rgba(255,255,255,0.02); border-radius: 8px; }
 
 /* === STORY-VIEWER-MODAL (In-App-Anzeige der Stories) === */
@@ -322,6 +324,8 @@ section.active { display: block; animation: fadeIn 0.4s ease-out; }
 .story-viewer-actions button:hover { background: var(--rust); color: white; border-color: var(--rust); }
 .story-viewer-actions button.primary-action { background: var(--rust); color: white; border-color: var(--rust); font-weight: 600; }
 .story-viewer-actions button.primary-action:hover { background: #a04621; border-color: #a04621; }
+.story-viewer-actions button.link-action { background: rgba(184,84,42,0.2); color: var(--rust); border-color: var(--rust); font-weight: 500; }
+.story-viewer-actions button.link-action:hover { background: var(--rust); color: white; }
 .story-viewer-actions .close-btn { font-size: 1rem; padding: 0.5rem 0.8rem; line-height: 1; font-weight: 600; }
 .story-viewer-actions .more-btn { font-size: 1.1rem; padding: 0.4rem 0.7rem; line-height: 1; font-weight: 700; letter-spacing: 0.05em; }
 .story-viewer-more-wrapper { position: relative; }
@@ -2410,6 +2414,7 @@ function renderStorySnapshotsList() {
       </div>
       <div class="story-snapshot-actions">
         <button onclick="openStorySnapshot('${esc(s.id)}')">📖 Öffnen</button>
+        <button class="link-btn" onclick="copyStoryShareLink('${esc(s.id)}')" title="Link zum Teilen kopieren">🔗 Link</button>
         <button class="delete-btn" onclick="deleteStorySnapshot('${esc(s.id)}')">🗑️</button>
       </div>
     </div>`;
@@ -4990,6 +4995,46 @@ async function openStorySnapshot(id) {
   }
 }
 
+// === Link zur Story kopieren (zum Teilen via WhatsApp etc.) ===
+async function copyStoryShareLink(snapshotId) {
+  try {
+    // Aktuelle URL-Basis ermitteln (ohne bestehende Query-Parameter)
+    const baseUrl = window.location.origin + window.location.pathname;
+    const shareUrl = `${baseUrl}?story=${encodeURIComponent(snapshotId)}`;
+    
+    // In Zwischenablage kopieren
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      copied = true;
+    } catch (e) {
+      // Fallback für Browser ohne Clipboard-API
+      const ta = document.createElement('textarea');
+      ta.value = shareUrl;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        copied = true;
+      } catch (e2) {}
+      document.body.removeChild(ta);
+    }
+    
+    if (copied) {
+      toast('Link kopiert ✓ — bereit zum Verschicken');
+    } else {
+      // Letzter Fallback: Link in einem Prompt anzeigen
+      window.prompt('Link kopieren (Cmd+C):', shareUrl);
+    }
+  } catch (e) {
+    console.error('Link-Kopier-Fehler:', e);
+    toast('Konnte Link nicht kopieren', true);
+  }
+}
+window.copyStoryShareLink = copyStoryShareLink;
+
 function showStoryViewerModal(htmlContent, title, snapshotId) {
   // Existierendes Modal entfernen
   const existing = document.getElementById('story-viewer-modal');
@@ -5002,6 +5047,7 @@ function showStoryViewerModal(htmlContent, title, snapshotId) {
     <div class="story-viewer-toolbar">
       <div class="story-viewer-title">${escapeHtml(title)}</div>
       <div class="story-viewer-actions">
+        <button onclick="copyStoryShareLink('${escapeHtml(snapshotId)}')" title="Link zum Teilen kopieren (z.B. WhatsApp)" class="link-action">🔗 Link kopieren</button>
         <button onclick="printStorySnapshot()" title="Als PDF speichern oder drucken" class="primary-action">📄 PDF speichern</button>
         <div class="story-viewer-more-wrapper">
           <button onclick="toggleStoryViewerMenu(event)" title="Weitere Aktionen" class="more-btn">⋯</button>
@@ -9920,7 +9966,65 @@ function initRealtimeSubscriptions() {
   // Stille Auto-Migration im Hintergrund: prüft, ob noch base64-Fotos in der DB sind
   // und migriert sie nach Storage. Verzögert um 3 Sekunden, damit die App zuerst rendert.
   setTimeout(() => { autoMigratePhotosIfNeeded(); }, 3000);
+  
+  // Wenn ein ?story=...-Parameter da ist, öffne diese Story automatisch
+  setTimeout(() => { checkAndOpenSharedStory(); }, 800);
 })();
+
+// === Auto-Open Story aus URL-Parameter ===
+async function checkAndOpenSharedStory() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const storyId = params.get('story');
+    if (!storyId) return;
+    
+    // Wenn nicht eingeloggt, später nochmal versuchen (nach Login)
+    if (!currentUser) {
+      // Polling: alle 1 Sek prüfen, ob User eingeloggt ist (max 5 Min)
+      let tries = 0;
+      const interval = setInterval(() => {
+        tries++;
+        if (currentUser) {
+          clearInterval(interval);
+          openSharedStoryById(storyId);
+        } else if (tries > 300) {
+          clearInterval(interval);
+        }
+      }, 1000);
+      return;
+    }
+    
+    openSharedStoryById(storyId);
+  } catch (e) {
+    console.warn('Shared-Story-Auto-Open-Fehler:', e);
+  }
+}
+
+async function openSharedStoryById(storyId) {
+  try {
+    // URL bereinigen, damit beim nächsten Reload nicht wieder geöffnet wird
+    const cleanUrl = window.location.origin + window.location.pathname;
+    window.history.replaceState({}, '', cleanUrl);
+    
+    // Kleine Verzögerung, damit App-UI vollständig geladen ist
+    await new Promise(r => setTimeout(r, 400));
+    
+    const { data, error } = await sb.from('story_snapshots')
+      .select('html_content, title')
+      .eq('id', storyId)
+      .single();
+    
+    if (error || !data) {
+      toast('Diese Story existiert nicht oder wurde gelöscht.', true);
+      return;
+    }
+    
+    showStoryViewerModal(data.html_content, data.title || 'Story', storyId);
+  } catch (e) {
+    console.error('Shared-Story-Open-Fehler:', e);
+    toast('Story konnte nicht geöffnet werden', true);
+  }
+}
 </script>
 </body>
 </html>
