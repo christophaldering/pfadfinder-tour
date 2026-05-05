@@ -250,6 +250,42 @@ section.active { display: block; animation: fadeIn 0.4s ease-out; }
 .sw-hint { font-size: 0.75rem; color: var(--paper-dim); margin-top: 0.6rem; padding: 0.5rem 0.7rem; background: rgba(184,84,42,0.06); border-left: 2px solid var(--rust); border-radius: 3px; line-height: 1.4; }
 .sw-hint strong { color: var(--rust); font-weight: 600; }
 
+/* === SCROLL-STORY: PROMPTS-MODAL === */
+.scroll-prompts-card { max-width: 880px !important; }
+.scroll-prompts-list { padding: 0.8rem 1.5rem; max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 0.8rem; }
+.scroll-prompt-card { display: grid; grid-template-columns: auto 1fr 200px; gap: 1rem; padding: 1rem; background: rgba(255,255,255,0.04); border: 1px solid var(--line-strong); border-radius: 8px; transition: all 0.2s; }
+.scroll-prompt-card.has-image { border-color: rgba(184,84,42,0.5); background: rgba(184,84,42,0.05); }
+.scroll-prompt-number { font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; color: var(--rust); font-weight: 600; padding: 0.2rem 0.5rem; align-self: start; line-height: 1.6; }
+.scroll-prompt-content { min-width: 0; }
+.scroll-prompt-position { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; color: var(--rust); text-transform: uppercase; margin-bottom: 0.3rem; font-weight: 600; }
+.scroll-prompt-de { font-size: 0.95rem; color: var(--paper); font-weight: 500; margin-bottom: 0.6rem; line-height: 1.4; }
+.scroll-prompt-en-wrapper { position: relative; }
+.scroll-prompt-en { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--paper-dim); background: rgba(0,0,0,0.2); padding: 0.6rem 0.7rem; padding-right: 5rem; border-radius: 4px; line-height: 1.5; word-break: break-word; max-height: 5rem; overflow-y: auto; }
+.scroll-prompt-copy-btn { position: absolute; top: 0.4rem; right: 0.4rem; padding: 0.3rem 0.6rem !important; background: var(--rust) !important; color: white !important; border: none !important; border-radius: 4px !important; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem !important; letter-spacing: 0.05em; cursor: pointer; transition: all 0.15s; }
+.scroll-prompt-copy-btn:hover { background: #a04621 !important; }
+.scroll-prompt-image-area { display: flex; align-items: stretch; justify-content: stretch; min-height: 120px; }
+.scroll-prompt-upload-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3rem; width: 100%; padding: 1rem; background: rgba(255,255,255,0.04); border: 2px dashed var(--line-strong); border-radius: 6px; cursor: pointer; transition: all 0.15s; text-align: center; }
+.scroll-prompt-upload-zone:hover { border-color: var(--rust); background: rgba(184,84,42,0.08); }
+.scroll-prompt-upload-zone .upload-icon { font-size: 1.6rem; color: var(--rust); line-height: 1; }
+.scroll-prompt-upload-zone .upload-text { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--paper); text-transform: uppercase; font-weight: 600; }
+.scroll-prompt-upload-zone .upload-subtext { font-size: 0.65rem; color: var(--paper-dim); font-style: italic; }
+.scroll-prompt-upload-progress { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; padding: 1rem; background: rgba(184,84,42,0.08); border: 2px dashed var(--rust); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--paper-dim); }
+.upload-spinner { width: 24px; height: 24px; border: 3px solid rgba(184,84,42,0.2); border-top-color: var(--rust); border-radius: 50%; animation: spin 0.8s linear infinite; }
+.scroll-prompt-image-preview { position: relative; width: 100%; border-radius: 6px; overflow: hidden; background: var(--bg-card); border: 1px solid var(--rust); }
+.scroll-prompt-image-preview img { width: 100%; height: 120px; object-fit: cover; display: block; }
+.scroll-prompt-image-remove { position: absolute; top: 0.4rem; right: 0.4rem; width: 1.6rem; height: 1.6rem; padding: 0 !important; background: rgba(0,0,0,0.7) !important; color: white !important; border: none !important; border-radius: 50% !important; font-size: 0.85rem !important; cursor: pointer; line-height: 1; display: flex; align-items: center; justify-content: center; }
+.scroll-prompt-image-remove:hover { background: var(--rust) !important; }
+.scroll-prompts-footer { padding: 1rem 1.5rem 1.5rem; border-top: 1px solid var(--line-strong); }
+.scroll-prompts-status { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--paper-dim); text-align: center; margin-bottom: 1rem; padding: 0.6rem; background: rgba(255,255,255,0.04); border-radius: 4px; }
+.scroll-prompts-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.scroll-prompts-actions .sw-btn-secondary, .scroll-prompts-actions .sw-btn-primary { flex: 1; min-width: 120px; }
+.scroll-prompts-actions .sw-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; background: rgba(184,84,42,0.4); }
+.scroll-prompts-skip-btn { font-size: 0.65rem !important; flex: 0 0 auto !important; min-width: auto !important; opacity: 0.7; }
+@media (max-width: 700px) {
+  .scroll-prompt-card { grid-template-columns: 1fr; }
+  .scroll-prompt-image-area { min-height: 140px; }
+}
+
 /* === LOADING-OVERLAY === */
 .story-loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 10001; display: flex; align-items: center; justify-content: center; padding: 2rem; }
 .story-loading-card { background: var(--bg-card); border: 1px solid var(--line-strong); border-radius: 12px; padding: 2.5rem 2rem; text-align: center; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
@@ -2907,6 +2943,13 @@ async function generateStoryWithKI() {
   
   // Loading-Modal anzeigen
   closeStoryWizard();
+  
+  // Scroll-Story: Zweistufiger Workflow (Prompts erst, dann Bilder, dann Story)
+  if (settings.format === 'scrolltelling') {
+    await startScrollStoryWorkflow(settings);
+    return;
+  }
+  
   showStoryLoading();
   
   try {
@@ -3416,7 +3459,7 @@ WEITERE REGELN:
 - Beginne direkt mit <header class="scroll-prologue"> — keine <html>/<body>-Tags.
 - Schreibe ALLE Etappen in chronologischer Reihenfolge.
 - Schreibe in fließendem Deutsch, mit Drama und Atmosphäre — das ist eine filmische Story, kein nüchterner Bericht.
-- Cast-Sektion am Ende: <section class="scroll-cast"> mit <article class="cast-member"> für jeden Pfadfinder mit Rolle/Charakterisierung.
+- Cast-Sektion am Ende: <section class="scroll-cast"><div class="scroll-cast-title">Die Pfadfinder</div><h2 class="scroll-cast-heading">Sechs Männer · <em>eine Reise</em></h2><ul class="scroll-cast-list"><li>Christoph</li><li>Willi</li><li>Charly</li><li>Stefan</li><li>Burkhard</li><li>Friedhelm</li></ul></section> — NUR die Namen, keine Charakter-Beschreibungen.
 
 WICHTIG ZU VOLLSTÄNDIGKEIT: Lieber ALLE Fotos in einfacher Galerie unten, als die Hälfte vergessen. Die Galerie ist Teil der Story — sie zeigt, dass dies eine echte, gelebte Reise war.`;
 }
@@ -3851,126 +3894,564 @@ function wrapScrolltellingTemplate(bodyContent, etappeData, settings) {
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0e0e10;--bg-soft:#17171a;--bg-card:#1d1d20;
-  --paper:#f0ede4;--paper-soft:#dad5c6;--paper-dim:#a8a293;
-  --accent:#c89c4a;--accent-soft:#9c7635;--accent-bright:#e6b558;
-  --rust:#b8542a;--rust-deep:#8a3d1e;
-  --rule:rgba(240,237,228,.12);--rule-soft:rgba(240,237,228,.06);
+  --paper:#f4ede1;
+  --paper-warm:#ebe0cd;
+  --paper-deep:#dfd3b8;
+  --ink:#1a1410;
+  --ink-soft:#3d342c;
+  --ink-fade:#7a6e5f;
+  --ink-whisper:#a89c8a;
+  --rust:#b8542a;
+  --rust-deep:#8a3d1e;
+  --rust-soft:#d8865c;
+  --gold:#c89c4a;
+  --moss:#5a6e3f;
+  --rule:rgba(26,20,16,.12);
+  --rule-soft:rgba(26,20,16,.06);
 }
-*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
-body{background:var(--bg);color:var(--paper);font-family:'Inter',sans-serif;font-size:18px;line-height:1.65;overflow-x:hidden}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  font-size:18px;
+  line-height:1.65;
+  overflow-x:hidden;
+  font-weight:400;
+}
 img{max-width:100%;height:auto;display:block}
 
-/* === PROLOGUE === */
-.scroll-prologue{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:4rem 1.5rem;background:radial-gradient(ellipse at center,rgba(200,156,74,.08),transparent 70%),var(--bg);position:relative;overflow:hidden}
-.scroll-prologue::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle at 20% 30%,rgba(184,84,42,.06),transparent 50%),radial-gradient(circle at 80% 70%,rgba(200,156,74,.05),transparent 50%);pointer-events:none}
-.scroll-pretitle{font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.4em;color:var(--accent);text-transform:uppercase;margin-bottom:2rem;position:relative;z-index:2}
-.scroll-maintitle{font-family:'Fraunces',serif;font-weight:300;font-size:clamp(3rem,11vw,8rem);line-height:.95;letter-spacing:-.04em;color:var(--paper);margin-bottom:1.5rem;position:relative;z-index:2;max-width:14ch}
-.scroll-maintitle em{font-style:italic;color:var(--accent);font-weight:400}
-.scroll-subtitle{font-family:'Fraunces',serif;font-style:italic;font-size:clamp(1.2rem,2.5vw,1.6rem);color:var(--paper-soft);max-width:38rem;margin-bottom:2rem;line-height:1.4;position:relative;z-index:2}
-.scroll-prologue-meta{font-family:'JetBrains Mono',monospace;font-size:.8rem;letter-spacing:.2em;color:var(--paper-dim);text-transform:uppercase;margin-bottom:3rem;position:relative;z-index:2}
-.scroll-scroll-hint{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.3em;color:var(--paper-dim);text-transform:uppercase;animation:bounce 2s ease-in-out infinite;position:relative;z-index:2}
-@keyframes bounce{0%,100%{transform:translateY(0);opacity:.6}50%{transform:translateY(8px);opacity:1}}
+/* === PROLOGUE / HERO === */
+.scroll-prologue{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  padding:5rem 1.5rem;
+  background:var(--paper);
+  position:relative;
+  overflow:hidden;
+}
+.scroll-prologue::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(ellipse at 20% 30%,rgba(184,84,42,.04),transparent 60%),
+    radial-gradient(ellipse at 80% 70%,rgba(200,156,74,.05),transparent 60%);
+  pointer-events:none;
+}
+.scroll-prologue > *{position:relative;z-index:2}
+.scroll-pretitle{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.7rem;
+  letter-spacing:.45em;
+  color:var(--rust);
+  text-transform:uppercase;
+  margin-bottom:2.5rem;
+  font-weight:500;
+}
+.scroll-maintitle{
+  font-family:'Fraunces',serif;
+  font-weight:300;
+  font-size:clamp(3rem,11vw,7.5rem);
+  line-height:.95;
+  letter-spacing:-.03em;
+  color:var(--ink);
+  margin-bottom:1.5rem;
+  max-width:14ch;
+}
+.scroll-maintitle em{
+  font-style:italic;
+  color:var(--rust);
+  font-weight:400;
+}
+.scroll-subtitle{
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-size:clamp(1.15rem,2.4vw,1.6rem);
+  color:var(--ink-soft);
+  max-width:38rem;
+  margin-bottom:2rem;
+  line-height:1.45;
+  font-weight:300;
+}
+.scroll-prologue-meta{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.75rem;
+  letter-spacing:.25em;
+  color:var(--ink-fade);
+  text-transform:uppercase;
+  margin-bottom:3.5rem;
+}
+.scroll-scroll-hint{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.65rem;
+  letter-spacing:.35em;
+  color:var(--ink-whisper);
+  text-transform:uppercase;
+  animation:scrollBounce 2s ease-in-out infinite;
+}
+@keyframes scrollBounce{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(8px);opacity:1}}
 
-/* === ACT-DIVIDER === */
-.scroll-act-divider{padding:6rem 1.5rem 4rem;text-align:center;background:var(--bg-soft);position:relative;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
-.dalle-placeholder{aspect-ratio:21/9;max-width:1200px;margin:0 auto 3rem;background:linear-gradient(135deg,rgba(200,156,74,.12),rgba(184,84,42,.08));border:2px dashed var(--accent-soft);border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
-.dalle-placeholder::before{content:"";position:absolute;inset:0;background-image:repeating-linear-gradient(45deg,transparent,transparent 30px,rgba(200,156,74,.03) 30px,rgba(200,156,74,.03) 31px);pointer-events:none}
-.dalle-placeholder-text{display:flex;flex-direction:column;align-items:center;gap:.6rem;text-align:center;padding:1.5rem;color:var(--accent-soft)}
-.dalle-icon{font-size:2.4rem;line-height:1}
-.dalle-label{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accent)}
-.dalle-prompt-preview{font-family:'Fraunces',serif;font-style:italic;font-size:1rem;color:var(--paper-soft);max-width:42ch;line-height:1.4}
-.dalle-placeholder img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.scroll-act-label{font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.3em;color:var(--accent);text-transform:uppercase;margin-bottom:.6rem}
-.scroll-act-number{font-family:'Fraunces',serif;font-style:italic;font-size:1rem;color:var(--paper-dim);margin-bottom:.4rem;letter-spacing:.05em}
-.scroll-act-title{font-family:'Fraunces',serif;font-weight:300;font-size:clamp(2.4rem,6vw,4.5rem);line-height:1;letter-spacing:-.02em;color:var(--paper);margin-bottom:1.2rem;max-width:18ch;margin-left:auto;margin-right:auto}
-.scroll-act-title em{font-style:italic;color:var(--accent)}
-.scroll-act-intro{font-family:'Fraunces',serif;font-style:italic;font-size:clamp(1.1rem,2vw,1.3rem);color:var(--paper-soft);max-width:38rem;margin:0 auto;line-height:1.5}
+/* === ACT-DIVIDER (NEU MIT ECHTEM BILD) === */
+.scroll-act-divider{
+  padding:0 0 5rem;
+  text-align:center;
+  background:var(--paper-warm);
+  position:relative;
+  border-top:1px solid var(--rule);
+  border-bottom:1px solid var(--rule);
+}
+.scroll-act-hero{
+  width:100%;
+  height:65vh;
+  min-height:400px;
+  max-height:720px;
+  margin:0 0 4rem;
+  position:relative;
+  overflow:hidden;
+}
+.scroll-act-hero img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.scroll-act-hero::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,transparent 50%,rgba(244,237,225,.4));
+  pointer-events:none;
+}
+
+/* DALL-E-Platzhalter (falls keine Bilder hochgeladen) */
+.dalle-placeholder{
+  width:100%;
+  aspect-ratio:21/9;
+  margin:0 0 3rem;
+  background:linear-gradient(135deg,var(--paper-warm),var(--paper-deep));
+  border-top:1px solid var(--rust-soft);
+  border-bottom:1px solid var(--rust-soft);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+}
+.dalle-placeholder::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-image:repeating-linear-gradient(45deg,transparent,transparent 40px,rgba(184,84,42,.04) 40px,rgba(184,84,42,.04) 41px);
+  pointer-events:none;
+}
+.dalle-placeholder-text{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:.8rem;
+  text-align:center;
+  padding:2rem;
+  position:relative;
+  z-index:2;
+}
+.dalle-icon{font-size:2rem;line-height:1;opacity:.6}
+.dalle-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.65rem;
+  letter-spacing:.35em;
+  text-transform:uppercase;
+  color:var(--rust);
+  font-weight:500;
+}
+.dalle-prompt-preview{
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-size:1.1rem;
+  color:var(--ink-soft);
+  max-width:42ch;
+  line-height:1.4;
+}
+
+.scroll-act-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.7rem;
+  letter-spacing:.4em;
+  color:var(--rust);
+  text-transform:uppercase;
+  margin-bottom:.8rem;
+  font-weight:500;
+}
+.scroll-act-number{
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-size:.95rem;
+  color:var(--ink-fade);
+  margin-bottom:.6rem;
+  letter-spacing:.05em;
+}
+.scroll-act-title{
+  font-family:'Fraunces',serif;
+  font-weight:300;
+  font-size:clamp(2.4rem,6vw,4.2rem);
+  line-height:1.05;
+  letter-spacing:-.02em;
+  color:var(--ink);
+  margin-bottom:1.5rem;
+  max-width:18ch;
+  margin-left:auto;
+  margin-right:auto;
+  padding:0 1.5rem;
+}
+.scroll-act-title em{font-style:italic;color:var(--rust)}
+.scroll-act-intro{
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-size:clamp(1.1rem,2vw,1.3rem);
+  color:var(--ink-soft);
+  max-width:42rem;
+  margin:0 auto;
+  line-height:1.55;
+  padding:0 1.5rem;
+  font-weight:300;
+}
 
 /* === ACT === */
-.scroll-act{padding:4rem 1.5rem;max-width:48rem;margin:0 auto}
-.scroll-meta{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;color:var(--accent);text-transform:uppercase;margin-bottom:2rem;border-bottom:1px solid var(--rule);padding-bottom:1rem}
+.scroll-act{
+  padding:6rem 1.5rem;
+  max-width:48rem;
+  margin:0 auto;
+  background:var(--paper);
+}
+.scroll-meta{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.7rem;
+  letter-spacing:.25em;
+  color:var(--rust);
+  text-transform:uppercase;
+  margin-bottom:2.5rem;
+  border-bottom:1px solid var(--rule);
+  padding-bottom:1.2rem;
+  font-weight:500;
+}
 
-/* === HERO-FOTO === */
-.scroll-hero{margin:0 -1.5rem 3rem;position:relative}
-@media (min-width:768px){.scroll-hero{margin:0 -3rem 3rem}}
-@media (min-width:1024px){.scroll-hero{margin:0 -8rem 3rem}}
-.scroll-hero img{width:100%;aspect-ratio:21/9;object-fit:cover}
-.scroll-hero-caption{font-family:'Fraunces',serif;font-style:italic;font-size:.95rem;color:var(--paper-dim);text-align:center;padding:1rem 1.5rem;line-height:1.4;max-width:42rem;margin:0 auto}
+/* === HERO-FOTO IM AKT === */
+.scroll-hero{
+  margin:0 -1.5rem 4rem;
+  position:relative;
+}
+@media (min-width:768px){.scroll-hero{margin:0 -3rem 4rem}}
+@media (min-width:1024px){.scroll-hero{margin:0 -8rem 4rem}}
+.scroll-hero img{
+  width:100%;
+  aspect-ratio:21/9;
+  object-fit:cover;
+}
+.scroll-hero-caption{
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-size:.95rem;
+  color:var(--ink-fade);
+  text-align:center;
+  padding:1.2rem 1.5rem 0;
+  line-height:1.5;
+  max-width:42rem;
+  margin:0 auto;
+}
 
 /* === SECTION === */
-.scroll-section{margin-bottom:3rem}
-.scroll-section-label{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.25em;color:var(--accent);text-transform:uppercase;margin-bottom:.8rem}
-.scroll-section-title{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.1;letter-spacing:-.01em;color:var(--paper);margin-bottom:1.5rem}
-.scroll-section-title em{font-style:italic;color:var(--accent)}
-.scroll-prose p{font-family:'Fraunces',serif;font-size:1.15rem;line-height:1.75;margin-bottom:1.4rem;color:var(--paper-soft)}
-.scroll-prose p:first-of-type::first-letter{font-family:'Fraunces',serif;font-size:4em;font-weight:300;font-style:italic;float:left;line-height:.9;margin:.05em .12em 0 -.02em;color:var(--accent)}
-.scroll-prose em{font-style:italic;color:var(--paper)}
-.scroll-prose strong{font-weight:600;color:var(--paper)}
+.scroll-section{
+  margin-bottom:4rem;
+}
+.scroll-section-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.7rem;
+  letter-spacing:.3em;
+  color:var(--rust);
+  text-transform:uppercase;
+  margin-bottom:1rem;
+  font-weight:500;
+}
+.scroll-section-title{
+  font-family:'Fraunces',serif;
+  font-weight:400;
+  font-size:clamp(1.8rem,4vw,2.8rem);
+  line-height:1.1;
+  letter-spacing:-.015em;
+  color:var(--ink);
+  margin-bottom:2rem;
+}
+.scroll-section-title em{
+  font-style:italic;
+  color:var(--rust);
+  font-weight:400;
+}
+.scroll-prose p{
+  font-family:'Fraunces',serif;
+  font-size:1.18rem;
+  line-height:1.75;
+  margin-bottom:1.5rem;
+  color:var(--ink-soft);
+  font-weight:400;
+}
+.scroll-prose p:first-of-type::first-letter{
+  font-family:'Fraunces',serif;
+  font-size:4.5em;
+  font-weight:300;
+  font-style:italic;
+  float:left;
+  line-height:.85;
+  margin:.05em .12em 0 -.02em;
+  color:var(--rust);
+}
+.scroll-prose em{font-style:italic;color:var(--ink)}
+.scroll-prose strong{font-weight:600;color:var(--ink)}
 
-/* === INLINE-FOTOS === */
-.scroll-photo-inline{margin:2.5rem -1.5rem;background:var(--bg-card)}
-@media (min-width:768px){.scroll-photo-inline{margin:2.5rem -2rem}}
-.scroll-photo-inline img{width:100%;aspect-ratio:16/9;object-fit:cover}
-.scroll-photo-inline figcaption{font-family:'Fraunces',serif;font-style:italic;font-size:.9rem;color:var(--paper-dim);padding:.8rem 1rem;text-align:left;line-height:1.4;border-top:1px solid var(--rule)}
+/* === INLINE-FOTO === */
+.scroll-photo-inline{
+  margin:3rem -1.5rem;
+  background:var(--paper-warm);
+}
+@media (min-width:768px){.scroll-photo-inline{margin:3rem -2.5rem}}
+.scroll-photo-inline img{
+  width:100%;
+  aspect-ratio:16/9;
+  object-fit:cover;
+}
+.scroll-photo-inline figcaption{
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-size:.95rem;
+  color:var(--ink-fade);
+  padding:1rem 1.2rem;
+  text-align:center;
+  line-height:1.5;
+  border-top:1px solid var(--rule);
+  background:var(--paper-warm);
+}
 
 /* === PULL-QUOTE === */
-.scroll-pullquote{margin:4rem -1.5rem;padding:3rem 2rem;text-align:center;background:linear-gradient(180deg,transparent,rgba(200,156,74,.04),transparent);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);position:relative}
-.scroll-pullquote::before{content:""";position:absolute;top:1rem;left:50%;transform:translateX(-50%);font-family:'Fraunces',serif;font-size:6rem;line-height:1;color:var(--accent);opacity:.2}
-.scroll-pullquote p{font-family:'Fraunces',serif;font-weight:300;font-style:italic;font-size:clamp(1.5rem,3.5vw,2.4rem);line-height:1.3;color:var(--paper);max-width:34rem;margin:0 auto 1rem;letter-spacing:-.005em;position:relative;z-index:2}
-.scroll-pullquote cite{font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.2em;color:var(--accent);font-style:normal;text-transform:uppercase;display:block}
+.scroll-pullquote{
+  margin:5rem -1.5rem;
+  padding:4rem 2rem;
+  text-align:center;
+  background:linear-gradient(180deg,transparent,rgba(184,84,42,.03),transparent);
+  border-top:1px solid var(--rule);
+  border-bottom:1px solid var(--rule);
+  position:relative;
+}
+.scroll-pullquote::before{
+  content:"\\201C";
+  position:absolute;
+  top:0.5rem;
+  left:50%;
+  transform:translateX(-50%);
+  font-family:'Fraunces',serif;
+  font-size:7rem;
+  line-height:1;
+  color:var(--rust);
+  opacity:.18;
+  font-style:italic;
+}
+.scroll-pullquote p{
+  font-family:'Fraunces',serif;
+  font-weight:300;
+  font-style:italic;
+  font-size:clamp(1.5rem,3.5vw,2.4rem);
+  line-height:1.35;
+  color:var(--ink);
+  max-width:34rem;
+  margin:0 auto 1.2rem;
+  letter-spacing:-.005em;
+  position:relative;
+  z-index:2;
+}
+.scroll-pullquote cite{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.7rem;
+  letter-spacing:.25em;
+  color:var(--rust);
+  font-style:normal;
+  text-transform:uppercase;
+  display:block;
+  font-weight:500;
+}
 
 /* === GALLERY === */
-.scroll-gallery{margin-top:4rem;padding-top:3rem;border-top:1px solid var(--rule)}
-.scroll-gallery-title{font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.25em;color:var(--accent);text-transform:uppercase;margin-bottom:1.5rem;text-align:center}
-.scroll-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem}
-.scroll-gallery-grid figure{background:var(--bg-card);overflow:hidden;transition:transform .3s ease}
-.scroll-gallery-grid figure:hover{transform:translateY(-4px)}
-.scroll-gallery-grid img{width:100%;aspect-ratio:1/1;object-fit:cover}
-.scroll-gallery-grid figcaption{font-family:'Inter',sans-serif;font-size:.8rem;color:var(--paper-dim);padding:.6rem .8rem;line-height:1.4}
+.scroll-gallery{
+  margin-top:5rem;
+  padding-top:3rem;
+  border-top:1px solid var(--rule);
+}
+.scroll-gallery-title{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.7rem;
+  letter-spacing:.3em;
+  color:var(--rust);
+  text-transform:uppercase;
+  margin-bottom:2rem;
+  text-align:center;
+  font-weight:500;
+}
+.scroll-gallery-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:1rem;
+}
+.scroll-gallery-grid figure{
+  background:var(--paper-warm);
+  overflow:hidden;
+  transition:transform .35s ease, box-shadow .35s ease;
+  position:relative;
+}
+.scroll-gallery-grid figure:hover{
+  transform:translateY(-3px);
+  box-shadow:0 8px 24px rgba(26,20,16,.12);
+}
+.scroll-gallery-grid img{
+  width:100%;
+  aspect-ratio:1/1;
+  object-fit:cover;
+  transition:transform .5s ease;
+}
+.scroll-gallery-grid figure:hover img{
+  transform:scale(1.03);
+}
+.scroll-gallery-grid figcaption{
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-size:.85rem;
+  color:var(--ink-fade);
+  padding:.7rem .9rem;
+  line-height:1.4;
+  background:var(--paper-warm);
+}
 
-/* === CAST === */
-.scroll-cast{padding:6rem 1.5rem;background:var(--bg-soft);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
-.scroll-cast-title{font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.4em;color:var(--accent);text-transform:uppercase;text-align:center;margin-bottom:1rem}
-.scroll-cast-heading{font-family:'Fraunces',serif;font-weight:300;font-size:clamp(2.4rem,6vw,4rem);line-height:1;letter-spacing:-.02em;color:var(--paper);text-align:center;margin-bottom:3rem}
-.scroll-cast-heading em{font-style:italic;color:var(--accent)}
-.scroll-cast-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem;max-width:64rem;margin:0 auto}
-.cast-member{background:var(--bg-card);padding:1.8rem 1.5rem;border-radius:6px;border:1px solid var(--rule);text-align:center}
-.cast-role{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;color:var(--accent);text-transform:uppercase;margin-bottom:.6rem}
-.cast-name{font-family:'Fraunces',serif;font-weight:400;font-size:1.6rem;color:var(--paper);margin-bottom:.8rem;line-height:1.2}
-.cast-description{font-family:'Inter',sans-serif;font-size:.95rem;color:var(--paper-dim);line-height:1.5;font-style:italic}
+/* === CAST (NUR NAMEN) === */
+.scroll-cast{
+  padding:7rem 1.5rem;
+  background:var(--paper-warm);
+  border-top:1px solid var(--rule);
+  border-bottom:1px solid var(--rule);
+  text-align:center;
+}
+.scroll-cast-title{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.7rem;
+  letter-spacing:.45em;
+  color:var(--rust);
+  text-transform:uppercase;
+  margin-bottom:1.5rem;
+  font-weight:500;
+}
+.scroll-cast-heading{
+  font-family:'Fraunces',serif;
+  font-weight:300;
+  font-size:clamp(2.4rem,6vw,4rem);
+  line-height:1;
+  letter-spacing:-.02em;
+  color:var(--ink);
+  margin-bottom:3.5rem;
+}
+.scroll-cast-heading em{font-style:italic;color:var(--rust)}
+.scroll-cast-list{
+  list-style:none;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:0.8rem 2.5rem;
+  max-width:42rem;
+  margin:0 auto;
+  padding:0;
+}
+.scroll-cast-list li{
+  font-family:'Fraunces',serif;
+  font-weight:400;
+  font-size:clamp(1.4rem,3vw,2rem);
+  color:var(--ink);
+  letter-spacing:.005em;
+  position:relative;
+}
+.scroll-cast-list li:not(:last-child)::after{
+  content:"·";
+  color:var(--rust);
+  margin-left:1.5rem;
+  font-weight:300;
+}
+@media (max-width:600px){
+  .scroll-cast-list{flex-direction:column;gap:.6rem}
+  .scroll-cast-list li:not(:last-child)::after{display:none}
+}
 
 /* === FOOTER === */
-.scroll-footer{padding:5rem 1.5rem 4rem;text-align:center;background:var(--bg)}
-.scroll-footer-emblem{font-family:'Fraunces',serif;font-size:2rem;color:var(--accent);margin-bottom:1.5rem;font-style:italic;font-weight:300}
-.scroll-footer p{font-family:'Fraunces',serif;font-style:italic;font-size:1.05rem;line-height:1.6;color:var(--paper-soft);max-width:38rem;margin:0 auto 1rem}
-.scroll-footer-credits{margin-top:3rem;padding-top:2rem;border-top:1px solid var(--rule);font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;color:var(--paper-dim);text-transform:uppercase;line-height:1.8}
-.scroll-footer-credits strong{color:var(--accent);display:block;margin-top:1rem;margin-bottom:.4rem;font-weight:600}
+.scroll-footer{
+  padding:6rem 1.5rem 4rem;
+  text-align:center;
+  background:var(--paper);
+}
+.scroll-footer-emblem{
+  font-family:'Fraunces',serif;
+  font-size:1.6rem;
+  color:var(--rust);
+  margin-bottom:2rem;
+  font-style:italic;
+  font-weight:300;
+  letter-spacing:.02em;
+}
+.scroll-footer p{
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-size:1.05rem;
+  line-height:1.6;
+  color:var(--ink-fade);
+  max-width:38rem;
+  margin:0 auto 1rem;
+  font-weight:300;
+}
+.scroll-footer-credits{
+  margin-top:3.5rem;
+  padding-top:2.5rem;
+  border-top:1px solid var(--rule);
+  font-family:'JetBrains Mono',monospace;
+  font-size:.7rem;
+  letter-spacing:.2em;
+  color:var(--ink-fade);
+  text-transform:uppercase;
+  line-height:1.8;
+  font-weight:400;
+}
+.scroll-footer-credits strong{
+  color:var(--rust);
+  display:block;
+  margin-top:1.2rem;
+  margin-bottom:.3rem;
+  font-weight:600;
+}
+.scroll-footer-credits strong:first-child{margin-top:0}
 
-::selection{background:var(--accent);color:var(--bg)}
+::selection{background:var(--rust);color:var(--paper)}
 
 @media print{
-  @page { margin: 1cm; size: A4; }
-  body{font-size:10pt;line-height:1.5;background:white !important;color:black !important}
-  .scroll-prologue{min-height:auto;page-break-after:always;background:white !important;color:black !important}
-  .scroll-prologue *{color:black !important}
-  .scroll-act-divider,.scroll-act{page-break-before:always;background:white !important;color:black !important}
-  .scroll-act-divider *,.scroll-act *{color:black !important}
-  .scroll-act-title,.scroll-section-title,.scroll-cast-heading{color:black !important}
-  .scroll-prose p{color:#222 !important}
-  .scroll-pullquote{background:none !important;border:1px solid #888;padding:1rem;margin:1rem 0}
-  .scroll-pullquote p{color:black !important}
-  .scroll-hero,.scroll-photo-inline{margin:1rem 0}
-  .scroll-hero img,.scroll-photo-inline img{max-height:14cm;object-fit:contain}
-  .scroll-gallery-grid{grid-template-columns:repeat(3,1fr);gap:.5rem}
+  @page { margin: 1.5cm; size: A4; }
+  body{font-size:10pt;line-height:1.55;background:var(--paper) !important;color:var(--ink) !important}
+  .scroll-prologue{min-height:auto;page-break-after:always;padding:2cm 1cm}
+  .scroll-act-divider{page-break-before:always;padding:1cm 0}
+  .scroll-act-hero{height:8cm;margin-bottom:1.5cm}
+  .scroll-act{padding:1.5cm 1cm;page-break-before:avoid}
+  .scroll-section-title,.scroll-act-title,.scroll-cast-heading,.scroll-maintitle{page-break-after:avoid}
+  .scroll-pullquote{page-break-inside:avoid;padding:1cm;margin:1cm -1cm}
+  .scroll-hero,.scroll-photo-inline{margin:1cm 0;page-break-inside:avoid}
+  .scroll-hero img,.scroll-photo-inline img{max-height:13cm;object-fit:contain}
+  .scroll-gallery{page-break-inside:auto}
+  .scroll-gallery-grid{grid-template-columns:repeat(3,1fr);gap:.4cm}
   .scroll-gallery-grid img{aspect-ratio:1/1;max-height:5cm}
-  .scroll-cast{page-break-before:always;background:white !important}
-  .scroll-cast *{color:black !important}
-  .cast-member{background:white !important;border:1px solid #ccc}
-  .scroll-footer{background:white !important}
-  .scroll-footer *{color:black !important}
-  .dalle-placeholder{background:white !important;border:1px dashed #888;aspect-ratio:auto;min-height:6cm}
-  .dalle-placeholder *{color:#666 !important}
+  .scroll-cast{page-break-before:always;padding:2cm 1cm}
+  .scroll-footer{padding:2cm 1cm}
+  .dalle-placeholder{aspect-ratio:auto;min-height:6cm;border:1px dashed var(--ink-fade)}
 }
 </style></head><body>
 
@@ -3984,7 +4465,7 @@ ${bodyContent}
     <strong>Drehbuch & Erzählung</strong>
     Claude Opus 4.7
     <strong>Atmosphären-Bilder</strong>
-    DALL-E (Prompts in der Story markiert)
+    DALL-E
     <strong>Fotografie</strong>
     Die Pfadfinder selbst
     <strong>Erstellt</strong>
@@ -3994,11 +4475,488 @@ ${bodyContent}
 
 </body></html>`;
 }
+
 window.closeStoryWizard = closeStoryWizard;
 window.generateStoryWithKI = generateStoryWithKI;
 window.loadStorySnapshots = loadStorySnapshots;
 window.deleteStorySnapshot = deleteStorySnapshot;
 window.openStorySnapshot = openStorySnapshot;
+
+// ============================================================
+// === SCROLL-STORY ZWEISTUFIGER WORKFLOW ===
+// 1. Prompts erstellen (KI generiert DALL-E-Prompts)
+// 2. Bilder hochladen (Supabase Storage)
+// 3. Story generieren (mit den Bildern eingebettet)
+// ============================================================
+
+// Aktuelle Session-State
+let _scrollStorySession = null;
+
+// === Workflow startet ===
+async function startScrollStoryWorkflow(settings) {
+  showStoryLoading();
+  updateLoadingStatus('Atmosphären-Prompts werden vorbereitet...', 'Das dauert ~30 Sekunden.');
+  
+  try {
+    const data = buildStoryDataForKI();
+    if (data.length === 0) {
+      throw new Error('Keine Foto-Daten verfügbar.');
+    }
+    
+    // Stage 1: Nur Prompts generieren
+    const promptsSystemPrompt = buildScrollPromptsSystemPrompt(settings);
+    const promptsUserPrompt = buildScrollPromptsUserPrompt(data, settings);
+    
+    let lastTime = Date.now();
+    const aiResponse = await callClaudeAPI(promptsSystemPrompt, promptsUserPrompt, 4000, (charCount) => {
+      const elapsed = Math.floor((Date.now() - lastTime) / 1000);
+      updateLoadingStatus('Atmosphären-Prompts werden generiert...', `${elapsed}s`);
+    });
+    
+    // JSON parsen
+    let promptList;
+    try {
+      const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) throw new Error('Kein JSON gefunden in der Antwort');
+      promptList = JSON.parse(jsonMatch[0]);
+      if (!Array.isArray(promptList)) throw new Error('Antwort ist kein Array');
+    } catch (e) {
+      console.error('Prompt-Parse-Fehler:', e, aiResponse);
+      throw new Error('KI-Antwort konnte nicht geparst werden. Bitte erneut versuchen.');
+    }
+    
+    closeStoryLoading();
+    
+    // Session-State setzen
+    _scrollStorySession = {
+      settings,
+      data,
+      prompts: promptList.map((p, idx) => ({
+        id: 'prompt_' + idx + '_' + Date.now(),
+        index: idx,
+        position: p.position || 'unbekannt',
+        de_label: p.de_label || p.de || '',
+        en_prompt: p.en_prompt || p.en || '',
+        imageUrl: null,
+        uploading: false
+      }))
+    };
+    
+    showScrollStoryPromptsModal();
+  } catch (e) {
+    console.error('Scroll-Story-Prompts-Fehler:', e);
+    closeStoryLoading();
+    toast('Fehler: ' + (e.message || e), true);
+  }
+}
+
+// === System-Prompt: nur DALL-E-Prompts erstellen ===
+function buildScrollPromptsSystemPrompt(settings) {
+  return `Du bist Bildregisseur für eine filmische Web-Reportage über die Pfadfinder-Tour 2026 (Ruhrtalradweg, Winterberg → Duisburg, 29.04.-03.05.2026, 6 ehemalige Pfadfinder).
+
+Deine Aufgabe: Erstelle 6-8 atmosphärische DALL-E-Prompts für Übergangs-Bilder zwischen den Akten der Story. Diese Bilder zeigen NICHT die Pfadfinder selbst, sondern die Stimmung, die Landschaft, die Orte — wie Establishing Shots in einem Film.
+
+WICHTIG:
+- Auf Englisch geschrieben
+- Stil-Konsistenz: ALLE Prompts enden mit dem selben Stil-Anker, z.B. "35mm editorial photography, atmospheric, cinematic, golden hour lighting, muted earth tones, warm color palette"
+- Spezifische Orte/Stimmungen aus der Tour:
+  * Akt I: Anreise / Quelle der Ruhr / Sauerland-Höhen
+  * Akt II: Sauerländer Wälder, Mescheder Land
+  * Akt III: Walpurgisnacht / Mendener Region
+  * Akt IV: Wetter an der Ruhr / Industriekultur / Zeche Nachtigall
+  * Akt V: Essen / Industrie / Ruhrgebiet
+  * Akt VI: Duisburg / Rheinmündung / Heimkehr
+  * Optional Eröffnungs- und Abschlussbilder
+- Jeder Prompt zeigt KEINE Personen — nur Landschaft, Architektur, Atmosphäre
+- Sehr filmisch, atmosphärisch — wie aus NY Times "Snow Fall" oder ZEIT-Magazin
+
+ANTWORT-FORMAT: Gib AUSSCHLIESSLICH ein JSON-Array zurück, OHNE jede Erklärung davor oder danach. Format:
+
+[
+  {
+    "position": "Prolog / Eröffnung",
+    "de_label": "Quelle der Ruhr im Morgennebel",
+    "en_prompt": "The source of the Ruhr river at Winterberg in early morning, ancient stones covered in moss, mist rising from the cold spring water, dense beech forest in background, 35mm editorial photography, atmospheric, cinematic, golden hour lighting, muted earth tones, warm color palette"
+  },
+  {
+    "position": "Akt I — Aufbruch",
+    "de_label": "Sauerländer Höhen, blühender Frühling",
+    "en_prompt": "Rolling hills of the Sauerland region in spring, ancient farmhouses, blooming meadows with wildflowers, narrow country roads winding through, distant church spire, 35mm editorial photography, atmospheric, cinematic, golden hour lighting, muted earth tones, warm color palette"
+  }
+]
+
+Beachte:
+- 6-8 Prompts insgesamt
+- ALLE Prompts in EINEM Array
+- KEINE Erklärungen außerhalb des JSON
+- Beginne deine Antwort mit "[" und ende mit "]"`;
+}
+
+function buildScrollPromptsUserPrompt(data, settings) {
+  let prompt = `Tour-Daten als Kontext:\n\n`;
+  data.forEach(e => {
+    prompt += `Etappe ${e.num}: ${e.from} → ${e.to}, ${e.km || '?'} km\n`;
+  });
+  prompt += `\n${settings.wishes ? 'Besondere Wünsche: ' + settings.wishes + '\n' : ''}`;
+  prompt += `\nErstelle nun das JSON-Array mit 6-8 atmosphärischen DALL-E-Prompts. Antwort: nur das JSON, sonst nichts.`;
+  return prompt;
+}
+
+// === Prompts-Modal anzeigen ===
+function showScrollStoryPromptsModal() {
+  const existing = document.getElementById('scroll-prompts-modal');
+  if (existing) existing.remove();
+  
+  const modal = document.createElement('div');
+  modal.id = 'scroll-prompts-modal';
+  modal.className = 'story-wizard-overlay';
+  modal.innerHTML = `
+    <div class="story-wizard-card scroll-prompts-card">
+      <div class="story-wizard-header">
+        <div class="sw-icon">🎨</div>
+        <h2>DALL-E-Prompts für deine Scroll-Story</h2>
+        <p>So funktioniert's: Kopiere jeden Prompt, generiere bei DALL-E (oder ChatGPT mit Bildgenerierung) das Bild, lade es hier hoch. Wenn alle Bilder da sind, wird die Story gebaut.</p>
+        <button class="sw-close" onclick="closeScrollPromptsModal()">×</button>
+      </div>
+      
+      <div class="scroll-prompts-list" id="scroll-prompts-list">
+        ${renderScrollPromptsList()}
+      </div>
+      
+      <div class="scroll-prompts-footer">
+        <div class="scroll-prompts-status" id="scroll-prompts-status">
+          ${getPromptsStatusText()}
+        </div>
+        <div class="scroll-prompts-actions">
+          <button class="sw-btn-secondary" onclick="closeScrollPromptsModal()">Abbrechen</button>
+          <button class="sw-btn-primary" id="scroll-prompts-generate-btn" onclick="generateScrollStoryFinal()">
+            ✨ Story jetzt erstellen
+          </button>
+          <button class="sw-btn-secondary scroll-prompts-skip-btn" onclick="generateScrollStoryWithoutImages()">
+            Ohne Bilder fortfahren
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  updatePromptsButtonState();
+}
+
+function renderScrollPromptsList() {
+  if (!_scrollStorySession || !_scrollStorySession.prompts) return '';
+  return _scrollStorySession.prompts.map((p, idx) => `
+    <div class="scroll-prompt-card ${p.imageUrl ? 'has-image' : ''}" data-prompt-id="${p.id}">
+      <div class="scroll-prompt-number">${idx + 1}</div>
+      <div class="scroll-prompt-content">
+        <div class="scroll-prompt-position">${escapeHtml(p.position)}</div>
+        <div class="scroll-prompt-de">${escapeHtml(p.de_label)}</div>
+        <div class="scroll-prompt-en-wrapper">
+          <div class="scroll-prompt-en">${escapeHtml(p.en_prompt)}</div>
+          <button class="scroll-prompt-copy-btn" onclick="copyScrollPrompt('${p.id}')" title="Prompt kopieren">📋 Kopieren</button>
+        </div>
+      </div>
+      <div class="scroll-prompt-image-area">
+        ${p.imageUrl ? `
+          <div class="scroll-prompt-image-preview">
+            <img src="${escapeHtml(p.imageUrl)}" alt="Preview">
+            <button class="scroll-prompt-image-remove" onclick="removeScrollPromptImage('${p.id}')" title="Entfernen">✕</button>
+          </div>
+        ` : `
+          <label class="scroll-prompt-upload-zone" for="upload-${p.id}">
+            <input type="file" accept="image/*" id="upload-${p.id}" onchange="handleScrollPromptUpload(event, '${p.id}')" style="display:none;">
+            <div class="upload-icon">⬆</div>
+            <div class="upload-text">Bild hochladen</div>
+            <div class="upload-subtext">JPG, PNG · Drag & Drop</div>
+          </label>
+        `}
+      </div>
+    </div>
+  `).join('');
+}
+
+function getPromptsStatusText() {
+  if (!_scrollStorySession) return '';
+  const total = _scrollStorySession.prompts.length;
+  const uploaded = _scrollStorySession.prompts.filter(p => p.imageUrl).length;
+  if (uploaded === 0) return `${total} Prompts vorbereitet · noch keine Bilder hochgeladen`;
+  if (uploaded === total) return `✓ Alle ${total} Bilder hochgeladen — bereit zum Story-Bau!`;
+  return `${uploaded} von ${total} Bildern hochgeladen`;
+}
+
+function updatePromptsButtonState() {
+  const status = document.getElementById('scroll-prompts-status');
+  if (status) status.textContent = getPromptsStatusText();
+  const btn = document.getElementById('scroll-prompts-generate-btn');
+  if (btn && _scrollStorySession) {
+    const allDone = _scrollStorySession.prompts.every(p => p.imageUrl);
+    btn.disabled = !allDone;
+    btn.textContent = allDone ? '✨ Story jetzt erstellen' : `Noch ${_scrollStorySession.prompts.filter(p=>!p.imageUrl).length} Bilder fehlen`;
+  }
+}
+
+// === Prompt kopieren ===
+async function copyScrollPrompt(promptId) {
+  const prompt = _scrollStorySession?.prompts.find(p => p.id === promptId);
+  if (!prompt) return;
+  try {
+    await navigator.clipboard.writeText(prompt.en_prompt);
+    toast('Prompt kopiert ✓');
+  } catch (e) {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = prompt.en_prompt;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('Prompt kopiert ✓');
+  }
+}
+
+// === Bild-Upload ===
+async function handleScrollPromptUpload(event, promptId) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const prompt = _scrollStorySession?.prompts.find(p => p.id === promptId);
+  if (!prompt) return;
+  
+  if (!file.type.startsWith('image/')) {
+    toast('Bitte ein Bild auswählen', true);
+    return;
+  }
+  
+  if (file.size > 10 * 1024 * 1024) {
+    toast('Bild zu groß (max 10 MB)', true);
+    return;
+  }
+  
+  prompt.uploading = true;
+  
+  // Upload-UI
+  const card = document.querySelector(`[data-prompt-id="${promptId}"] .scroll-prompt-image-area`);
+  if (card) {
+    card.innerHTML = '<div class="scroll-prompt-upload-progress"><div class="upload-spinner"></div><div>Lädt hoch...</div></div>';
+  }
+  
+  try {
+    // Filename mit Timestamp
+    const ext = file.name.split('.').pop() || 'jpg';
+    const filename = `dalle_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    
+    const { data, error } = await sb.storage
+      .from('story-assets')
+      .upload(filename, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+    
+    if (error) {
+      console.error('Upload-Fehler:', error);
+      throw error;
+    }
+    
+    // Public URL holen
+    const { data: urlData } = sb.storage.from('story-assets').getPublicUrl(filename);
+    if (!urlData?.publicUrl) throw new Error('Konnte URL nicht ermitteln');
+    
+    prompt.imageUrl = urlData.publicUrl;
+    prompt.uploading = false;
+    
+    // Liste neu rendern
+    document.getElementById('scroll-prompts-list').innerHTML = renderScrollPromptsList();
+    updatePromptsButtonState();
+    toast('Bild hochgeladen ✓');
+  } catch (e) {
+    console.error('Upload-Fehler:', e);
+    prompt.uploading = false;
+    document.getElementById('scroll-prompts-list').innerHTML = renderScrollPromptsList();
+    toast('Upload fehlgeschlagen: ' + (e.message || e), true);
+  }
+}
+
+function removeScrollPromptImage(promptId) {
+  const prompt = _scrollStorySession?.prompts.find(p => p.id === promptId);
+  if (!prompt) return;
+  prompt.imageUrl = null;
+  document.getElementById('scroll-prompts-list').innerHTML = renderScrollPromptsList();
+  updatePromptsButtonState();
+}
+
+function closeScrollPromptsModal() {
+  const modal = document.getElementById('scroll-prompts-modal');
+  if (modal) modal.remove();
+  _scrollStorySession = null;
+}
+
+// === Stage 3: Story mit Bildern generieren ===
+async function generateScrollStoryFinal() {
+  if (!_scrollStorySession) return;
+  const session = _scrollStorySession;
+  
+  // Modal schließen
+  document.getElementById('scroll-prompts-modal')?.remove();
+  
+  showStoryLoading();
+  updateLoadingStatus('Story wird vorbereitet...', '');
+  
+  try {
+    // System-Prompt mit den fertigen DALL-E-Bildern
+    const systemPrompt = buildScrolltellingPromptWithImages(session.settings, session.prompts);
+    const userPrompt = buildUserPrompt(session.data, session.settings);
+    
+    updateLoadingStatus('Claude schreibt deine Scroll-Story...', 'Wörter werden generiert: 0');
+    
+    let lastProgressTime = Date.now();
+    const aiResponse = await callClaudeAPI(systemPrompt, userPrompt, 32000, (charCount) => {
+      const words = Math.round(charCount / 6);
+      const elapsed = Math.floor((Date.now() - lastProgressTime) / 1000);
+      updateLoadingStatus(
+        'Claude schreibt deine Scroll-Story...',
+        `${words} Wörter · ${elapsed}s`
+      );
+    });
+    
+    updateLoadingStatus('Story wird gespeichert...', '');
+    
+    const html = wrapStoryInHtmlTemplate(aiResponse, session.data, session.settings);
+    const totalPhotos = session.data.reduce((s, e) => s + e.photos.length, 0);
+    const totalCaptions = session.data.reduce((s, e) => s + e.photos.filter(p => p.caption.trim().length > 0).length, 0);
+    
+    const snapshotId = 'story_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    const title = generateStoryTitle(session.settings);
+    
+    // wizard_settings inkl. Atmosphären-Bildern speichern
+    const wizardSettingsWithImages = {
+      ...session.settings,
+      atmosphereImages: session.prompts.map(p => ({
+        position: p.position,
+        de_label: p.de_label,
+        imageUrl: p.imageUrl
+      }))
+    };
+    
+    const { error: insertError } = await sb.from('story_snapshots').insert({
+      id: snapshotId,
+      format: session.settings.format,
+      title: title,
+      html_content: html,
+      caption_count: totalCaptions,
+      photo_count: totalPhotos,
+      wizard_settings: wizardSettingsWithImages,
+      created_by: currentUser?.name || 'Unbekannt'
+    });
+    
+    if (insertError) {
+      console.error('Snapshot-Insert-Fehler:', insertError);
+      toast('Story erstellt, aber Speichern fehlgeschlagen: ' + insertError.message, true);
+    } else {
+      toast('Scroll-Story erfolgreich erstellt ✓');
+    }
+    
+    await loadStorySnapshots();
+    closeStoryLoading();
+    
+    if (document.getElementById('tab-story')?.classList.contains('active')) {
+      renderStoryMode();
+    }
+    
+    showStoryViewerModal(html, title, snapshotId);
+    _scrollStorySession = null;
+  } catch (e) {
+    console.error('Scroll-Story-Final-Fehler:', e);
+    closeStoryLoading();
+    toast('Fehler beim Generieren: ' + (e.message || e), true);
+  }
+}
+
+// Variante: Story ohne Bilder generieren (Platzhalter bleiben)
+async function generateScrollStoryWithoutImages() {
+  if (!_scrollStorySession) return;
+  if (!confirm('Story ohne hochgeladene Atmosphären-Bilder erstellen? Die Platzhalter bleiben sichtbar und können später ersetzt werden.')) return;
+  
+  // Markiere alle Prompts als "ohne Bild" — Story zeigt dann Platzhalter
+  generateScrollStoryFinal();
+}
+
+// === System-Prompt für finale Story mit Bildern ===
+function buildScrolltellingPromptWithImages(settings, prompts) {
+  // Basis-Prompt holen
+  const basePrompt = buildScrolltellingPrompt(
+    `Du schreibst über die "Pfadfinder-Tour 2026" — sechs ehemalige Pfadfinder (alle Männer, ca. 60 Jahre) sind den Ruhrtalradweg von Winterberg bis Duisburg gefahren, vom 29. April bis 3. Mai 2026.
+
+Die sechs Pfadfinder sind: **Christoph** (Hauptchronist, Brille, volles graues Haar, etwas dicker, dunkle Kleidung), **Willi** (Brille, grauer Vollbart, schlank, helle Kleidung), **Charly** (kräftig, Glatze), **Stefan** (Brille, volles graues Haar, Polo-Shirt-Typ), **Burkhard** (Brille, Geheimratsecken, kräftig, kariertes Hemd), **Friedhelm** (Brille, helle kurze Haare, kein Bart, gerne Hawaii-Shirts).`,
+    settings,
+    settings.background === 'ja' ? 'WICHTIG: Webe historische und kulturelle Hintergründe großzügig ein, wo es passt — Zeche Nachtigall (gegründet 1714), Friedrich Harkort und seine Dampfmaschinen-Werkstatt in Wetter, Arnsberg (789 erstmals erwähnt), die Ruhrquelle (696m am Ruhrkopf), 20 Jahre Ruhrtalradweg.' : 'Hintergrund-Wissen sparsam einweben.',
+    settings.wishes ? `\n\nBesondere Wünsche: ${settings.wishes}` : ''
+  );
+  
+  // Bild-Liste anhängen
+  const imageList = prompts.filter(p => p.imageUrl).map((p, idx) => 
+    `${idx + 1}. Position: "${p.position}" · Beschreibung: "${p.de_label}"\n   URL: ${p.imageUrl}`
+  ).join('\n');
+  
+  const imageInstructions = prompts.filter(p => p.imageUrl).length > 0 ? `
+
+ATMOSPHÄREN-BILDER (vom User vorbereitet, MÜSSEN eingebaut werden):
+
+${imageList}
+
+Verwende diese Bilder als Akt-Trenner und Übergangs-Bilder. Statt der dalle-placeholder-Boxen aus der Standard-Anweisung baust du jetzt:
+
+<section class="scroll-act-divider">
+  <figure class="scroll-act-hero">
+    <img src="ECHTE_URL_AUS_OBIGER_LISTE" loading="lazy">
+  </figure>
+  <div class="scroll-act-label">[Ortsname]</div>
+  <div class="scroll-act-number">Akt [römisch]</div>
+  <h2 class="scroll-act-title">[Titel]</h2>
+  <p class="scroll-act-intro">[Atmosphärische Einleitung 2-3 Sätze]</p>
+</section>
+
+Verteile die Bilder sinnvoll: das erste als Eröffnung im Prologue, dann eines pro Akt-Anfang. Falls mehr Bilder als Akte, einige als atmosphärische Zwischenbilder zwischen Sektionen.
+
+WICHTIG: Cast-Sektion am Ende NUR mit Namen — KEINE Charakter-Beschreibungen. Format:
+<section class="scroll-cast">
+  <div class="scroll-cast-title">Die Pfadfinder</div>
+  <h2 class="scroll-cast-heading">Sechs Männer · <em>eine Reise</em></h2>
+  <ul class="scroll-cast-list">
+    <li>Christoph</li>
+    <li>Willi</li>
+    <li>Charly</li>
+    <li>Stefan</li>
+    <li>Burkhard</li>
+    <li>Friedhelm</li>
+  </ul>
+</section>` : `
+
+WICHTIG: Cast-Sektion am Ende NUR mit Namen — KEINE Charakter-Beschreibungen. Format:
+<section class="scroll-cast">
+  <div class="scroll-cast-title">Die Pfadfinder</div>
+  <h2 class="scroll-cast-heading">Sechs Männer · <em>eine Reise</em></h2>
+  <ul class="scroll-cast-list">
+    <li>Christoph</li>
+    <li>Willi</li>
+    <li>Charly</li>
+    <li>Stefan</li>
+    <li>Burkhard</li>
+    <li>Friedhelm</li>
+  </ul>
+</section>`;
+  
+  return basePrompt + imageInstructions;
+}
+
+window.startScrollStoryWorkflow = startScrollStoryWorkflow;
+window.copyScrollPrompt = copyScrollPrompt;
+window.handleScrollPromptUpload = handleScrollPromptUpload;
+window.removeScrollPromptImage = removeScrollPromptImage;
+window.closeScrollPromptsModal = closeScrollPromptsModal;
+window.generateScrollStoryFinal = generateScrollStoryFinal;
+window.generateScrollStoryWithoutImages = generateScrollStoryWithoutImages;
+
+
 
 async function deleteStorySnapshot(id) {
   if (!confirm('Diese Story wirklich löschen?')) return;
