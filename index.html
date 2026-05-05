@@ -279,10 +279,18 @@ section.active { display: block; animation: fadeIn 0.4s ease-out; }
 .story-viewer-overlay { position: fixed; inset: 0; z-index: 10002; background: rgba(0,0,0,0.92); display: flex; flex-direction: column; animation: fadeIn 0.2s ease-out; }
 .story-viewer-toolbar { background: var(--bg-card); border-bottom: 1px solid var(--line-strong); padding: 0.7rem 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
 .story-viewer-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em; color: var(--paper); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.story-viewer-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.story-viewer-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
 .story-viewer-actions button { padding: 0.5rem 0.9rem; background: rgba(255,255,255,0.06); border: 1px solid var(--line-strong); color: var(--paper); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.08em; border-radius: 5px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
 .story-viewer-actions button:hover { background: var(--rust); color: white; border-color: var(--rust); }
+.story-viewer-actions button.primary-action { background: var(--rust); color: white; border-color: var(--rust); font-weight: 600; }
+.story-viewer-actions button.primary-action:hover { background: #a04621; border-color: #a04621; }
 .story-viewer-actions .close-btn { font-size: 1rem; padding: 0.5rem 0.8rem; line-height: 1; font-weight: 600; }
+.story-viewer-actions .more-btn { font-size: 1.1rem; padding: 0.4rem 0.7rem; line-height: 1; font-weight: 700; letter-spacing: 0.05em; }
+.story-viewer-more-wrapper { position: relative; }
+.story-viewer-more-menu { position: absolute; top: calc(100% + 4px); right: 0; min-width: 180px; background: var(--bg-card); border: 1px solid var(--line-strong); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); padding: 0.3rem; display: none; z-index: 10003; }
+.story-viewer-more-menu.open { display: block; animation: fadeIn 0.15s ease-out; }
+.story-viewer-more-menu button { width: 100%; text-align: left; background: transparent !important; border: none !important; padding: 0.6rem 0.8rem !important; font-size: 0.75rem !important; }
+.story-viewer-more-menu button:hover { background: rgba(184,84,42,0.15) !important; color: var(--paper) !important; }
 .story-viewer-frame-wrapper { flex: 1; overflow: hidden; background: white; }
 .story-viewer-frame { width: 100%; height: 100%; border: none; background: white; }
 @media (max-width: 600px) {
@@ -3366,7 +3374,22 @@ article{max-width:46rem;margin:0 auto;padding:clamp(2rem,5vh,4rem) clamp(1.5rem,
 .story-footer p{font-family:'Fraunces',serif;font-style:italic;font-size:1rem;line-height:1.6;max-width:40rem;margin:0 auto 1rem}
 .story-footer-meta{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-fade);margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid rgba(244,237,225,.1)}
 ::selection{background:var(--rust);color:var(--paper)}
-@media print{body{font-size:11pt}.story-hero{page-break-after:always}.story-day{page-break-before:auto;page-break-inside:avoid}.story-photo,.story-pullout,.story-context{page-break-inside:avoid}}
+@media print{
+  @page { margin: 1.5cm; size: A4; }
+  body{font-size:10pt;line-height:1.5;background:white !important}
+  .story-hero{page-break-after:always;border-bottom:none}
+  .story-hero-stats{page-break-before:auto}
+  .story-day{page-break-before:always;page-break-inside:auto;border-top:none;padding-top:0}
+  .story-day:first-of-type{page-break-before:auto}
+  .day-title{page-break-after:avoid}
+  .day-meta{page-break-after:avoid}
+  .story-photo,.story-pullout,.story-context{page-break-inside:avoid;break-inside:avoid}
+  .story-photo img{max-height:14cm;object-fit:contain}
+  .day-prose p{orphans:3;widows:3}
+  article{padding:0;max-width:none}
+  .story-footer{page-break-before:always;background:white !important;color:var(--ink) !important}
+  .story-footer p,.story-footer-meta{color:var(--ink-soft) !important}
+}
 </style></head><body>
 
 <header class="story-hero">
@@ -3444,7 +3467,23 @@ article{max-width:64rem;margin:0 auto;padding:0 clamp(1rem,3vw,2rem)}
 .news-footer{padding:2rem 1rem;text-align:center;border-top:6px double var(--rule);background:var(--paper-dark);margin-top:2rem}
 .news-footer p{font-family:'Old Standard TT',serif;font-size:.85rem;font-style:italic;color:var(--ink-soft);margin-bottom:.4rem}
 ::selection{background:var(--accent);color:var(--paper)}
-@media print{body{font-size:10pt}.news-day{page-break-after:always}.news-photo{page-break-inside:avoid}}
+@media print{
+  @page { margin: 1cm; size: A4; }
+  body{font-size:9pt;line-height:1.4;background:white !important}
+  .news-titlepage{page-break-after:always}
+  .news-day{page-break-before:always;page-break-inside:auto;padding:1cm 0;border-bottom:none}
+  .news-day:first-of-type{page-break-before:auto}
+  .news-headline{page-break-after:avoid;font-size:2.4rem !important}
+  .news-lead{page-break-after:avoid}
+  .news-byline{page-break-after:avoid}
+  .news-photo{page-break-inside:avoid;break-inside:avoid}
+  .news-photo img{max-height:12cm;object-fit:contain}
+  .news-main{column-count:2 !important;column-gap:1.2rem;font-size:8.5pt}
+  .news-main p{orphans:3;widows:3}
+  .news-sidebar{page-break-inside:avoid;break-inside:avoid}
+  article{padding:0;max-width:none}
+  .news-footer{page-break-before:always;background:white !important}
+}
 </style></head><body>
 
 <header class="news-titlepage">
@@ -3516,7 +3555,20 @@ article{max-width:42rem;margin:0 auto;padding:clamp(2rem,5vh,4rem) clamp(1.5rem,
 .diary-footer p{font-family:'EB Garamond',serif;font-style:italic;font-size:1rem;color:var(--ink-soft);line-height:1.6;max-width:32rem;margin:0 auto .8rem}
 .diary-signature{font-family:'Caveat',cursive;font-size:1.6rem;color:var(--accent);transform:rotate(-2deg);display:inline-block;margin-top:1rem}
 ::selection{background:var(--accent);color:var(--paper)}
-@media print{body{font-size:11pt;background:var(--paper)}.diary-day{page-break-after:always}.diary-photo,.diary-quote{page-break-inside:avoid}}
+@media print{
+  @page { margin: 2cm; size: A4; }
+  body{font-size:11pt;line-height:1.65;background:var(--paper) !important;background-image:none !important}
+  .diary-titlepage{page-break-after:always}
+  .diary-day{page-break-before:always;page-break-inside:auto;padding-bottom:0;border-bottom:none}
+  .diary-day:first-of-type{page-break-before:auto}
+  .diary-title{page-break-after:avoid}
+  .diary-meta{page-break-after:avoid}
+  .diary-photo,.diary-quote{page-break-inside:avoid;break-inside:avoid}
+  .diary-photo img{max-height:13cm;object-fit:contain;filter:sepia(.2) saturate(.85)}
+  .diary-prose{orphans:3;widows:3}
+  article{padding:0;max-width:none}
+  .diary-footer{page-break-before:always;background:var(--paper-dark) !important}
+}
 </style></head><body>
 
 <header class="diary-titlepage">
@@ -3595,7 +3647,19 @@ article{max-width:54rem;margin:0 auto;padding:clamp(1.5rem,4vh,3rem) clamp(1rem,
 .comic-footer-burst{font-family:'Bangers',cursive;font-size:2.5rem;color:var(--paper-burst);text-shadow:3px 3px 0 var(--ink);transform:rotate(-3deg);display:inline-block;margin-top:1rem}
 ::selection{background:var(--paper-burst);color:white}
 @media (max-width:600px){.comic-bubble{max-width:75%;font-size:.9rem;padding:.5rem .7rem}.speaker-name{font-size:.75rem}}
-@media print{.comic-day{page-break-after:always}.comic-panel{page-break-inside:avoid}}
+@media print{
+  @page { margin: 1cm; size: A4; }
+  body{font-size:11pt;line-height:1.4;background:var(--paper) !important;background-image:none !important}
+  .comic-titlepage{page-break-after:always}
+  .comic-day{page-break-before:always;page-break-inside:auto;padding-bottom:0;border-bottom:none}
+  .comic-day:first-of-type{page-break-before:auto}
+  .comic-title{page-break-after:avoid}
+  .comic-panel{page-break-inside:avoid;break-inside:avoid;margin-bottom:0.6rem}
+  .comic-panel img{max-height:13cm;object-fit:contain}
+  .comic-bubble{box-shadow:2px 2px 0 var(--ink) !important}
+  article{padding:0;max-width:none}
+  .comic-footer{page-break-before:always;background:var(--paper-yellow) !important}
+}
 </style></head><body>
 
 <header class="comic-titlepage">
@@ -3665,13 +3729,18 @@ function showStoryViewerModal(htmlContent, title, snapshotId) {
     <div class="story-viewer-toolbar">
       <div class="story-viewer-title">${escapeHtml(title)}</div>
       <div class="story-viewer-actions">
-        <button onclick="downloadStorySnapshot('${escapeHtml(snapshotId)}')" title="Als HTML-Datei herunterladen">⬇ Download</button>
-        <button onclick="printStorySnapshot()" title="Drucken oder als PDF speichern">🖨 Drucken / PDF</button>
-        <button onclick="closeStoryViewer()" title="Schließen" class="close-btn">✕</button>
+        <button onclick="printStorySnapshot()" title="Als PDF speichern oder drucken" class="primary-action">📄 PDF speichern</button>
+        <div class="story-viewer-more-wrapper">
+          <button onclick="toggleStoryViewerMenu(event)" title="Weitere Aktionen" class="more-btn">⋯</button>
+          <div class="story-viewer-more-menu" id="story-viewer-more-menu">
+            <button onclick="downloadStorySnapshot('${escapeHtml(snapshotId)}'); closeStoryViewerMenu();">⬇ HTML-Datei</button>
+          </div>
+        </div>
+        <button onclick="closeStoryViewer()" title="Schließen (Esc)" class="close-btn">✕</button>
       </div>
     </div>
     <div class="story-viewer-frame-wrapper">
-      <iframe id="story-viewer-frame" class="story-viewer-frame" sandbox="allow-same-origin"></iframe>
+      <iframe id="story-viewer-frame" class="story-viewer-frame" sandbox="allow-same-origin allow-scripts allow-modals allow-popups allow-popups-to-escape-sandbox"></iframe>
     </div>
   `;
   document.body.appendChild(modal);
@@ -3724,18 +3793,73 @@ async function downloadStorySnapshot(id) {
 
 function printStorySnapshot() {
   const iframe = document.getElementById('story-viewer-frame');
-  if (!iframe) return;
+  if (!iframe) {
+    toast('Story nicht gefunden', true);
+    return;
+  }
+  
+  // Versuch 1: Direkt im iframe drucken
   try {
-    iframe.contentWindow.focus();
-    iframe.contentWindow.print();
+    if (iframe.contentWindow && iframe.contentWindow.document) {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      return;
+    }
   } catch (e) {
-    toast('Drucken nicht möglich, bitte herunterladen und manuell öffnen.', true);
+    console.warn('Direktdruck fehlgeschlagen:', e);
+  }
+  
+  // Versuch 2: Story in eigenem Tab öffnen, dort drucken
+  // (umgeht Safari-Sandbox-Einschränkungen)
+  try {
+    const html = iframe.srcdoc || iframe.getAttribute('srcdoc') || '';
+    if (!html) {
+      toast('Story-Inhalt nicht verfügbar', true);
+      return;
+    }
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const printWin = window.open(url, '_blank');
+    if (!printWin) {
+      toast('Pop-up blockiert. Bitte Pop-ups für diese Seite zulassen oder Download nutzen.', true);
+      return;
+    }
+    // Warten bis das Fenster geladen ist, dann Druckdialog auslösen
+    printWin.onload = () => {
+      setTimeout(() => {
+        try {
+          printWin.focus();
+          printWin.print();
+        } catch (e) {
+          // Im neuen Tab kann der User Cmd+P drücken
+        }
+      }, 300);
+    };
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (e) {
+    console.error('Drucken-Fallback fehlgeschlagen:', e);
+    toast('Drucken nicht möglich. Bitte Story herunterladen und in eigenem Programm drucken.', true);
   }
 }
 
 window.closeStoryViewer = closeStoryViewer;
 window.downloadStorySnapshot = downloadStorySnapshot;
 window.printStorySnapshot = printStorySnapshot;
+window.toggleStoryViewerMenu = function(event) {
+  event.stopPropagation();
+  const menu = document.getElementById('story-viewer-more-menu');
+  if (!menu) return;
+  const open = menu.classList.toggle('open');
+  if (open) {
+    setTimeout(() => {
+      document.addEventListener('click', closeStoryViewerMenu, { once: true });
+    }, 10);
+  }
+};
+window.closeStoryViewerMenu = function() {
+  const menu = document.getElementById('story-viewer-more-menu');
+  if (menu) menu.classList.remove('open');
+};
 
 
 
