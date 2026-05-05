@@ -2670,7 +2670,7 @@ function buildStoryDataForKI() {
 }
 
 // === KI-Aufruf über Cloudflare Worker Proxy ===
-async function callClaudeAPI(systemPrompt, userPrompt, maxTokens = 16000) {
+async function callClaudeAPI(systemPrompt, userPrompt, maxTokens = 8000) {
   if (!ANTHROPIC_PROXY_URL) {
     throw new Error('Proxy-URL nicht konfiguriert.');
   }
@@ -2844,7 +2844,7 @@ async function generateStoryWithKI() {
     // User-Prompt (Daten + Anweisung)
     const userPrompt = buildUserPrompt(data, settings);
     
-    updateLoadingStatus('Claude denkt nach...', 'Das kann 30-90 Sekunden dauern.');
+    updateLoadingStatus('Claude schreibt deine Story...', 'Das dauert 30-60 Sekunden. Danach wird sie gespeichert und geöffnet.');
     
     const aiResponse = await callClaudeAPI(systemPrompt, userPrompt);
     
@@ -2943,8 +2943,8 @@ function buildSystemPrompt(settings) {
   };
   const lengthMap = {
     'kompakt': 'Kompakt: ca. 600 Wörter insgesamt. Pro Etappe 100-150 Wörter Erzähltext.',
-    'mittel': 'Mittlere Länge: ca. 1500 Wörter insgesamt. Pro Etappe 250-400 Wörter Erzähltext.',
-    'ausfuehrlich': 'Ausführlich: ca. 3000 Wörter insgesamt. Pro Etappe 500-800 Wörter Erzähltext, mit Detail und Tiefe.'
+    'mittel': 'Mittlere Länge: ca. 1200 Wörter insgesamt. Pro Etappe 200-350 Wörter Erzähltext.',
+    'ausfuehrlich': 'Ausführlich: ca. 2200 Wörter insgesamt. Pro Etappe 400-600 Wörter Erzähltext, mit Detail und Tiefe.'
   };
   const audienceMap = {
     'truppe': 'die Pfadfinder selbst — Insider-Witze sind willkommen, wenn aus den Daten ableitbar.',
