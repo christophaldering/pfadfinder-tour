@@ -274,6 +274,21 @@ section.active { display: block; animation: fadeIn 0.4s ease-out; }
 .story-snapshot-actions .delete-btn:hover { background: #c75c2e; border-color: #c75c2e; }
 .story-snapshots-empty { text-align: center; padding: 2rem 1rem; color: var(--paper-dim); font-style: italic; font-size: 0.9rem; background: rgba(255,255,255,0.02); border-radius: 8px; }
 
+/* === STORY-VIEWER-MODAL (In-App-Anzeige der Stories) === */
+.story-viewer-overlay { position: fixed; inset: 0; z-index: 10002; background: rgba(0,0,0,0.92); display: flex; flex-direction: column; animation: fadeIn 0.2s ease-out; }
+.story-viewer-toolbar { background: var(--bg-card); border-bottom: 1px solid var(--line-strong); padding: 0.7rem 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.story-viewer-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em; color: var(--paper); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.story-viewer-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.story-viewer-actions button { padding: 0.5rem 0.9rem; background: rgba(255,255,255,0.06); border: 1px solid var(--line-strong); color: var(--paper); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.08em; border-radius: 5px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.story-viewer-actions button:hover { background: var(--rust); color: white; border-color: var(--rust); }
+.story-viewer-actions .close-btn { font-size: 1rem; padding: 0.5rem 0.8rem; line-height: 1; font-weight: 600; }
+.story-viewer-frame-wrapper { flex: 1; overflow: hidden; background: white; }
+.story-viewer-frame { width: 100%; height: 100%; border: none; background: white; }
+@media (max-width: 600px) {
+  .story-viewer-actions button { padding: 0.4rem 0.6rem; font-size: 0.65rem; }
+  .story-viewer-title { font-size: 0.95rem; }
+}
+
 .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.7rem; margin-bottom: 0.25rem; letter-spacing: 0.02em; display: flex; align-items: baseline; gap: 0.75rem; }
 .section-title::after { content: ''; flex: 1; height: 1px; background: var(--line-strong); }
 .section-subtitle { font-family: 'Caveat', cursive; font-size: 1.1rem; color: var(--gold); margin-bottom: 1.25rem; display: block; }
@@ -1372,31 +1387,6 @@ body.hero-collapsed .hero-compact { display: flex; }
   <div class="share-bar">
     <button class="share-btn" onclick="copyLink()">Link kopieren</button>
     <button class="share-btn" onclick="exportData()">Backup exportieren</button>
-    <div class="story-dropdown" id="storyDropdown">
-      <button class="share-btn story-btn" onclick="toggleStoryMenu(event)" style="background:rgba(184,84,42,0.15);border-color:#b8542a;color:#b8542a;">📖 Story erstellen ▾</button>
-      <div class="story-menu" id="storyMenu" style="display:none;">
-        <div class="story-menu-header">Format wählen:</div>
-        <button class="story-menu-item" onclick="openStory('reportage'); closeStoryMenu()">
-          <span class="story-icon">📖</span>
-          <div><strong>Reportage</strong><small>Magazin-Stil mit Etappen-Erzählung</small></div>
-        </button>
-        <button class="story-menu-item" onclick="openStory('zeitung'); closeStoryMenu()">
-          <span class="story-icon">📰</span>
-          <div><strong>Pfadfinder Press</strong><small>Tour-Tageszeitung im Boulevard-Stil</small></div>
-        </button>
-        <button class="story-menu-item" onclick="openStory('tagebuch'); closeStoryMenu()">
-          <span class="story-icon">📓</span>
-          <div><strong>Reisetagebuch</strong><small>Im Stil des 19. Jahrhunderts</small></div>
-        </button>
-        <button class="story-menu-item" onclick="openStory('comic'); closeStoryMenu()">
-          <span class="story-icon">💬</span>
-          <div><strong>Picture Stories</strong><small>Foto-Comic mit Sprechblasen</small></div>
-        </button>
-        <div class="story-menu-footer">
-          Story öffnet im neuen Tab. Dort: Datei → Drucken → "Als PDF sichern" für PDF-Export.
-        </div>
-      </div>
-    </div>
   </div>
 </footer>
 
@@ -2945,18 +2935,15 @@ async function generateStoryWithKI() {
     // Snapshots neu laden
     await loadStorySnapshots();
     
-    // Story im neuen Tab öffnen
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
-    
     closeStoryLoading();
     
     // Story-Tab aktualisieren falls aktiv
     if (document.getElementById('tab-story')?.classList.contains('active')) {
       renderStoryMode();
     }
+    
+    // Story direkt im In-App-Modal öffnen
+    showStoryViewerModal(html, generateStoryTitle(settings), snapshotId);
     
   } catch (e) {
     console.error('KI-Story-Fehler:', e);
@@ -3210,19 +3197,103 @@ async function deleteStorySnapshot(id) {
 
 async function openStorySnapshot(id) {
   try {
-    const { data, error } = await sb.from('story_snapshots').select('html_content').eq('id', id).single();
+    const { data, error } = await sb.from('story_snapshots').select('html_content, title').eq('id', id).single();
     if (error || !data) {
       toast('Story konnte nicht geladen werden', true);
       return;
     }
-    const blob = new Blob([data.html_content], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    
+    // In-App-Modal: Story als iframe einbetten — kein Pop-up nötig
+    showStoryViewerModal(data.html_content, data.title || 'Story', id);
   } catch (e) {
-    toast('Fehler', true);
+    console.error('Story-Open-Fehler:', e);
+    toast('Fehler beim Öffnen der Story', true);
   }
 }
+
+function showStoryViewerModal(htmlContent, title, snapshotId) {
+  // Existierendes Modal entfernen
+  const existing = document.getElementById('story-viewer-modal');
+  if (existing) existing.remove();
+  
+  const modal = document.createElement('div');
+  modal.id = 'story-viewer-modal';
+  modal.className = 'story-viewer-overlay';
+  modal.innerHTML = `
+    <div class="story-viewer-toolbar">
+      <div class="story-viewer-title">${escapeHtml(title)}</div>
+      <div class="story-viewer-actions">
+        <button onclick="downloadStorySnapshot('${escapeHtml(snapshotId)}')" title="Als HTML-Datei herunterladen">⬇ Download</button>
+        <button onclick="printStorySnapshot()" title="Drucken oder als PDF speichern">🖨 Drucken / PDF</button>
+        <button onclick="closeStoryViewer()" title="Schließen" class="close-btn">✕</button>
+      </div>
+    </div>
+    <div class="story-viewer-frame-wrapper">
+      <iframe id="story-viewer-frame" class="story-viewer-frame" sandbox="allow-same-origin"></iframe>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  
+  // Iframe-Inhalt setzen via srcdoc (umgeht Pop-up-Blocker)
+  const iframe = document.getElementById('story-viewer-frame');
+  iframe.srcdoc = htmlContent;
+  
+  // Body-Scroll deaktivieren
+  document.body.style.overflow = 'hidden';
+  
+  // ESC-Taste zum Schließen
+  const escHandler = (e) => {
+    if (e.key === 'Escape') {
+      closeStoryViewer();
+      document.removeEventListener('keydown', escHandler);
+    }
+  };
+  document.addEventListener('keydown', escHandler);
+}
+
+function closeStoryViewer() {
+  const modal = document.getElementById('story-viewer-modal');
+  if (modal) modal.remove();
+  document.body.style.overflow = '';
+}
+
+async function downloadStorySnapshot(id) {
+  try {
+    const { data, error } = await sb.from('story_snapshots').select('html_content, title').eq('id', id).single();
+    if (error || !data) {
+      toast('Download fehlgeschlagen', true);
+      return;
+    }
+    const blob = new Blob([data.html_content], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const safeTitle = (data.title || 'story').replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 50);
+    a.download = `pfadfinder-${safeTitle}-${new Date().toISOString().slice(0, 10)}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    toast('Story heruntergeladen ✓');
+  } catch (e) {
+    toast('Download-Fehler', true);
+  }
+}
+
+function printStorySnapshot() {
+  const iframe = document.getElementById('story-viewer-frame');
+  if (!iframe) return;
+  try {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+  } catch (e) {
+    toast('Drucken nicht möglich, bitte herunterladen und manuell öffnen.', true);
+  }
+}
+
+window.closeStoryViewer = closeStoryViewer;
+window.downloadStorySnapshot = downloadStorySnapshot;
+window.printStorySnapshot = printStorySnapshot;
 
 
 
